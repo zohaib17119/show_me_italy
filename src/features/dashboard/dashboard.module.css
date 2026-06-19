@@ -1,0 +1,432 @@
+.dashHero {
+  background: linear-gradient(135deg, #1c3a24 0%, #2d5a3d 50%, #1a4a2e 100%);
+  border-radius: 24px;
+  padding: 22px 26px;
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashHero::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.dashHero::after {
+  content: '';
+  position: absolute;
+  bottom: -60px;
+  right: 80px;
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: rgba(39, 174, 96, 0.12);
+}
+
+.dashHeroContent {
+  position: relative;
+  z-index: 1;
+}
+
+.dashHeroTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.dashHeroGreeting {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.dashHeroTitle {
+  font-size: 24px;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+  margin: 0;
+}
+
+.dashHeroDate {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 4px;
+}
+
+.dashHeroActions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+
+.dashHeroBtnPrimary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  background: rgba(255, 255, 255, 0.95);
+  color: #1c3a24;
+  transition: all 0.2s;
+}
+
+.dashHeroBtnPrimary:hover {
+  background: white;
+  transform: translateY(-1px);
+}
+
+.dashHeroBtnOutline {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 18px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.2s;
+}
+
+.dashHeroBtnOutline:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.dashHeroStatus {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashHeroStatusText {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.unfilledBanner {
+  background: linear-gradient(135deg, #fff8f5, #fff3f0);
+  border: 1.5px solid #f5c6c2;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: box-shadow 0.2s;
+}
+
+.unfilledBanner:hover {
+  box-shadow: 0 2px 8px rgba(28, 58, 36, 0.08);
+}
+
+.unfilledIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #fdecea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.scheduleCard {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid var(--border-color);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(28, 58, 36, 0.08);
+}
+
+.scheduleHeader {
+  padding: 16px 18px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eef4ef;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.scheduleTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.scheduleDatePill {
+  background: var(--g50);
+  border: 1px solid var(--g200);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--g600);
+}
+
+.tl2Row {
+  display: flex;
+  border-bottom: 1px solid #eef4ef;
+  transition: background 0.15s;
+  cursor: pointer;
+}
+
+.tl2Row:hover {
+  background: #f7faf8;
+}
+
+.tl2Row:last-child {
+  border-bottom: none;
+}
+
+.tl2TimeCol {
+  width: 72px;
+  padding: 13px 0 13px 18px;
+  flex-shrink: 0;
+}
+
+.tl2Time {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.tl2DotCol {
+  width: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 18px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.tl2Dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  z-index: 1;
+}
+
+.tl2Line {
+  position: absolute;
+  top: 23px;
+  bottom: -1px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background: var(--border-color);
+}
+
+.tl2Content {
+  flex: 1;
+  padding: 12px 18px 12px 10px;
+}
+
+.tl2TourName {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tl2Meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+.tl2StatusRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 5px;
+}
+
+.quickActions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.qaBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: white;
+  border: 1.5px solid var(--border-color);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.qaBtn:hover {
+  border-color: #7ed4a5;
+  background: var(--g50);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(28, 58, 36, 0.08);
+}
+
+.qaIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.qaLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.qaSub {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.guidesOnline {
+  background: linear-gradient(135deg, #1c3a24, #2a4a32);
+  border-radius: 16px;
+  padding: 16px;
+  color: white;
+}
+
+.goTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.goCount {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.goSub {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.45);
+  margin-top: 4px;
+}
+
+.goAvatars {
+  display: flex;
+  margin-top: 12px;
+}
+
+.goAv {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  margin-left: -6px;
+  color: white;
+}
+
+.goAv:first-child {
+  margin-left: 0;
+}
+
+.act2Item {
+  display: flex;
+  gap: 10px;
+  padding: 11px 16px;
+  border-bottom: 1px solid #eef4ef;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.act2Item:hover {
+  background: #f7faf8;
+}
+
+.act2Item:last-child {
+  border-bottom: none;
+}
+
+.act2Icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  flex-shrink: 0;
+}
+
+.act2Body {
+  flex: 1;
+}
+
+.act2Title {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.act2Sub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.act2Time {
+  font-size: 10px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.act2Indicator {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.analyticsSection {
+  margin-top: 20px;
+}
