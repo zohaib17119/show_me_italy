@@ -46,9 +46,9 @@ const iconMap: Record<string, React.ReactNode> = {
 };
 
 const badgeColors: Record<string, string> = {
-  green: '#27AE60',
-  red: '#E74C3C',
-  orange: '#F59E0B',
+  green: 'var(--g500)',
+  red: 'var(--red)',
+  orange: 'var(--orange)',
 };
 
 function SidebarContent({ collapsed }: { collapsed: boolean }) {
@@ -116,14 +116,16 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
           </div>
         )}
       </div>
-      <Menu
-        theme="dark"
-        mode="inline"
-        selectedKeys={[selectedKey]}
-        items={menuItems}
-        className="sidebar-menu"
-        style={{ background: 'transparent', border: 'none' }}
-      />
+      <div className="sidebar-nav-scroll">
+        <Menu
+          theme="dark"
+          mode="inline"
+          selectedKeys={[selectedKey]}
+          items={menuItems}
+          className="sidebar-menu"
+          style={{ background: 'transparent', border: 'none' }}
+        />
+      </div>
     </>
   );
 }
@@ -158,9 +160,11 @@ export function Sidebar() {
       collapsed={sidebarCollapsed}
       onCollapse={() => dispatch(toggleSidebar())}
       className="admin-layout-sider"
-      style={{ background: '#0d2318' }}
+      style={{ background: 'var(--sidebar-bg)', overflow: 'hidden' }}
     >
-      <SidebarContent collapsed={sidebarCollapsed} />
+      <div className="sidebar-inner">
+        <SidebarContent collapsed={sidebarCollapsed} />
+      </div>
     </Sider>
   );
 }

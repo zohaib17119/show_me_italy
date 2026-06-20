@@ -1,0 +1,268 @@
+.pageGrid {
+  display: grid;
+  grid-template-columns: 1fr 190px;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .pageGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.twoColWide {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .twoColWide {
+    grid-template-columns: 1fr;
+  }
+}
+
+.bulkGrid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .bulkGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.viewChips {
+  display: flex;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.calMonthTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.calDayHd {
+  text-align: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  padding: 6px 0;
+}
+
+.calMonth {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.calCell {
+  min-height: 72px;
+  padding: 6px;
+  border-right: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-color);
+  background: var(--card-bg);
+}
+
+.calCell:nth-child(7n) {
+  border-right: none;
+}
+
+.calCell:nth-last-child(-n + 7) {
+  border-bottom: none;
+}
+
+.calCellOther {
+  background: var(--content-bg);
+}
+
+.calCellToday {
+  background: var(--g50);
+}
+
+.calDn {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.calDnToday {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--g500);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calEv {
+  font-size: 9px;
+  font-weight: 700;
+  color: white;
+  padding: 2px 5px;
+  border-radius: 4px;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.langFilterList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.langFilterItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.langSwatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.legendList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legendDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.timeSlotRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.previewList {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  max-height: 380px;
+  overflow-y: auto;
+}
+
+.syncLogList {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  font-size: 12px;
+}
+
+.syncLogItem {
+  padding: 8px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--border-color);
+}
+
+.syncLogSuccess {
+  background: var(--g50);
+  border-color: var(--g200);
+  color: var(--g600);
+}
+
+.syncLogNeutral {
+  background: var(--content-bg);
+  color: var(--text-secondary);
+}
+
+.syncLogWarn {
+  background: var(--orange-bg);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #92400e;
+}
+
+.connectedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--g50);
+  color: var(--g700);
+  border: 1px solid var(--g200);
+}
+
+.connectedDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--g500);
+}
+
+.previewAccent {
+  height: 3px;
+  border-radius: 2px;
+  margin-bottom: 12px;
+}
+
+.previewMetaRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.previewBadge {
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--content-bg);
+  color: var(--text-secondary);
+}
+
+.previewPrice {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--g600);
+  margin-top: 10px;
+}
+
+.footerActions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}

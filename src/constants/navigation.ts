@@ -34,7 +34,7 @@ export const navigationGroups: NavGroupConfig[] = [
         badgeKey: 'approvals',
         badgeColor: 'red',
       },
-      { key: 'guide-detail', label: 'Guide Profile', path: '/guides/sample' },
+      { key: 'guide-detail', label: 'Guide Profile', path: '/guides/guide-marco-rossi' },
     ],
   },
   {
@@ -60,7 +60,7 @@ export const navigationGroups: NavGroupConfig[] = [
         badgeKey: 'payouts',
         badgeColor: 'orange',
       },
-      { key: 'payout-detail', label: 'Payout Detail', path: '/payments/payouts/sample' },
+      { key: 'payout-detail', label: 'Payout Detail', path: '/payments/payouts/payout-marco-march' },
       { key: 'reports', label: 'Payment Reports', path: ROUTES.REPORTS },
     ],
   },
@@ -114,7 +114,7 @@ export const routeMeta: Record<string, RouteMeta> = {
     subtitle: '3 guides awaiting review',
     breadcrumb: 'Guides / New Approvals',
   },
-  '/guides/sample': {
+  '/guides/guide-marco-rossi': {
     title: 'Guide Profile',
     subtitle: 'Marco Rossi',
     breadcrumb: 'Guides / Guide Profile',
@@ -134,7 +134,7 @@ export const routeMeta: Record<string, RouteMeta> = {
     subtitle: '7 pending verification requests',
     breadcrumb: 'Payments / Payout Requests',
   },
-  '/payments/payouts/sample': {
+  '/payments/payouts/payout-marco-march': {
     title: 'Payout Detail Review',
     subtitle: 'Marco Rossi · March 2026',
     breadcrumb: 'Payments / Payout Detail',
@@ -158,10 +158,10 @@ export function getRouteMeta(pathname: string): RouteMeta {
   if (routeMeta[pathname]) return routeMeta[pathname];
 
   if (pathname.startsWith('/guides/') && pathname !== ROUTES.APPROVALS) {
-    return routeMeta['/guides/sample'];
+    return routeMeta['/guides/guide-marco-rossi'];
   }
   if (pathname.startsWith('/payments/payouts/') && pathname !== ROUTES.PAYOUTS) {
-    return routeMeta['/payments/payouts/sample'];
+    return routeMeta['/payments/payouts/payout-marco-march'];
   }
 
   return {

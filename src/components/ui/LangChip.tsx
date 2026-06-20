@@ -1,5 +1,6 @@
 import { languageColors } from '@/theme/tokens';
 import type { LangCode } from '@/types';
+import styles from './LangChip.module.css';
 
 interface LangChipProps {
   code: LangCode | string;
@@ -8,21 +9,12 @@ interface LangChipProps {
 
 export function LangChip({ code, size = 'sm' }: LangChipProps) {
   const upper = code.toUpperCase();
-  const color = languageColors[upper] ?? '#6B8C75';
+  const color = languageColors[upper] ?? undefined;
 
   return (
     <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        padding: size === 'sm' ? '2px 8px' : '3px 10px',
-        borderRadius: 999,
-        fontSize: size === 'sm' ? 10 : 11,
-        fontWeight: 700,
-        color: 'white',
-        background: color,
-        lineHeight: 1.4,
-      }}
+      className={[styles.chip, styles[size], !color ? styles.fallback : ''].filter(Boolean).join(' ')}
+      style={color ? { background: color } : undefined}
     >
       {upper}
     </span>

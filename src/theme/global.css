@@ -5,6 +5,8 @@
 @import '@fontsource/inter/800.css';
 
 :root {
+  --header-height: 56px;
+  --sidebar-width: 228px;
   --g500: #27ae60;
   --g600: #1e8449;
   --g700: #166534;
@@ -20,7 +22,12 @@
   --text-muted: #6b8c75;
   --border-color: #dff0e4;
   --red: #e74c3c;
+  --red-bg: #fdecea;
   --orange: #f59e0b;
+  --orange-bg: #fef3c7;
+  --blue: #2e75b6;
+  --blue-bg: #eaf3fb;
+  --purple: #8e44ad;
 }
 
 *,
@@ -34,6 +41,7 @@ body,
 #root {
   height: 100%;
   margin: 0;
+  overflow: hidden;
 }
 
 body {
@@ -45,17 +53,63 @@ body {
 
 /* Admin layout */
 .admin-layout {
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+}
+
+.admin-main {
+  flex: 1;
+  min-width: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 .admin-layout .ant-layout-sider {
   border-right: 1px solid rgba(255, 255, 255, 0.07);
+  height: 100vh !important;
+  position: sticky;
+  top: 0;
+  overflow: hidden;
+}
+
+.admin-layout-sider .ant-layout-sider-children {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.sidebar-inner {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.sidebar-nav-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  min-height: 0;
+}
+
+.sidebar-nav-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.sidebar-nav-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 2px;
 }
 
 .admin-content {
+  flex: 1;
+  min-height: 0;
   padding: 24px 28px 40px;
   overflow-y: auto;
-  height: calc(100vh - 56px);
 }
 
 .admin-content::-webkit-scrollbar {
@@ -121,6 +175,9 @@ body {
   padding: 0 24px;
   border-bottom: 1px solid var(--border-color);
   box-shadow: 0 1px 3px rgba(28, 58, 36, 0.06);
+  flex-shrink: 0;
+  height: var(--header-height);
+  line-height: var(--header-height);
 }
 
 .admin-header-breadcrumb {

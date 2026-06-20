@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card } from 'antd';
 import type { ReactNode } from 'react';
+import styles from './StatCard.module.css';
 
 interface StatCardProps {
   icon: ReactNode;
@@ -21,7 +22,7 @@ export function StatCard({
   label,
   sub,
   trend,
-  accentColor = '#27AE60',
+  accentColor,
   valueColor,
   alert,
   warn,
@@ -45,66 +46,47 @@ export function StatCard({
     return () => cancelAnimationFrame(frame);
   }, [value]);
 
+  const cardClass = [
+    styles.card,
+    alert ? styles.alert : '',
+    warn ? styles.warn : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const accentStyle = accentColor ? { background: accentColor } : undefined;
+
   return (
     <Card
       hoverable={!!onClick}
       onClick={onClick}
       styles={{ body: { padding: '14px 15px' } }}
-      style={{
-        borderRadius: 12,
-        cursor: onClick ? 'pointer' : 'default',
-        borderColor: alert ? '#f5c6c2' : warn ? '#f6d860' : undefined,
-        background: alert
-          ? 'linear-gradient(135deg, white, #fff9f9)'
-          : undefined,
-        position: 'relative',
-        overflow: 'hidden',
-      }}
+      className={cardClass}
+      style={{ cursor: onClick ? 'pointer' : 'default' }}
     >
       <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: 3,
-          background: alert ? '#E74C3C' : warn ? '#F59E0B' : accentColor,
-          borderRadius: '0 0 12px 12px',
-        }}
+        className={[
+          styles.accent,
+          alert ? styles.accentAlert : '',
+          warn ? styles.accentWarn : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+        style={!alert && !warn ? accentStyle : undefined}
       />
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: 12,
-        }}
-      >
-        <span style={{ fontSize: 16 }}>{icon}</span>
+      <div className={styles.header}>
+        <span className={styles.icon}>{icon}</span>
         {trend}
       </div>
       <div
-        style={{
-          fontSize: 26,
-          fontWeight: 800,
-          letterSpacing: '-0.04em',
-          color: valueColor ?? 'var(--text-primary)',
-          lineHeight: 1,
-        }}
+        className={styles.value}
+        style={valueColor ? { color: valueColor } : undefined}
       >
         {displayValue.toLocaleString()}
       </div>
-      <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 5, fontWeight: 500 }}>
-        {label}
-      </div>
+      <div className={styles.label}>{label}</div>
       {sub && (
-        <div
-          style={{
-            fontSize: 10,
-            color: alert ? '#E74C3C' : 'var(--text-muted)',
-            marginTop: 2,
-          }}
-        >
+        <div className={[styles.sub, alert ? styles.subAlert : ''].filter(Boolean).join(' ')}>
           {sub}
         </div>
       )}

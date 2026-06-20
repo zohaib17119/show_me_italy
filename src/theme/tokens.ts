@@ -2,8 +2,19 @@ export const tokens = {
   colorPrimary: '#27AE60',
   colorPrimaryHover: '#1E8449',
   colorPrimaryActive: '#166534',
+  g50: '#F0FAF4',
+  g100: '#E0F5E9',
+  g200: '#C1EBD3',
+  g800: '#1C3A24',
+  n50: '#F7FAF8',
+  n100: '#EEF4EF',
+  n200: '#DFF0E4',
+  n400: '#A0B8A8',
+  n500: '#6B8C75',
+  n600: '#4A5E51',
+  n700: '#2E3D33',
+  n800: '#1C2520',
   sidebarBg: '#0d2318',
-  sidebarBgAlt: '#1C3A24',
   contentBg: '#EEF4EF',
   cardBg: '#FFFFFF',
   fontFamily: 'Inter, system-ui, sans-serif',
@@ -13,9 +24,14 @@ export const tokens = {
   textMuted: '#6B8C75',
   borderColor: '#DFF0E4',
   red: '#E74C3C',
+  redBg: '#FDECEA',
   orange: '#F59E0B',
+  orangeBg: '#FEF3C7',
   blue: '#2E75B6',
+  blueBg: '#EAF3FB',
   purple: '#8E44AD',
+  headerHeight: 56,
+  sidebarWidth: 228,
 } as const;
 
 export const languageColors: Record<string, string> = {
@@ -30,3 +46,35 @@ export const languageColors: Record<string, string> = {
 };
 
 export type LangCode = keyof typeof languageColors;
+
+export function tokensToCssVars(): Record<string, string> {
+  return {
+    '--header-height': `${tokens.headerHeight}px`,
+    '--sidebar-width': `${tokens.sidebarWidth}px`,
+    '--g500': tokens.colorPrimary,
+    '--g600': tokens.colorPrimaryHover,
+    '--g700': tokens.colorPrimaryActive,
+    '--g800': tokens.g800,
+    '--g50': tokens.g50,
+    '--g100': tokens.g100,
+    '--g200': tokens.g200,
+    '--content-bg': tokens.contentBg,
+    '--card-bg': tokens.cardBg,
+    '--sidebar-bg': tokens.sidebarBg,
+    '--text-primary': tokens.textPrimary,
+    '--text-secondary': tokens.textSecondary,
+    '--text-muted': tokens.textMuted,
+    '--border-color': tokens.borderColor,
+    '--red': tokens.red,
+    '--red-bg': tokens.redBg,
+    '--orange': tokens.orange,
+    '--orange-bg': tokens.orangeBg,
+    '--blue': tokens.blue,
+    '--blue-bg': tokens.blueBg,
+    '--purple': tokens.purple,
+    '--color-text-primary': tokens.textPrimary,
+    '--color-text-muted': tokens.textMuted,
+    '--color-border': tokens.borderColor,
+    '--color-danger': tokens.red,
+  };
+}

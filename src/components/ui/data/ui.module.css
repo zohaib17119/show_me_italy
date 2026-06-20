@@ -1,0 +1,695 @@
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--g800) 8%, transparent);
+  overflow: hidden;
+}
+
+.cardPadding {
+  padding: 18px 20px;
+}
+
+.cardPaddingSm {
+  padding: 14px 16px;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.cardTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.secTitle {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  margin: 0 0 4px;
+}
+
+.secLabel {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+  margin: 0 0 12px;
+}
+
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.breadcrumbItem {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.breadcrumbItem:hover {
+  color: var(--g600);
+}
+
+.breadcrumbItemCurrent {
+  color: var(--text-secondary);
+  font-weight: 600;
+  cursor: default;
+}
+
+.breadcrumbSep {
+  color: var(--border-color);
+  user-select: none;
+}
+
+.searchInput {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  height: 36px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-color);
+  background: var(--content-bg);
+  transition: border-color 0.2s;
+}
+
+.searchInput:focus-within {
+  border-color: var(--g500);
+  background: var(--card-bg);
+}
+
+.searchInputIcon {
+  color: var(--text-muted);
+  font-size: 13px;
+  flex-shrink: 0;
+}
+
+.searchInputField {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 12px;
+  color: var(--text-primary);
+  outline: none;
+  font-family: inherit;
+  min-width: 0;
+}
+
+.searchInputField::placeholder {
+  color: var(--text-muted);
+}
+
+.filterSelect {
+  height: 36px;
+  padding: 0 32px 0 14px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-color);
+  background: var(--card-bg);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B8C75' d='M3 4.5L6 7.5L9 4.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.filterSelect:focus {
+  outline: none;
+  border-color: var(--g500);
+}
+
+.filterBar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.bulkBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 10px 14px;
+  background: var(--g50);
+  border: 1.5px solid var(--g200);
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.bulkBarCount {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--g700);
+}
+
+.bulkBarActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tblWrap {
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.tbl :global(.ant-table) {
+  font-size: 12px;
+}
+
+.tbl :global(.ant-table-thead > tr > th) {
+  background: var(--content-bg) !important;
+  color: var(--text-muted) !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid var(--border-color) !important;
+  padding: 10px 14px !important;
+}
+
+.tbl :global(.ant-table-tbody > tr > td) {
+  border-bottom: 1px solid var(--border-color) !important;
+  padding: 11px 14px !important;
+  color: var(--text-primary);
+}
+
+.tbl :global(.ant-table-tbody > tr:hover > td) {
+  background: var(--content-bg) !important;
+}
+
+.tbl :global(.ant-table-tbody > tr:last-child > td) {
+  border-bottom: none !important;
+}
+
+.tbl :global(.ant-table-cell-row-hover) {
+  background: var(--content-bg) !important;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 14px;
+  border-top: 1px solid var(--border-color);
+}
+
+.paginationInfo {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.paginationControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.pgBtn {
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border-color);
+  background: var(--card-bg);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+}
+
+.pgBtn:hover:not(:disabled) {
+  border-color: var(--g200);
+  background: var(--g50);
+}
+
+.pgBtn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pgBtnActive {
+  background: var(--g500);
+  border-color: var(--g500);
+  color: white;
+}
+
+.statMini {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+}
+
+.statMiniIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  flex-shrink: 0;
+  background: var(--g50);
+  color: var(--g600);
+}
+
+.statMiniBody {
+  min-width: 0;
+}
+
+.statMiniValue {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.statMiniLabel {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  font-weight: 500;
+}
+
+.statMiniRow {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+@media (max-width: 992px) {
+  .statMiniRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .statMiniRow {
+    grid-template-columns: 1fr;
+  }
+}
+
+.stepper {
+  display: flex;
+  align-items: flex-start;
+  gap: 0;
+  margin-bottom: 20px;
+}
+
+.step {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  min-width: 0;
+}
+
+.step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: calc(50% + 16px);
+  right: calc(-50% + 16px);
+  height: 2px;
+  background: var(--border-color);
+  z-index: 0;
+}
+
+.stepDone:not(:last-child)::after {
+  background: var(--g500);
+}
+
+.stepDot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  border: 2px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-muted);
+  position: relative;
+  z-index: 1;
+}
+
+.stepDone .stepDot {
+  background: var(--g500);
+  border-color: var(--g500);
+  color: white;
+}
+
+.stepActive .stepDot {
+  border-color: var(--g500);
+  color: var(--g600);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--g500) 15%, transparent);
+}
+
+.stepLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-top: 8px;
+  text-align: center;
+  max-width: 100%;
+  padding: 0 4px;
+}
+
+.stepActive .stepLabel {
+  color: var(--g700);
+}
+
+.stepDone .stepLabel {
+  color: var(--text-secondary);
+}
+
+.guideCell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.guideAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--g600);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.guideBody {
+  min-width: 0;
+}
+
+.guideName {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.guideSub {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.previewCard {
+  background: linear-gradient(135deg, var(--g800), var(--g700));
+  border-radius: 14px;
+  padding: 16px 18px;
+  color: white;
+}
+
+.previewCardLabel {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in srgb, white 50%, transparent);
+  margin-bottom: 8px;
+}
+
+.previewCardTitle {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.previewCardMeta {
+  font-size: 11px;
+  color: color-mix(in srgb, white 55%, transparent);
+  margin-top: 6px;
+}
+
+.notificationItem {
+  display: flex;
+  gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.notificationItem:hover {
+  background: var(--content-bg);
+}
+
+.notificationItem:last-child {
+  border-bottom: none;
+}
+
+.notificationUnread {
+  background: var(--g50);
+}
+
+.notificationUnread:hover {
+  background: color-mix(in srgb, var(--g50) 70%, var(--content-bg));
+}
+
+.notificationIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  background: var(--g100);
+}
+
+.notificationBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.notificationTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.notificationSub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.notificationTime {
+  font-size: 10px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.notificationDot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--g500);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.settingsRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.settingsRow:last-child {
+  border-bottom: none;
+}
+
+.settingsIcon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+  background: var(--g50);
+}
+
+.settingsBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.settingsTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.settingsSub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.settingsAction {
+  flex-shrink: 0;
+}
+
+.payoutRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.payoutRow:last-child {
+  border-bottom: none;
+}
+
+.payoutDate {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  width: 72px;
+  flex-shrink: 0;
+}
+
+.payoutBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.payoutTour {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.payoutGuide {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.payoutAmount {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--g700);
+  flex-shrink: 0;
+}
+
+.importPreviewRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-color);
+  background: var(--card-bg);
+  margin-bottom: 8px;
+}
+
+.importPreviewRowConflict {
+  border-color: var(--orange);
+  background: var(--orange-bg);
+}
+
+.importPreviewStatus {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--g500);
+  flex-shrink: 0;
+}
+
+.importPreviewRowConflict .importPreviewStatus {
+  background: var(--orange);
+}
+
+.importPreviewBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.importPreviewTitle {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.importPreviewSub {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.importPreviewTag {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--g50);
+  color: var(--g700);
+  flex-shrink: 0;
+}
+
+.importPreviewRowConflict .importPreviewTag {
+  background: color-mix(in srgb, var(--orange) 20%, white);
+  color: var(--orange);
+}

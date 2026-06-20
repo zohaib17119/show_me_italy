@@ -1,0 +1,207 @@
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: none;
+  border-radius: 999px;
+  font-family: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.sm {
+  padding: 9px 18px;
+  font-size: 12px;
+}
+
+.xs {
+  padding: 5px 12px;
+  font-size: 11px;
+}
+
+.primary {
+  background: var(--g500);
+  color: white;
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--g500) 30%, transparent);
+}
+
+.primary:hover:not(:disabled) {
+  background: var(--g600);
+  transform: translateY(-1px);
+}
+
+.secondary {
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  border: 1.5px solid var(--border-color);
+}
+
+.secondary:hover:not(:disabled) {
+  border-color: var(--g200);
+  background: var(--g50);
+}
+
+.dark {
+  background: var(--g800);
+  color: white;
+}
+
+.dark:hover:not(:disabled) {
+  background: var(--g700);
+}
+
+.danger {
+  background: var(--red);
+  color: white;
+}
+
+.danger:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.warn {
+  background: var(--orange);
+  color: white;
+}
+
+.warn:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+
+.ghost {
+  background: transparent;
+  color: var(--g600);
+  border: 1.5px solid transparent;
+}
+
+.ghost:hover:not(:disabled) {
+  background: var(--g50);
+  border-color: var(--g200);
+}
+
+.iconBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1.5px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+
+.iconBtn:hover:not(:disabled) {
+  border-color: var(--g200);
+  background: var(--g50);
+  color: var(--g600);
+}
+
+.iconBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.iconBtnDanger {
+  color: var(--red);
+  border-color: color-mix(in srgb, var(--red) 25%, var(--border-color));
+}
+
+.iconBtnDanger:hover:not(:disabled) {
+  background: var(--red-bg);
+  border-color: var(--red);
+}
+
+.iconBtnSm {
+  width: 28px;
+  height: 28px;
+  font-size: 12px;
+  border-radius: 8px;
+}
+
+.filterChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.filterChip:hover {
+  border-color: var(--g200);
+  background: var(--g50);
+}
+
+.filterChipOn {
+  background: var(--g50);
+  border-color: var(--g500);
+  color: var(--g700);
+}
+
+.recipientChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid var(--border-color);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.recipientChip:hover {
+  border-color: var(--g200);
+}
+
+.recipientChipSelected {
+  background: var(--g50);
+  border-color: var(--g500);
+  color: var(--g700);
+}
+
+.recipientCheck {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  flex-shrink: 0;
+}
+
+.recipientChipSelected .recipientCheck {
+  background: var(--g500);
+  border-color: var(--g500);
+  color: white;
+}

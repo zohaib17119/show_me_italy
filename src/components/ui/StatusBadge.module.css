@@ -1,0 +1,32 @@
+.badge {
+  font-weight: 700 !important;
+  font-size: 10px !important;
+  border-radius: 999px !important;
+  margin: 0 !important;
+  border-width: 1px !important;
+  border-style: solid !important;
+}
+
+.success {
+  color: var(--g700) !important;
+  background: var(--g50) !important;
+  border-color: var(--g200) !important;
+}
+
+.approved {
+  color: var(--g600) !important;
+  background: var(--g50) !important;
+  border-color: var(--g200) !important;
+}
+
+.pending {
+  color: var(--orange) !important;
+  background: var(--orange-bg) !important;
+  border-color: color-mix(in srgb, var(--orange) 35%, var(--border-color)) !important;
+}
+
+.danger {
+  color: var(--red) !important;
+  background: var(--red-bg) !important;
+  border-color: color-mix(in srgb, var(--red) 30%, var(--border-color)) !important;
+}

@@ -26,9 +26,9 @@ export function AdminLayout() {
   }, [dispatch]);
 
   return (
-    <Layout className="admin-layout" style={{ minHeight: '100vh' }}>
+    <Layout className="admin-layout">
       <Sidebar />
-      <Layout>
+      <Layout className="admin-main">
         <Topbar />
         <Content className="admin-content">
           <Outlet />

@@ -1,0 +1,22 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  font-weight: 700;
+  color: white;
+  line-height: 1.4;
+}
+
+.sm {
+  padding: 2px 8px;
+  font-size: 10px;
+}
+
+.md {
+  padding: 3px 10px;
+  font-size: 11px;
+}
+
+.fallback {
+  background: var(--text-muted);
+}
