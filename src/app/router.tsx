@@ -2,6 +2,7 @@ import { lazy, Suspense } from 'react';
 import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { Spin } from 'antd';
 import { AdminLayout } from '@/components/layout/AdminLayout';
+import { ProtectedRoute } from '@/features/auth/ProtectedRoute';
 import { ROUTES } from '@/constants/routes';
 
 const PageLoader = () => (
@@ -22,7 +23,11 @@ const lazyPage = (factory: () => Promise<{ default: React.ComponentType }>) => {
 export const router = createBrowserRouter([
   {
     path: '/',
-    element: <AdminLayout />,
+    element: (
+      <ProtectedRoute>
+        <AdminLayout />
+      </ProtectedRoute>
+    ),
     children: [
       {
         index: true,

@@ -1,5 +1,8 @@
+import { useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Spin } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
@@ -13,7 +16,12 @@ import {
   showToast,
 } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
-import { getGuideById, type GuideTourHistory } from '@/mocks';
+import {
+  fetchAllAgents,
+  selectAgentStatus,
+  selectGuideById,
+} from '@/features/agent/agentSlice';
+import type { GuideTourHistory } from '@/mocks/guides';
 import type { TourStatus } from '@/types';
 import styles from './guides.module.css';
 
@@ -27,7 +35,21 @@ function historyStatusToBadge(status: GuideTourHistory['status']): TourStatus {
 export function GuideDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const guide = id ? getGuideById(id) : undefined;
+  const dispatch = useAppDispatch();
+  const status = useAppSelector(selectAgentStatus);
+  const guide = useAppSelector((state) => (id ? selectGuideById(state, id) : undefined));
+
+  useEffect(() => {
+    void dispatch(fetchAllAgents());
+  }, [dispatch]);
+
+  if (status === 'loading' && !guide) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
 
   if (!guide) {
     return (
@@ -69,8 +91,8 @@ export function GuideDetailPage() {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (status: GuideTourHistory['status']) => (
-        <StatusBadge status={historyStatusToBadge(status)} />
+      render: (s: GuideTourHistory['status']) => (
+        <StatusBadge status={historyStatusToBadge(s)} />
       ),
     },
   ];
@@ -178,7 +200,7 @@ export function GuideDetailPage() {
               variant="secondary"
               size="xs"
               style={{ width: '100%', marginTop: 12 }}
-              onClick={() => navigate('/payments/payouts/sample')}
+              onClick={() => navigate(ROUTES.PAYOUTS)}
             >
               View Payout →
             </AppButton>

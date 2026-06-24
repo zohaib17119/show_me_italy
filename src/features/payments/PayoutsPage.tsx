@@ -1,6 +1,8 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Spin } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
@@ -13,27 +15,36 @@ import {
 } from '@/components/ui';
 import { getRouteMeta } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
+import type { PayoutRequest, PayoutStatus } from '@/mocks/payouts';
 import {
-  MOCK_PAYOUT_REQUESTS,
-  PAYOUT_SUMMARY,
-  type PayoutRequest,
-  type PayoutStatus,
-} from '@/mocks';
+  fetchWalletData,
+  selectWalletStatus,
+  selectWalletSummary,
+  selectWalletTransactions,
+} from '@/features/wallet/walletSlice';
 import type { TourStatus } from '@/types';
 
-function payoutStatusToBadge(status: PayoutStatus): TourStatus {
+function payoutStatusToBadge(s: PayoutStatus): TourStatus {
   const map: Record<PayoutStatus, TourStatus> = {
     pending: 'pending',
     revision: 'denied',
     paid: 'completed',
     denied: 'denied',
   };
-  return map[status];
+  return map[s];
 }
 
 export function PayoutsPage() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
   const meta = getRouteMeta(ROUTES.PAYOUTS);
+  const transactions = useAppSelector(selectWalletTransactions);
+  const summary = useAppSelector(selectWalletSummary);
+  const status = useAppSelector(selectWalletStatus);
+
+  useEffect(() => {
+    void dispatch(fetchWalletData());
+  }, [dispatch]);
 
   const columns: ColumnsType<PayoutRequest> = useMemo(
     () => [
@@ -64,9 +75,7 @@ export function PayoutsPage() {
         title: 'Status',
         dataIndex: 'status',
         key: 'status',
-        render: (status: PayoutStatus) => (
-          <StatusBadge status={payoutStatusToBadge(status)} />
-        ),
+        render: (s: PayoutStatus) => <StatusBadge status={payoutStatusToBadge(s)} />,
       },
       {
         title: 'Actions',
@@ -96,26 +105,23 @@ export function PayoutsPage() {
         }
       />
 
+      {status === 'loading' && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
+          <Spin />
+        </div>
+      )}
+
       <StatMiniRow>
-        <StatMini icon="💰" value={`€${PAYOUT_SUMMARY.totalPending.toLocaleString()}`} label="Total Pending" />
-        <StatMini
-          icon="✅"
-          value={`€${PAYOUT_SUMMARY.paidThisMonth.toLocaleString()}`}
-          label="Paid This Month"
-          iconClassName=""
-        />
-        <StatMini icon="⏳" value={PAYOUT_SUMMARY.queueCount} label="Queue" />
-        <StatMini
-          icon="⚠️"
-          value={PAYOUT_SUMMARY.revisionNeeded}
-          label="Revision Needed"
-        />
+        <StatMini icon="💰" value={`€${summary.totalPending.toLocaleString()}`} label="Total Pending" />
+        <StatMini icon="✅" value={`€${summary.paidThisMonth.toLocaleString()}`} label="Paid This Month" />
+        <StatMini icon="⏳" value={summary.queueCount} label="Queue" />
+        <StatMini icon="⚠️" value={summary.revisionNeeded} label="Revision Needed" />
       </StatMiniRow>
 
       <DataTable<PayoutRequest>
         rowKey="id"
         columns={columns}
-        dataSource={MOCK_PAYOUT_REQUESTS}
+        dataSource={transactions}
         pagination={false}
       />
     </div>

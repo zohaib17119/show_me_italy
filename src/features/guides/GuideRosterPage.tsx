@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Spin } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
@@ -14,9 +16,16 @@ import {
   SearchInput,
   StatusBadge,
   TablePagination,
+  showToast,
 } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
-import { MOCK_GUIDES, type Guide, type GuideStatus } from '@/mocks';
+import {
+  fetchAllAgents,
+  selectAllGuides,
+  selectAgentStatus,
+  selectVerifiedGuides,
+} from '@/features/agent/agentSlice';
+import type { Guide, GuideStatus } from '@/mocks/guides';
 import type { TourStatus } from '@/types';
 
 const PAGE_SIZE = 5;
@@ -29,18 +38,23 @@ function guideStatusToBadge(status: GuideStatus): TourStatus {
 
 export function GuideRosterPage() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const guides = useAppSelector(selectAllGuides);
+  const verified = useAppSelector(selectVerifiedGuides);
+  const status = useAppSelector(selectAgentStatus);
+
   const [search, setSearch] = useState('');
   const [languageFilter, setLanguageFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
-  const [selectedKeys, setSelectedKeys] = useState<string[]>([
-    'guide-marco-rossi',
-    'guide-sofia-conti',
-    'guide-hans-muller',
-  ]);
+  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+
+  useEffect(() => {
+    void dispatch(fetchAllAgents());
+  }, [dispatch]);
 
   const filteredGuides = useMemo(() => {
-    return MOCK_GUIDES.filter((guide) => {
+    return guides.filter((guide) => {
       const matchesSearch =
         search.trim() === '' ||
         guide.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -50,7 +64,7 @@ export function GuideRosterPage() {
       const matchesStatus = statusFilter === 'all' || guide.status === statusFilter;
       return matchesSearch && matchesLang && matchesStatus;
     });
-  }, [search, languageFilter, statusFilter]);
+  }, [guides, search, languageFilter, statusFilter]);
 
   const pageData = filteredGuides.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -130,16 +144,22 @@ export function GuideRosterPage() {
 
       <PageHeader
         title="Guide Roster"
-        subtitle="48 total · 44 active · 3 pending · 1 inactive"
+        subtitle={`${guides.length} total · ${verified.length} active`}
         extra={
           <>
-            <AppButton variant="secondary" size="xs">
+            <AppButton variant="secondary" size="xs" onClick={() => showToast('Export started')}>
               Export CSV
             </AppButton>
             <AppButton size="xs">+ Invite Guide</AppButton>
           </>
         }
       />
+
+      {status === 'loading' && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
+          <Spin />
+        </div>
+      )}
 
       <FilterBar>
         <SearchInput

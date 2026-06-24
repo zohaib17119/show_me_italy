@@ -1,17 +1,33 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Card } from 'antd';
+import { useAppSelector } from '@/app/hooks';
+import { selectCalendarEvents } from '@/features/tour/tourSlice';
+import { selectLanguages } from '@/features/language/languageSlice';
 import { languageColors } from '@/theme/tokens';
 
-const distribution = [
-  { lang: 'English', code: 'EN', pct: 36 },
-  { lang: 'Italian', code: 'IT', pct: 20 },
-  { lang: 'French', code: 'FR', pct: 14 },
-  { lang: 'Spanish', code: 'ES', pct: 10 },
-  { lang: 'German', code: 'DE', pct: 9 },
-  { lang: 'Others', code: 'PT', pct: 11 },
-];
-
 export function LanguageDistribution() {
+  const events = useAppSelector(selectCalendarEvents);
+  const languages = useAppSelector(selectLanguages);
+
+  const distribution = useMemo(() => {
+    const counts: Record<string, number> = {};
+    events.forEach((e) => {
+      counts[e.language] = (counts[e.language] ?? 0) + 1;
+    });
+    const total = events.length || 1;
+    return Object.entries(counts)
+      .map(([code, count]) => {
+        const lang = languages.find((l) => l.code?.startsWith(code));
+        return {
+          lang: lang?.name ?? code,
+          code,
+          pct: Math.round((count / total) * 100),
+        };
+      })
+      .sort((a, b) => b.pct - a.pct)
+      .slice(0, 6);
+  }, [events, languages]);
+
   useEffect(() => {
     document.querySelectorAll<HTMLElement>('[data-dist-bar]').forEach((bar) => {
       const w = bar.dataset.distBar;
@@ -19,7 +35,7 @@ export function LanguageDistribution() {
         bar.style.width = `${w}%`;
       });
     });
-  }, []);
+  }, [distribution]);
 
   return (
     <Card id="distCard" styles={{ body: { padding: 16 } }}>
@@ -34,7 +50,7 @@ export function LanguageDistribution() {
         <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)' }}>
           Language Distribution
         </div>
-        <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>This week</div>
+        <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>All slots</div>
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', margin: '8px 0 14px' }}>
         <div
@@ -42,14 +58,7 @@ export function LanguageDistribution() {
             width: 100,
             height: 100,
             borderRadius: '50%',
-            background: `conic-gradient(
-              ${languageColors.EN} 0% 36%,
-              ${languageColors.IT} 36% 56%,
-              ${languageColors.FR} 56% 70%,
-              ${languageColors.ES} 70% 80%,
-              ${languageColors.DE} 80% 89%,
-              ${languageColors.PT} 89% 100%
-            )`,
+            background: '#eef4ef',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -67,14 +76,14 @@ export function LanguageDistribution() {
               justifyContent: 'center',
             }}
           >
-            <span style={{ fontWeight: 800, fontSize: 12 }}>34</span>
+            <span style={{ fontWeight: 800, fontSize: 12 }}>{events.length}</span>
             <span style={{ fontSize: 7, color: 'var(--text-muted)' }}>tours</span>
           </div>
         </div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {distribution.map((d) => {
-          const color = languageColors[d.code] ?? '#6B8C75';
+          const color = languageColors[d.code as keyof typeof languageColors] ?? '#6B8C75';
           return (
             <div
               key={d.lang}

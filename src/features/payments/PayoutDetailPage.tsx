@@ -1,4 +1,7 @@
+import { useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { Spin } from 'antd';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
@@ -7,25 +10,46 @@ import {
   FormInput,
   FormTextarea,
   GuideCell,
-  PayoutRow,
   SectionTitle,
   showToast,
   StatusBadge,
   Stepper,
 } from '@/components/ui';
 import { getRouteMeta } from '@/constants/navigation';
-import { MOCK_PAYOUT_DETAIL } from '@/mocks';
+import {
+  fetchWalletData,
+  selectPayoutById,
+  selectWalletStatus,
+} from '@/features/wallet/walletSlice';
 
 export function PayoutDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const detail = MOCK_PAYOUT_DETAIL;
+  const dispatch = useAppDispatch();
+  const status = useAppSelector(selectWalletStatus);
+  const payout = useAppSelector((state) => (id ? selectPayoutById(state, id) : undefined));
   const meta = getRouteMeta(`/payments/payouts/${id ?? 'sample'}`);
+
+  useEffect(() => {
+    void dispatch(fetchWalletData());
+  }, [dispatch]);
+
+  if (status === 'loading' && !payout) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>
+        <Spin size="large" />
+      </div>
+    );
+  }
+
+  if (!payout) {
+    return <PageHeader title="Payout Not Found" />;
+  }
 
   return (
     <div>
       <PageHeader
         title={meta.title}
-        subtitle={`${detail.guideName} · ${detail.monthLabel} · Submitted ${detail.submittedAt}`}
+        subtitle={`${payout.guideName} · ${payout.monthLabel} · Submitted ${payout.submittedAt}`}
         extra={
           <>
             <AppButton variant="warn" onClick={() => showToast('📝 Revision sent')}>
@@ -36,7 +60,7 @@ export function PayoutDetailPage() {
             </AppButton>
             <AppButton
               variant="primary"
-              onClick={() => showToast(`✓ Payout approved! €${detail.netPayout} queued.`)}
+              onClick={() => showToast(`✓ Payout approved! €${payout.amount} queued.`)}
             >
               Approve & Mark Paid
             </AppButton>
@@ -55,61 +79,21 @@ export function PayoutDetailPage() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <AppCard>
             <SectionTitle style={{ marginBottom: 12 }}>
-              Monthly Breakdown — {detail.tours} tours
+              Payout Summary — {payout.tours} tours
             </SectionTitle>
-            {detail.breakdown.map((row) => (
-              <div
-                key={row.id}
-                style={{ display: 'flex', alignItems: 'center', gap: 8 }}
-              >
-                <div style={{ flex: 1 }}>
-                  <PayoutRow
-                    date={`${row.day} ${row.month}`}
-                    tour={row.tour}
-                    guide={`${row.language} · ${row.hours}h`}
-                    amount=""
-                  />
-                </div>
-                <span style={{ fontSize: 11, color: 'var(--text-muted)', flexShrink: 0 }}>
-                  €{row.hourlyRate}/h
-                </span>
-                <span
-                  style={{
-                    fontSize: 12,
-                    fontWeight: 700,
-                    color: 'var(--text-primary)',
-                    flexShrink: 0,
-                    minWidth: 48,
-                    textAlign: 'right',
-                  }}
-                >
-                  €{row.amount}
-                </span>
-              </div>
-            ))}
             <div
               style={{
-                borderTop: '2px solid var(--border-color)',
-                paddingTop: 12,
-                marginTop: 4,
+                display: 'flex',
+                justifyContent: 'space-between',
+                padding: 10,
+                background: 'var(--g50)',
+                borderRadius: 10,
               }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  padding: 10,
-                  background: 'var(--g50)',
-                  borderRadius: 10,
-                }}
-              >
-                <span style={{ fontSize: 14, fontWeight: 800, color: 'var(--text-primary)' }}>
-                  Net Payout
-                </span>
-                <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--g600)' }}>
-                  €{detail.netPayout.toFixed(2)}
-                </span>
-              </div>
+              <span style={{ fontSize: 14, fontWeight: 800 }}>Net Payout</span>
+              <span style={{ fontSize: 16, fontWeight: 800, color: 'var(--g600)' }}>
+                €{payout.amount.toFixed(2)}
+              </span>
             </div>
           </AppCard>
 
@@ -125,25 +109,12 @@ export function PayoutDetailPage() {
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <AppCard title="Guide Info">
-            <GuideCell
-              initials={detail.guideInitials}
-              name={detail.guideName}
-              sub={detail.guideEmail}
-            />
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: 7,
-                fontSize: 12,
-                marginTop: 12,
-              }}
-            >
-              <InfoRow label="Tours" value={String(detail.tours)} />
-              <InfoRow label="Hours" value={`${detail.hours}h`} />
+            <GuideCell initials={payout.guideInitials} name={payout.guideName} sub="" />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 7, fontSize: 12, marginTop: 12 }}>
+              <InfoRow label="Tours" value={String(payout.tours)} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: 'var(--text-muted)' }}>Status</span>
-                <StatusBadge status="pending" />
+                <StatusBadge status={payout.status === 'paid' ? 'completed' : 'pending'} />
               </div>
             </div>
           </AppCard>
@@ -151,12 +122,7 @@ export function PayoutDetailPage() {
           <AppCard title="Bank Reference">
             <FormGrid>
               <FormInput label="Transfer ID" placeholder="TRF-2026-04-001" />
-              <FormTextarea
-                label="Note"
-                placeholder="Optional…"
-                rows={3}
-                style={{ minHeight: 60 }}
-              />
+              <FormTextarea label="Note" placeholder="Optional…" rows={3} style={{ minHeight: 60 }} />
             </FormGrid>
           </AppCard>
         </div>

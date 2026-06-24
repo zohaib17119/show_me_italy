@@ -1,5 +1,7 @@
-import { useMemo } from 'react';
+import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Spin } from 'antd';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
@@ -9,28 +11,44 @@ import {
   showToast,
 } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
-import { MOCK_GUIDES } from '@/mocks';
+import {
+  approveAgent,
+  fetchUnverifiedAgents,
+  selectAgentStatus,
+  selectUnverifiedGuides,
+} from '@/features/agent/agentSlice';
 import styles from './guides.module.css';
 
-const AVATAR_STYLES: Record<string, { background: string; color: string }> = {
-  'guide-yuki-tanaka': { background: '#fce4f3', color: '#E91E90' },
-  'guide-carlos-silva': { background: '#e8f8f5', color: '#1ABC9C' },
-  'guide-li-wei': { background: '#fff0e0', color: '#E67E22' },
-};
+const AVATAR_STYLES = [
+  { background: '#fce4f3', color: '#E91E90' },
+  { background: '#e8f8f5', color: '#1ABC9C' },
+  { background: '#fff0e0', color: '#E67E22' },
+];
 
-function registeredLabel(activeSince: string, adminNote: string): string {
-  const match = adminNote.match(/Registered (\d+ \w+ \d+)/);
+function registeredLabel(adminNote: string): string {
+  const match = adminNote.match(/Registered (.+)/);
   if (match) return `Registered: ${match[1]}`;
-  return `Active since ${activeSince}`;
+  return adminNote || 'Awaiting review';
 }
 
 export function ApprovalsPage() {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const pendingGuides = useAppSelector(selectUnverifiedGuides);
+  const status = useAppSelector(selectAgentStatus);
 
-  const pendingGuides = useMemo(
-    () => MOCK_GUIDES.filter((guide) => guide.status === 'pending'),
-    [],
-  );
+  useEffect(() => {
+    void dispatch(fetchUnverifiedAgents());
+  }, [dispatch]);
+
+  const handleApprove = async (agentId: string, name: string) => {
+    try {
+      await dispatch(approveAgent({ agentId })).unwrap();
+      showToast(`✓ ${name} approved!`);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to approve guide');
+    }
+  };
 
   return (
     <div>
@@ -42,14 +60,20 @@ export function ApprovalsPage() {
         ]}
       />
 
-      <PageHeader title="New Guide Approvals" subtitle="3 guides awaiting review" />
+      <PageHeader
+        title="New Guide Approvals"
+        subtitle={`${pendingGuides.length} guides awaiting review`}
+      />
+
+      {status === 'loading' && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
+          <Spin />
+        </div>
+      )}
 
       <div className={styles.approvalGrid}>
-        {pendingGuides.map((guide) => {
-          const avatarStyle = AVATAR_STYLES[guide.id] ?? {
-            background: 'var(--g200)',
-            color: 'var(--g700)',
-          };
+        {pendingGuides.map((guide, index) => {
+          const avatarStyle = AVATAR_STYLES[index % AVATAR_STYLES.length];
 
           return (
             <AppCard key={guide.id}>
@@ -64,7 +88,7 @@ export function ApprovalsPage() {
                   <div className={styles.approvalName}>{guide.name}</div>
                   <div className={styles.approvalEmail}>{guide.email}</div>
                   <div className={styles.approvalRegistered}>
-                    {registeredLabel(guide.activeSince, guide.adminNote)}
+                    {registeredLabel(guide.adminNote)}
                   </div>
                 </div>
               </div>
@@ -89,7 +113,7 @@ export function ApprovalsPage() {
                 <AppButton
                   size="xs"
                   style={{ flex: 1 }}
-                  onClick={() => showToast(`✓ ${guide.name} approved!`)}
+                  onClick={() => void handleApprove(guide.id, guide.name)}
                 >
                   ✓ Approve
                 </AppButton>

@@ -1,6 +1,11 @@
 import { Card } from 'antd';
+import { useAppSelector } from '@/app/hooks';
+import { selectWalletBalance, selectWalletSummary } from '@/features/wallet/walletSlice';
 
 export function RevenueCard() {
+  const summary = useAppSelector(selectWalletSummary);
+  const balance = useAppSelector(selectWalletBalance);
+
   return (
     <Card id="revenueCard" styles={{ body: { padding: '14px 16px' } }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -15,7 +20,7 @@ export function RevenueCard() {
               marginBottom: 4,
             }}
           >
-            April Revenue
+            Pending Payouts
           </div>
           <div
             style={{
@@ -25,7 +30,7 @@ export function RevenueCard() {
               color: 'var(--text-primary)',
             }}
           >
-            €12,800
+            €{summary.totalPending.toLocaleString()}
           </div>
           <span
             style={{
@@ -41,13 +46,13 @@ export function RevenueCard() {
               marginTop: 4,
             }}
           >
-            ▲ 23% vs March
+            €{summary.paidThisMonth.toLocaleString()} paid this month
           </span>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>YTD</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Balance</div>
           <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-secondary)' }}>
-            €68,400
+            €{balance.toLocaleString()}
           </div>
         </div>
       </div>
@@ -64,20 +69,7 @@ export function RevenueCard() {
             fontSize: 11,
           }}
         >
-          Sparkline chart — Phase 2
-        </div>
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            marginTop: 4,
-            fontSize: 9,
-            color: 'var(--text-muted)',
-          }}
-        >
-          {['Nov', 'Dec', 'Jan', 'Feb', 'Mar', 'Apr'].map((m) => (
-            <span key={m}>{m}</span>
-          ))}
+          {summary.queueCount} payouts in queue
         </div>
       </div>
     </Card>

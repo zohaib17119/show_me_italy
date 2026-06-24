@@ -1,6 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
 import type { User } from '@/types';
 
+// Auth phase (end): wire login via POST /v1/CompanyUser/verify-credentials
+// and uncomment axios auth interceptor + ProtectedRoute redirect.
+
 interface AuthState {
   user: User | null;
   isAuthenticated: boolean;

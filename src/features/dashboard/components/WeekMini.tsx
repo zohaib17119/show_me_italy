@@ -1,20 +1,39 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card } from 'antd';
+import { useAppSelector } from '@/app/hooks';
 import { ROUTES } from '@/constants/routes';
+import { selectEventsByDate } from '@/features/tour/tourSlice';
 import { languageColors } from '@/theme/tokens';
 
-const weekDays = [
-  { label: 'M', num: 13, dots: ['EN', 'IT'] },
-  { label: 'T', num: 14, today: true, dots: ['EN', 'IT', 'FR', 'RED'] },
-  { label: 'W', num: 15, dots: [] },
-  { label: 'T', num: 16, dots: [] },
-  { label: 'F', num: 17, hasTour: true, dots: ['EN', 'DE'] },
-  { label: 'S', num: 18, dots: [] },
-  { label: 'S', num: 19, dots: [] },
-];
+const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export function WeekMini() {
   const navigate = useNavigate();
+  const eventsByDate = useAppSelector(selectEventsByDate);
+
+  const weekDays = useMemo(() => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + mondayOffset);
+
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      const dateKey = d.toISOString().slice(0, 10);
+      const events = eventsByDate[dateKey] ?? [];
+      const isToday = dateKey === today.toISOString().slice(0, 10);
+      return {
+        label: DAY_LABELS[d.getDay()],
+        num: d.getDate(),
+        today: isToday,
+        hasTour: events.length > 0,
+        dots: events.slice(0, 4).map((e) => (e.unfilled ? 'RED' : e.language)),
+      };
+    });
+  }, [eventsByDate]);
 
   return (
     <Card id="weekMini" styles={{ body: { padding: 16 } }}>
@@ -81,9 +100,7 @@ export function WeekMini() {
                     height: 5,
                     borderRadius: '50%',
                     background:
-                      dot === 'RED'
-                        ? '#E74C3C'
-                        : (languageColors[dot] ?? '#6B8C75'),
+                      dot === 'RED' ? '#E74C3C' : (languageColors[dot as keyof typeof languageColors] ?? '#6B8C75'),
                   }}
                 />
               ))}

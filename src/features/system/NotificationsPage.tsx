@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Spin } from 'antd';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
@@ -13,23 +15,62 @@ import {
 } from '@/components/ui';
 import { getRouteMeta } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
+import { ANNOUNCEMENT_RECIPIENT_OPTIONS, ANNOUNCEMENT_TYPES } from '@/mocks';
 import {
-  ANNOUNCEMENT_RECIPIENT_OPTIONS,
-  ANNOUNCEMENT_TYPES,
-  MOCK_INBOX_ITEMS,
-} from '@/mocks';
+  fetchNotifications,
+  selectInboxItems,
+  selectInboxStatus,
+  sendNotification,
+} from '@/features/notifications/notificationSlice';
 
 export function NotificationsPage() {
+  const dispatch = useAppDispatch();
   const meta = getRouteMeta(ROUTES.NOTIFICATIONS);
+  const inbox = useAppSelector(selectInboxItems);
+  const inboxStatus = useAppSelector(selectInboxStatus);
+
   const [recipients, setRecipients] = useState<string[]>(['all']);
   const [pushEnabled, setPushEnabled] = useState(true);
   const [inAppEnabled, setInAppEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(false);
+  const [title, setTitle] = useState('');
+  const [message, setMessage] = useState('');
+  const [type, setType] = useState('announcement');
+  const [sending, setSending] = useState(false);
+
+  useEffect(() => {
+    void dispatch(fetchNotifications());
+  }, [dispatch]);
 
   const toggleRecipient = (id: string) => {
     setRecipients((prev) =>
       prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id],
     );
+  };
+
+  const handleSend = async () => {
+    if (!title.trim() || !message.trim()) {
+      showToast('Title and message are required');
+      return;
+    }
+    setSending(true);
+    try {
+      await dispatch(
+        sendNotification({
+          title,
+          description: message,
+          type: type === 'announcement' ? 1 : 2,
+          isRead: false,
+        }),
+      ).unwrap();
+      showToast('✓ Announcement sent!');
+      setTitle('');
+      setMessage('');
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to send notification');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -78,10 +119,22 @@ export function NotificationsPage() {
             <FormSelect
               label="Type"
               options={ANNOUNCEMENT_TYPES.map((t) => ({ value: t.value, label: t.label }))}
-              defaultValue="announcement"
+              value={type}
+              onChange={(e) => setType(e.target.value)}
             />
-            <FormInput label="Title" placeholder="Announcement title…" />
-            <FormTextarea label="Message" placeholder="Write your message…" rows={4} />
+            <FormInput
+              label="Title"
+              placeholder="Announcement title…"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+            />
+            <FormTextarea
+              label="Message"
+              placeholder="Write your message…"
+              rows={4}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
 
             <div>
               <label
@@ -98,21 +151,9 @@ export function NotificationsPage() {
                 Send Via
               </label>
               <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
-                <CheckboxLabel
-                  label="Push"
-                  checked={pushEnabled}
-                  onChange={setPushEnabled}
-                />
-                <CheckboxLabel
-                  label="In-App"
-                  checked={inAppEnabled}
-                  onChange={setInAppEnabled}
-                />
-                <CheckboxLabel
-                  label="Email"
-                  checked={emailEnabled}
-                  onChange={setEmailEnabled}
-                />
+                <CheckboxLabel label="Push" checked={pushEnabled} onChange={setPushEnabled} />
+                <CheckboxLabel label="In-App" checked={inAppEnabled} onChange={setInAppEnabled} />
+                <CheckboxLabel label="Email" checked={emailEnabled} onChange={setEmailEnabled} />
               </div>
             </div>
 
@@ -121,17 +162,23 @@ export function NotificationsPage() {
             <AppButton
               variant="primary"
               style={{ width: '100%' }}
-              onClick={() => showToast('✓ Announcement sent to all 48 guides!')}
+              onClick={() => void handleSend()}
+              disabled={sending}
             >
-              Send Now →
+              {sending ? 'Sending…' : 'Send Now →'}
             </AppButton>
           </div>
         </AppCard>
 
         <div>
           <SectionTitle style={{ marginBottom: 10 }}>Admin Inbox</SectionTitle>
+          {inboxStatus === 'loading' && (
+            <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
+              <Spin />
+            </div>
+          )}
           <AppCard padding="sm">
-            {MOCK_INBOX_ITEMS.map((item) => (
+            {inbox.map((item) => (
               <NotificationItem
                 key={item.id}
                 icon={
@@ -155,6 +202,11 @@ export function NotificationsPage() {
                 unread={item.unread}
               />
             ))}
+            {inbox.length === 0 && inboxStatus !== 'loading' && (
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', padding: 12 }}>
+                No notifications yet
+              </div>
+            )}
           </AppCard>
         </div>
       </div>

@@ -1,4 +1,20 @@
+import { useEffect } from 'react';
 import { Collapse, Row, Col } from 'antd';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import {
+  fetchAllAgents,
+  selectActiveGuideCount,
+  selectUnverifiedGuides,
+} from '@/features/agent/agentSlice';
+import { fetchApplications, selectPendingApplicationCount } from '@/features/applications/applicationsSlice';
+import { fetchLanguages } from '@/features/language/languageSlice';
+import {
+  fetchNotifications,
+  setBadgeCounts,
+} from '@/features/notifications/notificationSlice';
+import { fetchTours, selectTourItems, selectUnfilledCount } from '@/features/tour/tourSlice';
+import { fetchTourTypes } from '@/features/tourType/tourTypeSlice';
+import { fetchWalletData, selectWalletSummary } from '@/features/wallet/walletSlice';
 import { DashHero } from './components/DashHero';
 import { KpiRow } from './components/KpiRow';
 import { UnfilledBanner } from './components/UnfilledBanner';
@@ -16,11 +32,41 @@ import { TourTargets } from './widgets/TourTargets';
 import styles from './dashboard.module.css';
 
 export function DashboardPage() {
+  const dispatch = useAppDispatch();
+  const activeGuides = useAppSelector(selectActiveGuideCount);
+  const pendingApprovals = useAppSelector(selectUnverifiedGuides).length;
+  const pendingApps = useAppSelector(selectPendingApplicationCount);
+  const walletSummary = useAppSelector(selectWalletSummary);
+  const unfilled = useAppSelector(selectUnfilledCount);
+  const tours = useAppSelector(selectTourItems);
+
+  useEffect(() => {
+    void dispatch(fetchTourTypes());
+    void dispatch(fetchLanguages());
+    void dispatch(fetchTours());
+    void dispatch(fetchAllAgents());
+    void dispatch(fetchApplications());
+    void dispatch(fetchWalletData());
+    void dispatch(fetchNotifications());
+  }, [dispatch]);
+
+  useEffect(() => {
+    dispatch(
+      setBadgeCounts({
+        guides: activeGuides,
+        approvals: pendingApprovals,
+        applications: pendingApps,
+        payouts: walletSummary.queueCount,
+        notifications: 0,
+      }),
+    );
+  }, [dispatch, activeGuides, pendingApprovals, pendingApps, walletSummary.queueCount]);
+
   return (
     <div>
       <DashHero />
       <KpiRow />
-      <UnfilledBanner />
+      {unfilled > 0 && <UnfilledBanner />}
 
       <div className="dash-body">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
@@ -43,7 +89,7 @@ export function DashboardPage() {
               key: 'analytics',
               label: (
                 <span style={{ fontWeight: 700, fontSize: 13 }}>
-                  Analytics (Phase 2) — v1 Finbord widgets
+                  Analytics (Phase 2) — v1 Finbord widgets · {tours.length} API tours loaded
                 </span>
               ),
               children: (

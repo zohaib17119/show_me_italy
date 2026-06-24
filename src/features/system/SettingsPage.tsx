@@ -1,24 +1,124 @@
+import { useEffect, useState } from 'react';
+import { Spin } from 'antd';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import type { Language, TourType } from '@/api/types';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
   AppCard,
+  FormGrid,
+  FormInput,
   SettingsRow,
+  ToggleSwitch,
   showToast,
 } from '@/components/ui';
 import { getRouteMeta } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
+import { MOCK_ADMIN_USERS } from '@/mocks';
 import {
-  MOCK_ADMIN_USERS,
-  MOCK_LANGUAGE_SETTINGS,
-  MOCK_TOUR_TYPES,
-} from '@/mocks';
+  createLanguage,
+  fetchLanguages,
+  selectLanguages,
+  selectLanguageStatus,
+  updateLanguage,
+} from '@/features/language/languageSlice';
+import {
+  createTourType,
+  fetchTourTypes,
+  selectTourTypes,
+  selectTourTypeStatus,
+  updateTourType,
+} from '@/features/tourType/tourTypeSlice';
 
 export function SettingsPage() {
+  const dispatch = useAppDispatch();
   const meta = getRouteMeta(ROUTES.SETTINGS);
+  const tourTypes = useAppSelector(selectTourTypes);
+  const languages = useAppSelector(selectLanguages);
+  const tourTypeStatus = useAppSelector(selectTourTypeStatus);
+  const languageStatus = useAppSelector(selectLanguageStatus);
+
+  const [showTourForm, setShowTourForm] = useState(false);
+  const [showLangForm, setShowLangForm] = useState(false);
+  const [tourForm, setTourForm] = useState<Partial<TourType>>({
+    name: '',
+    basePrice: 70,
+    durationMinutes: 150,
+    isActive: true,
+  });
+  const [langForm, setLangForm] = useState<Partial<Language>>({
+    code: '',
+    name: '',
+    colorHex: '#27AE60',
+    rateModifier: 0,
+    isActive: true,
+  });
+
+  useEffect(() => {
+    void dispatch(fetchTourTypes());
+    void dispatch(fetchLanguages());
+  }, [dispatch]);
+
+  const handleSaveTourType = async () => {
+    if (!tourForm.name) {
+      showToast('Tour type name is required');
+      return;
+    }
+    try {
+      await dispatch(
+        createTourType({
+          name: tourForm.name,
+          description: tourForm.description ?? '',
+          location: tourForm.location ?? 'Rome',
+          meetingPointName: tourForm.meetingPointName ?? tourForm.name,
+          meetingPointAddress: tourForm.meetingPointAddress ?? '',
+          basePrice: Number(tourForm.basePrice ?? 0),
+          durationMinutes: Number(tourForm.durationMinutes ?? 120),
+          isActive: true,
+        }),
+      ).unwrap();
+      showToast('✓ Tour type saved');
+      setShowTourForm(false);
+      setTourForm({ name: '', basePrice: 70, durationMinutes: 150, isActive: true });
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to save tour type');
+    }
+  };
+
+  const handleSaveLanguage = async () => {
+    if (!langForm.code || !langForm.name) {
+      showToast('Language code and name are required');
+      return;
+    }
+    try {
+      await dispatch(
+        createLanguage({
+          code: langForm.code,
+          name: langForm.name,
+          colorHex: langForm.colorHex ?? '#27AE60',
+          rateModifier: Number(langForm.rateModifier ?? 0),
+          isActive: true,
+        }),
+      ).unwrap();
+      showToast('✓ Language saved');
+      setShowLangForm(false);
+      setLangForm({ code: '', name: '', colorHex: '#27AE60', rateModifier: 0, isActive: true });
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to save language');
+    }
+  };
+
+  const loading = tourTypeStatus === 'loading' || languageStatus === 'loading';
 
   return (
     <div>
       <PageHeader title={meta.title} />
+
+      {loading && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
+          <Spin />
+        </div>
+      )}
 
       <div
         style={{
@@ -32,36 +132,71 @@ export function SettingsPage() {
           <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 12px' }}>
             Types, meeting points, default rates
           </p>
-          {MOCK_TOUR_TYPES.map((tour) => (
+          {tourTypes.map((tour) => (
             <SettingsRow
-              key={tour.id}
+              key={tour.tourTypeId}
               icon="🏛️"
-              title={tour.name}
-              sub={
-                tour.isDefault
-                  ? `Default · €${tour.rate.toFixed(2)} · ${tour.durationHours}h`
-                  : `€${tour.rate.toFixed(2)} · ${tour.durationHours}h`
-              }
+              title={tour.name ?? 'Unnamed'}
+              sub={`€${(tour.basePrice ?? 0).toFixed(2)} · ${Math.round((tour.durationMinutes ?? 0) / 60)}h`}
               action={
-                <AppButton variant="secondary" onClick={() => showToast('Edit modal')}>
-                  Edit
+                <AppButton
+                  variant="secondary"
+                  onClick={() => {
+                    void dispatch(
+                      updateTourType({
+                        ...tour,
+                        isActive: !(tour.isActive ?? true),
+                      }),
+                    );
+                    showToast('Tour type updated');
+                  }}
+                >
+                  Toggle Active
                 </AppButton>
               }
             />
           ))}
+          {showTourForm && (
+            <div style={{ marginTop: 12 }}>
+              <FormGrid>
+              <FormInput
+                label="Name"
+                value={tourForm.name ?? ''}
+                onChange={(e) => setTourForm((f) => ({ ...f, name: e.target.value }))}
+              />
+              <FormInput
+                label="Base Price (€)"
+                type="number"
+                value={tourForm.basePrice ?? 0}
+                onChange={(e) => setTourForm((f) => ({ ...f, basePrice: Number(e.target.value) }))}
+              />
+              <FormInput
+                label="Duration (minutes)"
+                type="number"
+                value={tourForm.durationMinutes ?? 120}
+                onChange={(e) =>
+                  setTourForm((f) => ({ ...f, durationMinutes: Number(e.target.value) }))
+                }
+              />
+              <AppButton variant="primary" onClick={() => void handleSaveTourType()}>
+                Save Tour Type
+              </AppButton>
+              </FormGrid>
+            </div>
+          )}
           <AppButton
             variant="secondary"
             style={{ width: '100%', marginTop: 8 }}
-            onClick={() => showToast('Add tour type')}
+            onClick={() => setShowTourForm((v) => !v)}
           >
             + Add Tour Type
           </AppButton>
         </AppCard>
 
         <AppCard title="Language Settings">
-          {MOCK_LANGUAGE_SETTINGS.map((lang) => (
+          {languages.map((lang) => (
             <SettingsRow
-              key={lang.code}
+              key={lang.languageId}
               icon={
                 <span
                   style={{
@@ -69,30 +204,85 @@ export function SettingsPage() {
                     width: 18,
                     height: 18,
                     borderRadius: 4,
-                    background: lang.hex,
+                    background: lang.colorHex ?? '#ccc',
+                    opacity: lang.isActive !== false ? 1 : 0.45,
                   }}
                 />
               }
-              title={lang.name}
-              sub={lang.hex}
+              title={lang.name ?? lang.code ?? ''}
+              sub={
+                lang.rateModifier != null && lang.rateModifier > 0
+                  ? `${lang.colorHex ?? ''} · +${lang.rateModifier}%`
+                  : (lang.colorHex ?? '')
+              }
               action={
                 <>
                   <span
                     style={{
                       fontSize: 11,
                       fontWeight: 600,
-                      color: 'var(--text-secondary)',
+                      color: lang.isActive !== false ? 'var(--g600)' : 'var(--text-muted)',
                       marginRight: 8,
+                      minWidth: 52,
+                      textAlign: 'right',
                     }}
                   >
-                    {lang.rateLabel}
+                    {lang.isActive !== false ? 'Active' : 'Inactive'}
                   </span>
-                  <AppButton variant="secondary">Edit</AppButton>
+                  <ToggleSwitch
+                    checked={lang.isActive !== false}
+                    onCheckedChange={(checked) => {
+                      void dispatch(
+                        updateLanguage({
+                          ...lang,
+                          isActive: checked,
+                        }),
+                      );
+                      showToast(checked ? 'Language activated' : 'Language deactivated');
+                    }}
+                    aria-label={`${lang.name ?? lang.code} active status`}
+                  />
                 </>
               }
             />
           ))}
-          <AppButton variant="secondary" style={{ width: '100%', marginTop: 8 }}>
+          {showLangForm && (
+            <div style={{ marginTop: 12 }}>
+              <FormGrid>
+              <FormInput
+                label="Code"
+                value={langForm.code ?? ''}
+                onChange={(e) => setLangForm((f) => ({ ...f, code: e.target.value }))}
+              />
+              <FormInput
+                label="Name"
+                value={langForm.name ?? ''}
+                onChange={(e) => setLangForm((f) => ({ ...f, name: e.target.value }))}
+              />
+              <FormInput
+                label="Color Hex"
+                value={langForm.colorHex ?? ''}
+                onChange={(e) => setLangForm((f) => ({ ...f, colorHex: e.target.value }))}
+              />
+              <FormInput
+                label="Rate Modifier (%)"
+                type="number"
+                value={langForm.rateModifier ?? 0}
+                onChange={(e) =>
+                  setLangForm((f) => ({ ...f, rateModifier: Number(e.target.value) }))
+                }
+              />
+              <AppButton variant="primary" onClick={() => void handleSaveLanguage()}>
+                Save Language
+              </AppButton>
+              </FormGrid>
+            </div>
+          )}
+          <AppButton
+            variant="secondary"
+            style={{ width: '100%', marginTop: 8 }}
+            onClick={() => setShowLangForm((v) => !v)}
+          >
             + Add Language
           </AppButton>
         </AppCard>
@@ -140,7 +330,7 @@ export function SettingsPage() {
           <AppButton
             variant="secondary"
             style={{ width: '100%', marginTop: 8 }}
-            onClick={() => showToast('Add admin user')}
+            onClick={() => showToast('Add admin user — auth phase')}
           >
             + Add Admin User
           </AppButton>

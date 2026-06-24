@@ -1,11 +1,12 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
+import { Spin } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
   DataTable,
   GuideCell,
-  LangChip,
   showToast,
   StatMini,
   StatMiniRow,
@@ -13,10 +14,45 @@ import {
 } from '@/components/ui';
 import { getRouteMeta } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
-import { MOCK_PAYMENT_REPORTS, PAYOUT_SUMMARY, type PaymentReport } from '@/mocks';
+import type { PaymentReport } from '@/mocks/payouts';
+import {
+  fetchWalletData,
+  selectWalletStatus,
+  selectWalletSummary,
+  selectWalletTransactions,
+} from '@/features/wallet/walletSlice';
 
 export function ReportsPage() {
+  const dispatch = useAppDispatch();
   const meta = getRouteMeta(ROUTES.REPORTS);
+  const transactions = useAppSelector(selectWalletTransactions);
+  const summary = useAppSelector(selectWalletSummary);
+  const status = useAppSelector(selectWalletStatus);
+
+  useEffect(() => {
+    void dispatch(fetchWalletData());
+  }, [dispatch]);
+
+  const reports: PaymentReport[] = useMemo(
+    () =>
+      transactions
+        .filter((t) => t.status === 'paid')
+        .map((t) => ({
+          id: t.id,
+          guideId: t.guideId,
+          guideName: t.guideName,
+          guideInitials: t.guideInitials,
+          month: t.month,
+          monthLabel: t.monthLabel,
+          tours: t.tours,
+          amount: t.amount,
+          languages: ['EN'] as PaymentReport['languages'],
+          datePaid: t.submittedAt,
+          transferId: `TRF-${t.id}`,
+          status: 'paid' as const,
+        })),
+    [transactions],
+  );
 
   const columns: ColumnsType<PaymentReport> = useMemo(
     () => [
@@ -35,18 +71,6 @@ export function ReportsPage() {
         key: 'amount',
         render: (amount: number) => <strong>€{amount}</strong>,
       },
-      {
-        title: 'Languages',
-        dataIndex: 'languages',
-        key: 'languages',
-        render: (langs: PaymentReport['languages']) => (
-          <span style={{ display: 'inline-flex', gap: 4 }}>
-            {langs.map((code) => (
-              <LangChip key={code} code={code} />
-            ))}
-          </span>
-        ),
-      },
       { title: 'Date Paid', dataIndex: 'datePaid', key: 'datePaid' },
       {
         title: 'Transfer ID',
@@ -58,7 +82,6 @@ export function ReportsPage() {
       },
       {
         title: 'Status',
-        dataIndex: 'status',
         key: 'status',
         render: () => <StatusBadge status="completed" />,
       },
@@ -83,29 +106,23 @@ export function ReportsPage() {
         }
       />
 
+      {status === 'loading' && (
+        <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
+          <Spin />
+        </div>
+      )}
+
       <StatMiniRow>
-        <StatMini
-          icon="💰"
-          value={`€${PAYOUT_SUMMARY.paidThisMonth.toLocaleString()}`}
-          label="Paid This Month"
-        />
-        <StatMini
-          icon="📈"
-          value={`€${PAYOUT_SUMMARY.paidThisYear.toLocaleString()}`}
-          label="Paid This Year"
-        />
-        <StatMini
-          icon="⏳"
-          value={`€${PAYOUT_SUMMARY.outstanding.toLocaleString()}`}
-          label="Outstanding"
-        />
-        <StatMini icon="👥" value={PAYOUT_SUMMARY.guidesPaid} label="Guides Paid" />
+        <StatMini icon="💰" value={`€${summary.paidThisMonth.toLocaleString()}`} label="Paid This Month" />
+        <StatMini icon="📈" value={`€${summary.paidThisMonth.toLocaleString()}`} label="Paid This Period" />
+        <StatMini icon="⏳" value={`€${summary.totalPending.toLocaleString()}`} label="Outstanding" />
+        <StatMini icon="👥" value={reports.length} label="Guides Paid" />
       </StatMiniRow>
 
       <DataTable<PaymentReport>
         rowKey="id"
         columns={columns}
-        dataSource={MOCK_PAYMENT_REPORTS}
+        dataSource={reports}
         pagination={false}
       />
     </div>
