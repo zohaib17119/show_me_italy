@@ -7,8 +7,10 @@ import {
   LogoutOutlined,
   UserOutlined,
 } from '@ant-design/icons';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { logout } from '@/features/auth/authSlice';
+import { ROUTES } from '@/constants/routes';
 import { setMobileDrawerOpen } from '@/features/ui/uiSlice';
 import { getRouteMeta } from '@/constants/navigation';
 import { showToast } from '@/components/ui/AppToast';
@@ -17,6 +19,7 @@ const { Header } = Layout;
 
 export function Topbar() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const location = useLocation();
   const user = useAppSelector((s) => s.auth.user);
   const isMobile = useAppSelector((s) => s.ui.isMobile);
@@ -75,7 +78,18 @@ export function Topbar() {
           onClick={() => showToast('4 new notifications')}
         />
       </Badge>
-      <Dropdown menu={{ items: userMenuItems }} trigger={['click']}>
+      <Dropdown
+        menu={{
+          items: userMenuItems,
+          onClick: ({ key }) => {
+            if (key === 'logout') {
+              dispatch(logout());
+              navigate(ROUTES.LOGIN, { replace: true });
+            }
+          },
+        }}
+        trigger={['click']}
+      >
         <div
           style={{
             display: 'flex',

@@ -1,4 +1,5 @@
 export const ROUTES = {
+  LOGIN: '/login',
   DASHBOARD: '/',
   CALENDAR: '/schedule/calendar',
   CREATE_TOUR: '/schedule/create',

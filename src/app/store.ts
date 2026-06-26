@@ -8,6 +8,7 @@ import languageReducer from '@/features/language/languageSlice';
 import agentReducer from '@/features/agent/agentSlice';
 import applicationsReducer from '@/features/applications/applicationsSlice';
 import walletReducer from '@/features/wallet/walletSlice';
+import dashboardReducer from '@/features/dashboard/dashboardSlice';
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +21,7 @@ export const store = configureStore({
     agent: agentReducer,
     applications: applicationsReducer,
     wallet: walletReducer,
+    dashboard: dashboardReducer,
   },
 });
 

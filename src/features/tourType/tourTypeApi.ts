@@ -1,11 +1,12 @@
 import { axiosInstance } from '@/api/axiosInstance';
+import { normalizeListResponse } from '@/api/utils/normalizeList';
 import type { TourType } from '@/api/types';
 import { unwrapData } from '@/api/types';
 
 export const tourTypeApi = {
   getAll: async (): Promise<TourType[]> => {
     const { data } = await axiosInstance.post('/api/TourType/get-all', {});
-    return unwrapData<TourType[]>(data) ?? [];
+    return normalizeListResponse<TourType>(data);
   },
 
   getById: async (id: number): Promise<TourType | null> => {

@@ -24,7 +24,7 @@ import {
   createTourSlot,
   selectTourMutationStatus,
 } from '@/features/tour/tourSlice';
-import { fetchTourTypes, selectTourTypes } from '@/features/tourType/tourTypeSlice';
+import { fetchTourTypes, selectActiveTourTypes } from '@/features/tourType/tourTypeSlice';
 import { languageColors } from '@/theme/tokens';
 import styles from './schedule.module.css';
 
@@ -37,7 +37,7 @@ const STATUS_OPTIONS = [
 export function CreateTourPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const tourTypes = useAppSelector(selectTourTypes);
+  const tourTypes = useAppSelector(selectActiveTourTypes);
   const languages = useAppSelector(selectActiveLanguages);
   const mutationStatus = useAppSelector(selectTourMutationStatus);
 
@@ -145,9 +145,6 @@ export function CreateTourPage() {
           <>
             <AppButton variant="secondary" onClick={() => navigate(ROUTES.CALENDAR)}>
               Cancel
-            </AppButton>
-            <AppButton variant="dark" onClick={() => showToast('✓ Draft saved locally')}>
-              Save Draft
             </AppButton>
             <AppButton onClick={() => void handlePublish()} disabled={isSubmitting}>
               {isSubmitting ? 'Publishing…' : 'Publish Slot'}

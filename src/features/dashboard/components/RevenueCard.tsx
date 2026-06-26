@@ -1,10 +1,10 @@
 import { Card } from 'antd';
 import { useAppSelector } from '@/app/hooks';
-import { selectWalletBalance, selectWalletSummary } from '@/features/wallet/walletSlice';
+import { selectDashboardData } from '@/features/dashboard/dashboardSlice';
 
 export function RevenueCard() {
-  const summary = useAppSelector(selectWalletSummary);
-  const balance = useAppSelector(selectWalletBalance);
+  const dashboard = useAppSelector(selectDashboardData);
+  const payout = dashboard?.payout;
 
   return (
     <Card id="revenueCard" styles={{ body: { padding: '14px 16px' } }}>
@@ -30,7 +30,7 @@ export function RevenueCard() {
               color: 'var(--text-primary)',
             }}
           >
-            €{summary.totalPending.toLocaleString()}
+            €{(payout?.pendingAmount ?? 0).toLocaleString()}
           </div>
           <span
             style={{
@@ -46,13 +46,13 @@ export function RevenueCard() {
               marginTop: 4,
             }}
           >
-            €{summary.paidThisMonth.toLocaleString()} paid this month
+            €{(payout?.paidThisMonth ?? 0).toLocaleString()} paid this month
           </span>
         </div>
         <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Balance</div>
+          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Queue</div>
           <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-secondary)' }}>
-            €{balance.toLocaleString()}
+            {payout?.pendingCount ?? 0}
           </div>
         </div>
       </div>
@@ -69,7 +69,7 @@ export function RevenueCard() {
             fontSize: 11,
           }}
         >
-          {summary.queueCount} payouts in queue
+          {payout?.pendingCount ?? 0} payouts in queue
         </div>
       </div>
     </Card>

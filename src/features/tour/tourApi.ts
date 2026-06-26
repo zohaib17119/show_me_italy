@@ -1,12 +1,15 @@
 import { axiosInstance } from '@/api/axiosInstance';
-import type { TourSlot } from '@/api/types';
+import { normalizeListResponse } from '@/api/utils/normalizeList';
+import type { TourSlot, TourSlotFilter } from '@/api/types';
 import { unwrapData } from '@/api/types';
 
 export const tourApi = {
-  getAll: async (): Promise<TourSlot[]> => {
-    const { data } = await axiosInstance.post('/v1/Tour/get-all', {});
-    return unwrapData<TourSlot[]>(data) ?? [];
+  getAllAdmin: async (filter: TourSlotFilter = {}): Promise<TourSlot[]> => {
+    const { data } = await axiosInstance.post('/v1/Tour/get-all-admin', filter);
+    return normalizeListResponse<TourSlot>(data);
   },
+
+  getAll: async (): Promise<TourSlot[]> => tourApi.getAllAdmin({}),
 
   getById: async (id: number): Promise<TourSlot | null> => {
     const { data } = await axiosInstance.post('/v1/Tour/getbyid', null, {

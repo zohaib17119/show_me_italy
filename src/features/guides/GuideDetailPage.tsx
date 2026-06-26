@@ -1,8 +1,9 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Spin } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import type { GuideApplicationRow } from '@/api/mappers/agentMapper';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
@@ -17,33 +18,67 @@ import {
 } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
 import {
-  fetchAllAgents,
-  selectAgentStatus,
-  selectGuideById,
+  approveAgent,
+  clearSelectedAgent,
+  fetchAgentById,
+  rejectAgent,
+  selectAgentDetailStatus,
+  selectSelectedAgent,
+  selectSelectedAgentApplications,
 } from '@/features/agent/agentSlice';
-import type { GuideTourHistory } from '@/mocks/guides';
-import type { TourStatus } from '@/types';
+import { RejectAgentModal } from './components/RejectAgentModal';
 import styles from './guides.module.css';
-
-function historyStatusToBadge(status: GuideTourHistory['status']): TourStatus {
-  if (status === 'paid') return 'approved';
-  if (status === 'completed') return 'completed';
-  if (status === 'confirmed') return 'confirmed';
-  return 'pending';
-}
 
 export function GuideDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const status = useAppSelector(selectAgentStatus);
-  const guide = useAppSelector((state) => (id ? selectGuideById(state, id) : undefined));
+  const detailStatus = useAppSelector(selectAgentDetailStatus);
+  const guide = useAppSelector(selectSelectedAgent);
+  const applications = useAppSelector(selectSelectedAgentApplications);
+
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
-    void dispatch(fetchAllAgents());
-  }, [dispatch]);
+    if (id) {
+      void dispatch(fetchAgentById(id));
+    }
+    return () => {
+      dispatch(clearSelectedAgent());
+    };
+  }, [dispatch, id]);
 
-  if (status === 'loading' && !guide) {
+  const handleApprove = async () => {
+    if (!guide) return;
+    setActionLoading(true);
+    try {
+      await dispatch(approveAgent(guide.id)).unwrap();
+      showToast(`✓ ${guide.name} approved!`);
+      navigate(ROUTES.APPROVALS);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to approve guide');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async (reason: string) => {
+    if (!guide) return;
+    setActionLoading(true);
+    try {
+      await dispatch(rejectAgent({ userId: guide.id, reason })).unwrap();
+      showToast(`${guide.name} rejected`);
+      setRejectOpen(false);
+      navigate(ROUTES.APPROVALS);
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to reject guide');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  if (detailStatus === 'loading' && !guide) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>
         <Spin size="large" />
@@ -66,34 +101,29 @@ export function GuideDetailPage() {
     );
   }
 
-  const historyColumns: ColumnsType<GuideTourHistory> = [
-    { title: 'Date', dataIndex: 'date', key: 'date' },
-    { title: 'Tour', dataIndex: 'tour', key: 'tour' },
+  const isPending = guide.status === 'pending';
+
+  const historyColumns: ColumnsType<GuideApplicationRow> = [
     {
-      title: 'Lang',
-      dataIndex: 'language',
-      key: 'language',
-      render: (lang) => <LangChip code={lang} />,
+      title: 'Applied At',
+      dataIndex: 'appliedAt',
+      key: 'appliedAt',
     },
     {
-      title: 'Hours',
-      dataIndex: 'hours',
-      key: 'hours',
-      render: (hours: number) => `${hours}h`,
+      title: 'Tour Slot',
+      dataIndex: 'tourSlot',
+      key: 'tourSlot',
     },
     {
-      title: 'Amount',
-      dataIndex: 'amount',
-      key: 'amount',
-      render: (amount: number) => <strong>€{amount}</strong>,
+      title: 'Pay Rate',
+      dataIndex: 'payRate',
+      key: 'payRate',
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      render: (s: GuideTourHistory['status']) => (
-        <StatusBadge status={historyStatusToBadge(s)} />
-      ),
+      render: (status: GuideApplicationRow['status']) => <StatusBadge status={status} />,
     },
   ];
 
@@ -114,17 +144,33 @@ export function GuideDetailPage() {
             title={guide.name}
             subtitle={`${guide.email} · ${guide.phone} · Active since ${guide.activeSince}`}
             extra={
-              <>
-                <AppButton variant="danger" size="xs">
-                  Deactivate
-                </AppButton>
-                <AppButton variant="secondary" size="xs">
-                  Edit Profile
-                </AppButton>
-                <AppButton size="xs" onClick={() => showToast('✓ Note added')}>
-                  Add Note
-                </AppButton>
-              </>
+              isPending ? (
+                <>
+                  <AppButton
+                    variant="danger"
+                    size="xs"
+                    disabled={actionLoading}
+                    onClick={() => setRejectOpen(true)}
+                  >
+                    Reject
+                  </AppButton>
+                  <AppButton size="xs" disabled={actionLoading} onClick={() => void handleApprove()}>
+                    Approve
+                  </AppButton>
+                </>
+              ) : (
+                <>
+                  <AppButton variant="danger" size="xs">
+                    Deactivate
+                  </AppButton>
+                  <AppButton variant="secondary" size="xs">
+                    Edit Profile
+                  </AppButton>
+                  <AppButton size="xs" onClick={() => showToast('✓ Note added')}>
+                    Add Note
+                  </AppButton>
+                </>
+              )
             }
           />
         </div>
@@ -153,6 +199,17 @@ export function GuideDetailPage() {
                 <span className={styles.certYes}>
                   {guide.certified ? '✓ Verified' : '⏳ Pending'}
                 </span>
+                {guide.certificateUpload && (
+                  <div style={{ marginTop: 6 }}>
+                    <AppButton
+                      variant="secondary"
+                      size="xs"
+                      onClick={() => window.open(guide.certificateUpload, '_blank', 'noopener')}
+                    >
+                      View Certificate
+                    </AppButton>
+                  </div>
+                )}
               </div>
               <div>
                 <SectionLabel>Rating</SectionLabel>
@@ -165,10 +222,10 @@ export function GuideDetailPage() {
 
           <AppCard>
             <SectionTitle style={{ marginBottom: 10 }}>Tour History</SectionTitle>
-            <DataTable<GuideTourHistory>
-              rowKey={(row) => `${row.date}-${row.language}-${row.tour}`}
+            <DataTable<GuideApplicationRow>
+              rowKey="id"
               columns={historyColumns}
-              dataSource={guide.tourHistory}
+              dataSource={applications}
               pagination={false}
               size="small"
             />
@@ -206,24 +263,34 @@ export function GuideDetailPage() {
             </AppButton>
           </AppCard>
 
-          <AppCard>
-            <SectionTitle style={{ marginBottom: 10 }}>Admin Actions</SectionTitle>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-              <AppButton
-                variant="secondary"
-                size="xs"
-                style={{ width: '100%' }}
-                onClick={() => showToast('✓ Edit languages')}
-              >
-                Edit Languages
-              </AppButton>
-              <AppButton variant="warn" size="xs" style={{ width: '100%' }}>
-                Deactivate Guide
-              </AppButton>
-            </div>
-          </AppCard>
+          {!isPending && (
+            <AppCard>
+              <SectionTitle style={{ marginBottom: 10 }}>Admin Actions</SectionTitle>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                <AppButton
+                  variant="secondary"
+                  size="xs"
+                  style={{ width: '100%' }}
+                  onClick={() => showToast('✓ Edit languages')}
+                >
+                  Edit Languages
+                </AppButton>
+                <AppButton variant="warn" size="xs" style={{ width: '100%' }}>
+                  Deactivate Guide
+                </AppButton>
+              </div>
+            </AppCard>
+          )}
         </div>
       </div>
+
+      <RejectAgentModal
+        open={rejectOpen}
+        guideName={guide.name}
+        loading={actionLoading}
+        onCancel={() => setRejectOpen(false)}
+        onConfirm={(reason) => void handleReject(reason)}
+      />
     </div>
   );
 }

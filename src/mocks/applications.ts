@@ -2,6 +2,7 @@ import type { LangCode, TourStatus } from '@/types';
 
 export interface Application {
   id: string;
+  applicationId: number;
   guideId: string;
   guideName: string;
   guideInitials: string;
@@ -17,6 +18,7 @@ export interface Application {
 export const MOCK_APPLICATIONS: Application[] = [
   {
     id: 'app-001',
+    applicationId: 1,
     guideId: 'guide-marco-rossi',
     guideName: 'Marco Rossi',
     guideInitials: 'MR',
@@ -30,6 +32,7 @@ export const MOCK_APPLICATIONS: Application[] = [
   },
   {
     id: 'app-002',
+    applicationId: 2,
     guideId: 'guide-sofia-conti',
     guideName: 'Sofia Conti',
     guideInitials: 'SC',
@@ -43,6 +46,7 @@ export const MOCK_APPLICATIONS: Application[] = [
   },
   {
     id: 'app-003',
+    applicationId: 3,
     guideId: 'guide-yuki-tanaka',
     guideName: 'Yuki Tanaka',
     guideInitials: 'YT',
@@ -56,6 +60,7 @@ export const MOCK_APPLICATIONS: Application[] = [
   },
   {
     id: 'app-004',
+    applicationId: 4,
     guideId: 'guide-hans-muller',
     guideName: 'Hans Müller',
     guideInitials: 'HM',
@@ -69,6 +74,7 @@ export const MOCK_APPLICATIONS: Application[] = [
   },
   {
     id: 'app-005',
+    applicationId: 5,
     guideId: 'guide-amelie-dubois',
     guideName: 'Amélie Dubois',
     guideInitials: 'AD',

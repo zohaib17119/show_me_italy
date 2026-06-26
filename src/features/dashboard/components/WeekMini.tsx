@@ -3,37 +3,32 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Card } from 'antd';
 import { useAppSelector } from '@/app/hooks';
 import { ROUTES } from '@/constants/routes';
-import { selectEventsByDate } from '@/features/tour/tourSlice';
+import { selectDashboardData } from '@/features/dashboard/dashboardSlice';
 import { languageColors } from '@/theme/tokens';
+import type { LangCode } from '@/types';
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
 export function WeekMini() {
   const navigate = useNavigate();
-  const eventsByDate = useAppSelector(selectEventsByDate);
+  const dashboard = useAppSelector(selectDashboardData);
+  const weekDays = dashboard?.week?.days ?? [];
 
-  const weekDays = useMemo(() => {
-    const today = new Date();
-    const dayOfWeek = today.getDay();
-    const mondayOffset = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
-    const monday = new Date(today);
-    monday.setDate(today.getDate() + mondayOffset);
-
-    return Array.from({ length: 7 }, (_, i) => {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      const dateKey = d.toISOString().slice(0, 10);
-      const events = eventsByDate[dateKey] ?? [];
-      const isToday = dateKey === today.toISOString().slice(0, 10);
+  const days = useMemo(() => {
+    return weekDays.map((day) => {
+      const date = day.date ? new Date(day.date) : new Date();
+      const dateKey = Number.isNaN(date.getTime()) ? '' : date.toISOString().slice(0, 10);
+      const todayKey = new Date().toISOString().slice(0, 10);
+      const tourCount = day.tours ?? 0;
       return {
-        label: DAY_LABELS[d.getDay()],
-        num: d.getDate(),
-        today: isToday,
-        hasTour: events.length > 0,
-        dots: events.slice(0, 4).map((e) => (e.unfilled ? 'RED' : e.language)),
+        label: DAY_LABELS[date.getDay()] ?? 'D',
+        num: date.getDate(),
+        today: dateKey === todayKey,
+        hasTour: tourCount > 0,
+        dots: Array.from({ length: Math.min(tourCount, 4) }, () => 'EN' as LangCode),
       };
     });
-  }, [eventsByDate]);
+  }, [weekDays]);
 
   return (
     <Card id="weekMini" styles={{ body: { padding: 16 } }}>
@@ -54,7 +49,7 @@ export function WeekMini() {
         </Button>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: 4 }}>
-        {weekDays.map((d) => (
+        {days.map((d) => (
           <div
             key={`${d.label}-${d.num}`}
             style={{
@@ -99,8 +94,7 @@ export function WeekMini() {
                     width: 5,
                     height: 5,
                     borderRadius: '50%',
-                    background:
-                      dot === 'RED' ? '#E74C3C' : (languageColors[dot as keyof typeof languageColors] ?? '#6B8C75'),
+                    background: languageColors[dot] ?? '#6B8C75',
                   }}
                 />
               ))}

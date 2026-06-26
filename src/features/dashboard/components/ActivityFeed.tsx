@@ -1,33 +1,41 @@
 import { useMemo } from 'react';
 import { useAppSelector } from '@/app/hooks';
-import { selectInboxItems } from '@/features/notifications/notificationSlice';
+import { selectDashboardData } from '@/features/dashboard/dashboardSlice';
 import styles from '../dashboard.module.css';
 
+function formatActivityTime(value?: string): string {
+  if (!value) return '—';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+}
+
 export function ActivityFeed() {
-  const inbox = useAppSelector(selectInboxItems);
+  const dashboard = useAppSelector(selectDashboardData);
+  const items = dashboard?.activity?.activities ?? [];
 
   const activities = useMemo(() => {
-    if (inbox.length === 0) {
+    if (items.length === 0) {
       return [
         {
           icon: '📡',
           bg: '#eaf3fb',
-          title: 'Waiting for live updates',
-          sub: 'Notifications will appear here from API',
+          title: 'No recent activity',
+          sub: 'Updates will appear here from the dashboard API',
           time: '—',
-          dot: '#2E75B6',
+          dot: '#c8dbcf',
         },
       ];
     }
-    return inbox.slice(0, 5).map((item) => ({
-      icon: item.icon,
-      bg: item.iconBg,
-      title: item.title,
-      sub: item.body,
-      time: item.time,
-      dot: item.unread ? '#27AE60' : '#c8dbcf',
+    return items.slice(0, 5).map((item) => ({
+      icon: '📌',
+      bg: '#eaf3fb',
+      title: item.title ?? 'Activity',
+      sub: item.description ?? '',
+      time: formatActivityTime(item.createdOn),
+      dot: '#27AE60',
     }));
-  }, [inbox]);
+  }, [items]);
 
   return (
     <div className={styles.scheduleCard} id="activityCard" style={{ overflow: 'hidden' }}>
@@ -36,7 +44,7 @@ export function ActivityFeed() {
         <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Live updates</div>
       </div>
       {activities.map((a) => (
-        <div key={a.title} className={styles.act2Item}>
+        <div key={`${a.title}-${a.time}`} className={styles.act2Item}>
           <div className={styles.act2Icon} style={{ background: a.bg }}>
             {a.icon}
           </div>

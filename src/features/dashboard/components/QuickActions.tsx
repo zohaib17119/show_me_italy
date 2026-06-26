@@ -1,40 +1,49 @@
+import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAppSelector } from '@/app/hooks';
 import { ROUTES } from '@/constants/routes';
+import { selectDashboardData } from '@/features/dashboard/dashboardSlice';
 import styles from '../dashboard.module.css';
-
-const actions = [
-  {
-    icon: '🗓️',
-    bg: '#e0f5e9',
-    label: 'Create Tour Slot',
-    sub: 'Add new schedule',
-    route: ROUTES.CREATE_TOUR,
-  },
-  {
-    icon: '📋',
-    bg: '#fef3c7',
-    label: 'Review Applications',
-    sub: '12 awaiting',
-    route: ROUTES.APPLICATIONS,
-  },
-  {
-    icon: '💸',
-    bg: '#e0f5e9',
-    label: 'Process Payouts',
-    sub: '7 pending · €4,230',
-    route: ROUTES.PAYOUTS,
-  },
-  {
-    icon: '👤',
-    bg: '#eaf3fb',
-    label: 'Guide Approvals',
-    sub: '3 new registrations',
-    route: ROUTES.APPROVALS,
-  },
-];
 
 export function QuickActions() {
   const navigate = useNavigate();
+  const dashboard = useAppSelector(selectDashboardData);
+  const quick = dashboard?.quickActions;
+  const payout = dashboard?.payout;
+
+  const actions = useMemo(
+    () => [
+      {
+        icon: '🗓️',
+        bg: '#e0f5e9',
+        label: 'Create Tour Slot',
+        sub: 'Add new schedule',
+        route: ROUTES.CREATE_TOUR,
+      },
+      {
+        icon: '📋',
+        bg: '#fef3c7',
+        label: 'Review Applications',
+        sub: `${quick?.pendingApplications ?? 0} awaiting`,
+        route: ROUTES.APPLICATIONS,
+      },
+      {
+        icon: '💸',
+        bg: '#e0f5e9',
+        label: 'Process Payouts',
+        sub: `${quick?.pendingPayouts ?? 0} pending · €${(payout?.pendingAmount ?? 0).toLocaleString()}`,
+        route: ROUTES.PAYOUTS,
+      },
+      {
+        icon: '👤',
+        bg: '#eaf3fb',
+        label: 'Guide Approvals',
+        sub: `${quick?.pendingGuideApprovals ?? 0} new registrations`,
+        route: ROUTES.APPROVALS,
+      },
+    ],
+    [quick, payout],
+  );
 
   return (
     <div>

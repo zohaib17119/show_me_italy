@@ -22,6 +22,14 @@ const lazyPage = (factory: () => Promise<{ default: React.ComponentType }>) => {
 
 export const router = createBrowserRouter([
   {
+    path: ROUTES.LOGIN,
+    element: lazyPage(() =>
+      import('@/features/auth/LoginPage').then((m) => ({
+        default: m.LoginPage,
+      })),
+    ),
+  },
+  {
     path: '/',
     element: (
       <ProtectedRoute>

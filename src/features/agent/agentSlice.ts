@@ -1,5 +1,11 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import { mapAgentsToGuides } from '@/api/mappers/agentMapper';
+import {
+  mapAgentToGuide,
+  mapAgentsToGuides,
+  mapGuideApplicationsToHistory,
+  type GuideApplicationRow,
+} from '@/api/mappers/agentMapper';
+import type { AllAgentsAdminFilter } from '@/api/types';
 import { getApiErrorMessage } from '@/api/axiosInstance';
 import type { Guide } from '@/mocks/guides';
 import { agentApi } from './agentApi';
@@ -7,27 +13,39 @@ import type { RootState } from '@/app/store';
 import type { RequestStatus } from '@/features/tour/tourSlice';
 
 interface AgentState {
-  verified: Guide[];
+  adminGuides: Guide[];
   unverified: Guide[];
-  status: RequestStatus;
+  selectedAgent: Guide | null;
+  selectedAgentApplications: GuideApplicationRow[];
+  adminStatus: RequestStatus;
+  unverifiedStatus: RequestStatus;
+  detailStatus: RequestStatus;
   mutationStatus: RequestStatus;
+  adminError: string | null;
+  unverifiedError: string | null;
   error: string | null;
 }
 
 const initialState: AgentState = {
-  verified: [],
+  adminGuides: [],
   unverified: [],
-  status: 'idle',
+  selectedAgent: null,
+  selectedAgentApplications: [],
+  adminStatus: 'idle',
+  unverifiedStatus: 'idle',
+  detailStatus: 'idle',
   mutationStatus: 'idle',
+  adminError: null,
+  unverifiedError: null,
   error: null,
 };
 
-export const fetchVerifiedAgents = createAsyncThunk(
-  'agent/fetchVerified',
-  async (_, { rejectWithValue }) => {
+export const fetchAdminGuides = createAsyncThunk(
+  'agent/fetchAdminGuides',
+  async (filter: AllAgentsAdminFilter | undefined, { rejectWithValue }) => {
     try {
-      const records = await agentApi.getVerifiedAgents();
-      return mapAgentsToGuides(records, true);
+      const records = await agentApi.getAllAgentsAdmin(filter ?? {});
+      return mapAgentsToGuides(records);
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }
@@ -39,21 +57,24 @@ export const fetchUnverifiedAgents = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const records = await agentApi.getUnverifiedAgents();
-      return mapAgentsToGuides(records, false);
+      return mapAgentsToGuides(records, { pending: true });
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }
   },
 );
 
-export const fetchAllAgents = createAsyncThunk(
-  'agent/fetchAll',
-  async (_, { dispatch, rejectWithValue }) => {
+export const fetchAgentById = createAsyncThunk(
+  'agent/fetchById',
+  async (userId: string, { rejectWithValue }) => {
     try {
-      await Promise.all([
-        dispatch(fetchVerifiedAgents()),
-        dispatch(fetchUnverifiedAgents()),
-      ]);
+      const profile = await agentApi.getAgentProfileByUserId(userId);
+      if (!profile?.userResponse) {
+        return rejectWithValue('Guide not found');
+      }
+      const guide = mapAgentToGuide(profile.userResponse);
+      const applications = mapGuideApplicationsToHistory(profile.guideApplication);
+      return { guide, applications };
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }
@@ -62,10 +83,29 @@ export const fetchAllAgents = createAsyncThunk(
 
 export const approveAgent = createAsyncThunk(
   'agent/approve',
-  async (payload: { agentId: string }, { rejectWithValue, dispatch }) => {
+  async (userId: string, { rejectWithValue }) => {
     try {
-      await agentApi.approveAgent({ agentId: payload.agentId, userId: payload.agentId });
-      await dispatch(fetchAllAgents());
+      await agentApi.approveRejectAgent({ userId, isActive: true });
+      return userId;
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
+export const rejectAgent = createAsyncThunk(
+  'agent/reject',
+  async (
+    payload: { userId: string; reason?: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      await agentApi.approveRejectAgent({
+        userId: payload.userId,
+        isActive: false,
+        reasonOfRejection: payload.reason ?? '',
+      });
+      return payload.userId;
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }
@@ -75,23 +115,53 @@ export const approveAgent = createAsyncThunk(
 const agentSlice = createSlice({
   name: 'agent',
   initialState,
-  reducers: {},
+  reducers: {
+    clearSelectedAgent(state) {
+      state.selectedAgent = null;
+      state.selectedAgentApplications = [];
+      state.detailStatus = 'idle';
+    },
+  },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchVerifiedAgents.pending, (state) => {
-        state.status = 'loading';
-        state.error = null;
+      .addCase(fetchAdminGuides.pending, (state) => {
+        state.adminStatus = 'loading';
+        state.adminError = null;
       })
-      .addCase(fetchVerifiedAgents.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.verified = action.payload;
+      .addCase(fetchAdminGuides.fulfilled, (state, action) => {
+        state.adminStatus = 'succeeded';
+        state.adminGuides = action.payload;
       })
-      .addCase(fetchVerifiedAgents.rejected, (state, action) => {
-        state.status = 'failed';
-        state.error = (action.payload as string) ?? 'Failed to load guides';
+      .addCase(fetchAdminGuides.rejected, (state, action) => {
+        state.adminStatus = 'failed';
+        state.adminError = (action.payload as string) ?? 'Failed to load guides';
+      })
+      .addCase(fetchUnverifiedAgents.pending, (state) => {
+        state.unverifiedStatus = 'loading';
+        state.unverifiedError = null;
       })
       .addCase(fetchUnverifiedAgents.fulfilled, (state, action) => {
+        state.unverifiedStatus = 'succeeded';
         state.unverified = action.payload;
+      })
+      .addCase(fetchUnverifiedAgents.rejected, (state, action) => {
+        state.unverifiedStatus = 'failed';
+        state.unverifiedError = (action.payload as string) ?? 'Failed to load pending guides';
+      })
+      .addCase(fetchAgentById.pending, (state) => {
+        state.detailStatus = 'loading';
+        state.error = null;
+      })
+      .addCase(fetchAgentById.fulfilled, (state, action) => {
+        state.detailStatus = 'succeeded';
+        state.selectedAgent = action.payload.guide;
+        state.selectedAgentApplications = action.payload.applications;
+      })
+      .addCase(fetchAgentById.rejected, (state, action) => {
+        state.detailStatus = 'failed';
+        state.selectedAgent = null;
+        state.selectedAgentApplications = [];
+        state.error = (action.payload as string) ?? 'Failed to load guide';
       })
       .addCase(approveAgent.pending, (state) => {
         state.mutationStatus = 'loading';
@@ -102,20 +172,40 @@ const agentSlice = createSlice({
       .addCase(approveAgent.rejected, (state, action) => {
         state.mutationStatus = 'failed';
         state.error = (action.payload as string) ?? 'Failed to approve guide';
+      })
+      .addCase(rejectAgent.pending, (state) => {
+        state.mutationStatus = 'loading';
+      })
+      .addCase(rejectAgent.fulfilled, (state) => {
+        state.mutationStatus = 'succeeded';
+      })
+      .addCase(rejectAgent.rejected, (state, action) => {
+        state.mutationStatus = 'failed';
+        state.error = (action.payload as string) ?? 'Failed to reject guide';
       });
   },
 });
 
+export const { clearSelectedAgent } = agentSlice.actions;
 export default agentSlice.reducer;
 
-export const selectVerifiedGuides = (state: RootState) => state.agent.verified;
+export const selectAdminGuides = (state: RootState) => state.agent.adminGuides;
 export const selectUnverifiedGuides = (state: RootState) => state.agent.unverified;
-export const selectAllGuides = (state: RootState) => [
-  ...state.agent.verified,
-  ...state.agent.unverified,
-];
-export const selectAgentStatus = (state: RootState) => state.agent.status;
-export const selectActiveGuideCount = (state: RootState) => state.agent.verified.length;
+export const selectSelectedAgent = (state: RootState) => state.agent.selectedAgent;
+export const selectSelectedAgentApplications = (state: RootState) =>
+  state.agent.selectedAgentApplications;
+export const selectAdminGuideStatus = (state: RootState) => state.agent.adminStatus;
+export const selectUnverifiedGuideStatus = (state: RootState) => state.agent.unverifiedStatus;
+export const selectAdminGuideError = (state: RootState) => state.agent.adminError;
+export const selectUnverifiedGuideError = (state: RootState) => state.agent.unverifiedError;
+/** @deprecated use selectAdminGuideStatus */
+export const selectAgentStatus = selectAdminGuideStatus;
+export const selectAgentDetailStatus = (state: RootState) => state.agent.detailStatus;
+export const selectActiveGuideCount = (state: RootState) =>
+  state.agent.adminGuides.filter((g) => g.status === 'active').length;
 
 export const selectGuideById = (state: RootState, id: string) =>
-  selectAllGuides(state).find((g) => g.id === id);
+  state.agent.selectedAgent?.id === id
+    ? state.agent.selectedAgent
+    : state.agent.adminGuides.find((g) => g.id === id) ??
+      state.agent.unverified.find((g) => g.id === id);

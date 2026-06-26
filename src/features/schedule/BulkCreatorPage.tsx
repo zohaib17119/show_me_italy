@@ -23,7 +23,7 @@ import {
 import { ROUTES } from '@/constants/routes';
 import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
 import { createTourSlot } from '@/features/tour/tourSlice';
-import { fetchTourTypes, selectTourTypes } from '@/features/tourType/tourTypeSlice';
+import { fetchTourTypes, selectActiveTourTypes } from '@/features/tourType/tourTypeSlice';
 import styles from './schedule.module.css';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -39,7 +39,7 @@ const STEPPER_STEPS = [
 export function BulkCreatorPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const tourTypes = useAppSelector(selectTourTypes);
+  const tourTypes = useAppSelector(selectActiveTourTypes);
   const languages = useAppSelector(selectActiveLanguages);
 
   const [fromDate, setFromDate] = useState('2026-07-15');

@@ -1,29 +1,29 @@
 import { useAppSelector } from '@/app/hooks';
-import { selectVerifiedGuides } from '@/features/agent/agentSlice';
+import { selectDashboardData } from '@/features/dashboard/dashboardSlice';
 import styles from '../dashboard.module.css';
 
 export function GuidesOnline() {
-  const verified = useAppSelector(selectVerifiedGuides);
-  const avatars = verified.slice(0, 5);
+  const dashboard = useAppSelector(selectDashboardData);
+  const guideStatus = dashboard?.guideStatus;
+  const online = guideStatus?.onlineGuides ?? 0;
+  const total = guideStatus?.totalActiveGuides ?? 0;
 
   return (
     <div className={styles.guidesOnline} id="guidesOnline">
       <div className={styles.goTitle}>Guides Online Now</div>
-      <div className={styles.goCount}>{Math.min(verified.length, 12)}</div>
-      <div className={styles.goSub}>
-        of {verified.length} active guides · from API
-      </div>
+      <div className={styles.goCount}>{online}</div>
+      <div className={styles.goSub}>of {total} active guides</div>
       <div className={styles.goAvatars}>
-        {avatars.map((g, i) => (
+        {Array.from({ length: Math.min(online, 5) }, (_, i) => (
           <div
-            key={g.id}
+            key={i}
             className={styles.goAv}
             style={{ background: ['#1E8449', '#1a6b8a', '#6a3a9a', '#8a3a2a', '#2a5a7a'][i] }}
           >
-            {g.initials}
+            G{i + 1}
           </div>
         ))}
-        {verified.length > 5 && (
+        {online > 5 && (
           <div
             className={styles.goAv}
             style={{
@@ -32,7 +32,7 @@ export function GuidesOnline() {
               color: 'rgba(255,255,255,0.6)',
             }}
           >
-            +{verified.length - 5}
+            +{online - 5}
           </div>
         )}
       </div>

@@ -1,32 +1,43 @@
 import { useEffect, useMemo } from 'react';
 import { Card } from 'antd';
 import { useAppSelector } from '@/app/hooks';
-import { selectCalendarEvents } from '@/features/tour/tourSlice';
-import { selectLanguages } from '@/features/language/languageSlice';
+import { selectDashboardData } from '@/features/dashboard/dashboardSlice';
 import { languageColors } from '@/theme/tokens';
+import type { LangCode } from '@/types';
+
+function languageToCode(language?: string): LangCode {
+  const map: Record<string, LangCode> = {
+    english: 'EN',
+    italian: 'IT',
+    french: 'FR',
+    spanish: 'ES',
+    german: 'DE',
+    japanese: 'JA',
+  };
+  return map[language?.toLowerCase() ?? ''] ?? 'EN';
+}
 
 export function LanguageDistribution() {
-  const events = useAppSelector(selectCalendarEvents);
-  const languages = useAppSelector(selectLanguages);
+  const dashboard = useAppSelector(selectDashboardData);
+  const languages = dashboard?.languageDistribution?.languages ?? [];
 
   const distribution = useMemo(() => {
-    const counts: Record<string, number> = {};
-    events.forEach((e) => {
-      counts[e.language] = (counts[e.language] ?? 0) + 1;
-    });
-    const total = events.length || 1;
-    return Object.entries(counts)
-      .map(([code, count]) => {
-        const lang = languages.find((l) => l.code?.startsWith(code));
+    const total = languages.reduce((sum, item) => sum + (item.tours ?? 0), 0) || 1;
+    return languages
+      .map((item) => {
+        const code = languageToCode(item.language);
         return {
-          lang: lang?.name ?? code,
+          lang: item.language ?? code,
           code,
-          pct: Math.round((count / total) * 100),
+          pct: Math.round(((item.tours ?? 0) / total) * 100),
+          count: item.tours ?? 0,
         };
       })
       .sort((a, b) => b.pct - a.pct)
       .slice(0, 6);
-  }, [events, languages]);
+  }, [languages]);
+
+  const totalTours = languages.reduce((sum, item) => sum + (item.tours ?? 0), 0);
 
   useEffect(() => {
     document.querySelectorAll<HTMLElement>('[data-dist-bar]').forEach((bar) => {
@@ -76,7 +87,7 @@ export function LanguageDistribution() {
               justifyContent: 'center',
             }}
           >
-            <span style={{ fontWeight: 800, fontSize: 12 }}>{events.length}</span>
+            <span style={{ fontWeight: 800, fontSize: 12 }}>{totalTours}</span>
             <span style={{ fontSize: 7, color: 'var(--text-muted)' }}>tours</span>
           </div>
         </div>

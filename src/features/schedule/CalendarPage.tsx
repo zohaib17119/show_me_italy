@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Spin } from 'antd';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
@@ -10,13 +10,21 @@ import {
   BreadcrumbNav,
   FilterChip,
   IconButton,
+  ListErrorState,
   SectionLabel,
-  showToast,
 } from '@/components/ui';
-import { formatLocalDateKey, todayLocalDateKey } from '@/api/utils/date';
+import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
+import {
+  addDaysToDateKey,
+  formatLocalDateKey,
+  todayLocalDateKey,
+} from '@/api/utils/date';
 import { ROUTES } from '@/constants/routes';
 import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
-import { fetchTourTypes } from '@/features/tourType/tourTypeSlice';
+import {
+  fetchTourTypes,
+  selectActiveTourTypes,
+} from '@/features/tourType/tourTypeSlice';
 import {
   fetchTours,
   selectEventsByDate,
@@ -25,9 +33,13 @@ import {
 } from '@/features/tour/tourSlice';
 import { languageColors } from '@/theme/tokens';
 import type { LangCode } from '@/types';
+import {
+  buildTourSlotFilter,
+  calendarTitle,
+  tourSlotFilterKey,
+  type CalendarViewMode,
+} from './calendarFilter';
 import styles from './schedule.module.css';
-
-type ViewMode = 'month' | 'week' | 'day';
 
 interface CalendarDay {
   date: string;
@@ -90,20 +102,25 @@ export function CalendarPage() {
   const dispatch = useAppDispatch();
   const eventsByDate = useAppSelector(selectEventsByDate);
   const languages = useAppSelector(selectActiveLanguages);
+  const tourTypes = useAppSelector(selectActiveTourTypes);
   const status = useAppSelector(selectTourStatus);
   const error = useAppSelector(selectTourError);
 
-  const [viewMode, setViewMode] = useState<ViewMode>('month');
+  const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
   const [cursor, setCursor] = useState(() => {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
   });
+  const [selectedDate, setSelectedDate] = useState(todayLocalDateKey);
   const [enabledLangs, setEnabledLangs] = useState<Set<LangCode>>(() => new Set());
+  const [enabledTourTypeIds, setEnabledTourTypeIds] = useState<Set<number>>(() => new Set());
+  const [filtersReady, setFiltersReady] = useState(false);
+
+  useFetchErrorToast(status, error);
 
   useEffect(() => {
     void dispatch(fetchTourTypes());
     void dispatch(fetchLanguages());
-    void dispatch(fetchTours());
   }, [dispatch]);
 
   useEffect(() => {
@@ -119,22 +136,74 @@ export function CalendarPage() {
   }, [languages, enabledLangs.size]);
 
   useEffect(() => {
-    if (error) showToast(error);
-  }, [error]);
+    if (tourTypes.length > 0 && enabledTourTypeIds.size === 0) {
+      setEnabledTourTypeIds(
+        new Set(tourTypes.map((t) => t.tourTypeId).filter((id): id is number => id != null)),
+      );
+    }
+  }, [tourTypes, enabledTourTypeIds.size]);
+
+  useEffect(() => {
+    setFiltersReady(enabledLangs.size > 0 && enabledTourTypeIds.size > 0);
+  }, [enabledLangs.size, enabledTourTypeIds.size]);
+
+  const enabledLangKey = useMemo(
+    () => [...enabledLangs].sort().join(','),
+    [enabledLangs],
+  );
+  const enabledTourTypeKey = useMemo(
+    () => [...enabledTourTypeIds].sort((a, b) => a - b).join(','),
+    [enabledTourTypeIds],
+  );
 
   const monthDays = useMemo(
     () => buildMonthGrid(cursor.year, cursor.month),
     [cursor.year, cursor.month],
   );
 
-  const filteredEvents = useMemo(() => {
-    const result: typeof eventsByDate = {};
-    for (const [date, events] of Object.entries(eventsByDate)) {
-      const visible = events.filter((ev) => enabledLangs.has(ev.language));
-      if (visible.length > 0) result[date] = visible;
-    }
-    return result;
-  }, [eventsByDate, enabledLangs]);
+  const monthGridDates = useMemo(() => monthDays.map((cell) => cell.date), [monthDays]);
+
+  const tourFilter = useMemo(
+    () =>
+      buildTourSlotFilter({
+        viewMode,
+        monthGridDates,
+        selectedDate,
+        enabledLangs,
+        enabledTourTypeIds,
+        languages,
+        tourTypes,
+      }),
+    [
+      viewMode,
+      monthGridDates,
+      selectedDate,
+      enabledLangKey,
+      enabledTourTypeKey,
+      languages,
+      tourTypes,
+      enabledLangs,
+      enabledTourTypeIds,
+    ],
+  );
+
+  const filterKey = useMemo(() => tourSlotFilterKey(tourFilter), [tourFilter]);
+  const tourFilterRef = useRef(tourFilter);
+  tourFilterRef.current = tourFilter;
+
+  useEffect(() => {
+    if (viewMode === 'month') return;
+    const [y, m] = selectedDate.split('-').map(Number);
+    setCursor((prev) => {
+      if (prev.year === y && prev.month === m - 1) return prev;
+      return { year: y, month: m - 1 };
+    });
+  }, [selectedDate, viewMode]);
+
+  useEffect(() => {
+    if (!filtersReady) return;
+    void dispatch(fetchTours(tourFilterRef.current));
+  }, [dispatch, filterKey, filtersReady]);
 
   const toggleLang = (code: LangCode) => {
     setEnabledLangs((prev) => {
@@ -145,12 +214,57 @@ export function CalendarPage() {
     });
   };
 
+  const toggleTourType = (tourTypeId: number) => {
+    setEnabledTourTypeIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(tourTypeId)) next.delete(tourTypeId);
+      else next.add(tourTypeId);
+      return next;
+    });
+  };
+
   const shiftMonth = (delta: number) => {
     setCursor((prev) => {
       const date = new Date(prev.year, prev.month + delta, 1);
       return { year: date.getFullYear(), month: date.getMonth() };
     });
   };
+
+  const shiftWeek = (delta: number) => {
+    setSelectedDate((prev) => addDaysToDateKey(prev, delta * 7));
+  };
+
+  const shiftDay = (delta: number) => {
+    setSelectedDate((prev) => addDaysToDateKey(prev, delta));
+  };
+
+  const handlePrev = () => {
+    if (viewMode === 'month') shiftMonth(-1);
+    else if (viewMode === 'week') shiftWeek(-1);
+    else shiftDay(-1);
+  };
+
+  const handleNext = () => {
+    if (viewMode === 'month') shiftMonth(1);
+    else if (viewMode === 'week') shiftWeek(1);
+    else shiftDay(1);
+  };
+
+  const handleViewModeChange = (mode: CalendarViewMode) => {
+    setViewMode(mode);
+    if (mode !== 'month') {
+      setSelectedDate(todayLocalDateKey());
+    }
+  };
+
+  const navLabel =
+    viewMode === 'month'
+      ? 'month'
+      : viewMode === 'week'
+        ? 'week'
+        : 'day';
+
+  const cardTitle = calendarTitle(viewMode, cursor, selectedDate, MONTH_NAMES);
 
   return (
     <div>
@@ -167,13 +281,22 @@ export function CalendarPage() {
         extra={
           <>
             <div className={styles.viewChips}>
-              <FilterChip active={viewMode === 'month'} onClick={() => setViewMode('month')}>
+              <FilterChip
+                active={viewMode === 'month'}
+                onClick={() => handleViewModeChange('month')}
+              >
                 Month
               </FilterChip>
-              <FilterChip active={viewMode === 'week'} onClick={() => setViewMode('week')}>
+              <FilterChip
+                active={viewMode === 'week'}
+                onClick={() => handleViewModeChange('week')}
+              >
                 Week
               </FilterChip>
-              <FilterChip active={viewMode === 'day'} onClick={() => setViewMode('day')}>
+              <FilterChip
+                active={viewMode === 'day'}
+                onClick={() => handleViewModeChange('day')}
+              >
                 Day
               </FilterChip>
             </div>
@@ -188,20 +311,29 @@ export function CalendarPage() {
         </div>
       )}
 
+      {status === 'failed' && (
+        <ListErrorState
+          message={error}
+          loading={false}
+          onRetry={() => void dispatch(fetchTours(tourFilter))}
+        />
+      )}
+
+      {status !== 'failed' && (
       <div className={styles.pageGrid}>
         <AppCard
-          title={`${MONTH_NAMES[cursor.month]} ${cursor.year}`}
+          title={cardTitle}
           extra={
             <div style={{ display: 'flex', gap: 6 }}>
               <IconButton
                 icon={<LeftOutlined />}
-                aria-label="Previous month"
-                onClick={() => shiftMonth(-1)}
+                aria-label={`Previous ${navLabel}`}
+                onClick={handlePrev}
               />
               <IconButton
                 icon={<RightOutlined />}
-                aria-label="Next month"
-                onClick={() => shiftMonth(1)}
+                aria-label={`Next ${navLabel}`}
+                onClick={handleNext}
               />
             </div>
           }
@@ -222,7 +354,7 @@ export function CalendarPage() {
 
           <div className={styles.calMonth}>
             {monthDays.map((cell) => {
-              const events = filteredEvents[cell.date] ?? [];
+              const events = eventsByDate[cell.date] ?? [];
               return (
                 <div
                   key={cell.date}
@@ -230,9 +362,15 @@ export function CalendarPage() {
                     styles.calCell,
                     cell.otherMonth ? styles.calCellOther : '',
                     cell.isToday ? styles.calCellToday : '',
+                    viewMode === 'day' && cell.date === selectedDate ? styles.calCellToday : '',
                   ]
                     .filter(Boolean)
                     .join(' ')}
+                  onClick={() => {
+                    if (viewMode === 'day') setSelectedDate(cell.date);
+                  }}
+                  role={viewMode === 'day' ? 'button' : undefined}
+                  tabIndex={viewMode === 'day' ? 0 : undefined}
                 >
                   <div className={styles.calDn}>
                     {cell.isToday ? (
@@ -291,27 +429,29 @@ export function CalendarPage() {
           </AppCard>
 
           <AppCard padding="sm">
-            <SectionLabel>Legend</SectionLabel>
-            <div className={styles.legendList}>
-              <div className={styles.legendItem}>
-                <span className={styles.legendDot} style={{ background: 'var(--g500)' }} />
-                Confirmed
-              </div>
-              <div className={styles.legendItem}>
-                <span className={styles.legendDot} style={{ background: 'var(--orange)' }} />
-                Pending
-              </div>
-              <div className={styles.legendItem}>
-                <span
-                  className={styles.legendDot}
-                  style={{ background: 'var(--red)', opacity: 0.6 }}
-                />
-                Unfilled
-              </div>
+            <SectionLabel>Tour Type Filter</SectionLabel>
+            <div className={styles.langFilterList}>
+              {tourTypes.map((tour) => {
+                const id = tour.tourTypeId;
+                if (id == null) return null;
+                return (
+                  <label key={id} className={styles.langFilterItem}>
+                    <input
+                      type="checkbox"
+                      checked={enabledTourTypeIds.has(id)}
+                      onChange={() => toggleTourType(id)}
+                      style={{ width: 13, height: 13 }}
+                    />
+                    <span style={{ fontSize: 14 }}>🏛️</span>
+                    {tour.name ?? `Tour #${id}`}
+                  </label>
+                );
+              })}
             </div>
           </AppCard>
         </div>
       </div>
+      )}
     </div>
   );
 }

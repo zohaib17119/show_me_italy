@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Spin } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
@@ -12,16 +12,21 @@ import {
   FilterSelect,
   GuideCell,
   LangChip,
+  ListErrorState,
   SearchInput,
   showToast,
   StatusBadge,
   TablePagination,
 } from '@/components/ui';
+import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import { getRouteMeta } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
 import {
+  approveApplication,
   fetchApplications,
   selectApplications,
+  selectApplicationsError,
+  selectApplicationsMutationStatus,
   selectApplicationsStatus,
 } from '@/features/applications/applicationsSlice';
 import type { Application } from '@/mocks/applications';
@@ -34,15 +39,23 @@ export function ApplicationsPage() {
   const meta = getRouteMeta(ROUTES.APPLICATIONS);
   const applications = useAppSelector(selectApplications);
   const status = useAppSelector(selectApplicationsStatus);
+  const error = useAppSelector(selectApplicationsError);
+  const mutationStatus = useAppSelector(selectApplicationsMutationStatus);
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [approvingId, setApprovingId] = useState<number | null>(null);
 
-  useEffect(() => {
+  const loadApplications = useCallback(() => {
     void dispatch(fetchApplications());
   }, [dispatch]);
+
+  useFetchErrorToast(status, error);
+
+  useEffect(() => {
+    loadApplications();
+  }, [loadApplications]);
 
   useEffect(() => {
     if (applications.length > 0 && selectedKeys.length === 0) {
@@ -52,16 +65,31 @@ export function ApplicationsPage() {
 
   const filtered = useMemo(() => {
     return applications.filter((app) => {
-      const matchesSearch =
-        search.trim() === '' ||
-        app.guideName.toLowerCase().includes(search.toLowerCase()) ||
-        app.tour.toLowerCase().includes(search.toLowerCase());
-      const matchesStatus = statusFilter === 'all' || app.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const query = search.trim().toLowerCase();
+      if (query === '') return true;
+      return (
+        app.guideName.toLowerCase().includes(query) ||
+        app.tour.toLowerCase().includes(query)
+      );
     });
-  }, [applications, search, statusFilter]);
+  }, [applications, search]);
 
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const handleApprove = useCallback(
+    async (applicationId: number) => {
+      setApprovingId(applicationId);
+      try {
+        await dispatch(approveApplication(applicationId)).unwrap();
+        showToast('✓ Application approved');
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'Failed to approve application');
+      } finally {
+        setApprovingId(null);
+      }
+    },
+    [dispatch],
+  );
 
   const columns: ColumnsType<Application> = useMemo(
     () => [
@@ -104,38 +132,35 @@ export function ApplicationsPage() {
       {
         title: 'Actions',
         key: 'actions',
-        render: (_, row) =>
-          row.status === 'approved' ? (
-            <AppButton variant="secondary" size="xs">
-              View
+        render: (_, row) => (
+          <div style={{ display: 'flex', gap: 5 }}>
+            <AppButton
+              variant="primary"
+              size="xs"
+              disabled={mutationStatus === 'loading' && approvingId === row.applicationId}
+              onClick={() => void handleApprove(row.applicationId)}
+            >
+              Approve
             </AppButton>
-          ) : (
-            <div style={{ display: 'flex', gap: 5 }}>
-              <AppButton variant="primary" size="xs" onClick={() => showToast('✓ Approved!')}>
-                ✓
-              </AppButton>
-              <AppButton variant="danger" size="xs" onClick={() => showToast('Denied')}>
-                ✕
-              </AppButton>
-              <AppButton
-                variant="secondary"
-                size="xs"
-                onClick={() => navigate(ROUTES.ASSIGNMENT)}
-              >
-                Assign
-              </AppButton>
-            </div>
-          ),
+            <AppButton
+              variant="secondary"
+              size="xs"
+              onClick={() => navigate(ROUTES.ASSIGNMENT)}
+            >
+              Assign
+            </AppButton>
+          </div>
+        ),
       },
     ],
-    [navigate],
+    [approvingId, handleApprove, mutationStatus, navigate],
   );
 
   return (
     <div>
       <PageHeader
         title={meta.title}
-        subtitle={meta.subtitle}
+        subtitle={`${applications.length} pending · nearest first`}
         extra={
           <AppButton variant="secondary" onClick={() => showToast('Export started')}>
             Export CSV
@@ -143,78 +168,73 @@ export function ApplicationsPage() {
         }
       />
 
-      {status === 'loading' && (
+      {status === 'loading' && applications.length === 0 && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
           <Spin />
         </div>
       )}
 
-      <FilterBar>
-        <SearchInput
-          placeholder="Search…"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-        />
-        <FilterSelect
-          options={[
-            { value: 'all', label: 'All Tours' },
-            { value: 'colosseum', label: 'Colosseum Arena' },
-          ]}
-          defaultValue="all"
-        />
-        <FilterSelect
-          options={[
-            { value: 'all', label: 'All Languages' },
-            { value: 'EN', label: 'English' },
-            { value: 'IT', label: 'Italian' },
-          ]}
-          defaultValue="all"
-        />
-        <FilterSelect
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPage(1);
-          }}
-          options={[
-            { value: 'all', label: 'All Status' },
-            { value: 'pending', label: 'Pending' },
-            { value: 'approved', label: 'Approved' },
-            { value: 'denied', label: 'Denied' },
-          ]}
-        />
-      </FilterBar>
+      {status === 'failed' && (
+        <ListErrorState message={error} onRetry={loadApplications} />
+      )}
 
-      <BulkActionBar selectedCount={selectedKeys.length}>
-        <AppButton variant="primary" onClick={() => showToast('✓ Bulk approved')}>
-          ✓ Approve All
-        </AppButton>
-        <AppButton variant="danger" onClick={() => showToast('Bulk denied')}>
-          ✕ Deny All
-        </AppButton>
-      </BulkActionBar>
+      {status !== 'failed' && (
+        <>
+          <FilterBar>
+            <SearchInput
+              placeholder="Search…"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+            <FilterSelect
+              options={[
+                { value: 'all', label: 'All Tours' },
+                { value: 'colosseum', label: 'Colosseum Arena' },
+              ]}
+              defaultValue="all"
+            />
+            <FilterSelect
+              options={[
+                { value: 'all', label: 'All Languages' },
+                { value: 'EN', label: 'English' },
+                { value: 'IT', label: 'Italian' },
+              ]}
+              defaultValue="all"
+            />
+          </FilterBar>
 
-      <DataTable<Application>
-        rowKey="id"
-        columns={columns}
-        dataSource={pageData}
-        pagination={false}
-        rowSelection={{
-          selectedRowKeys: selectedKeys,
-          onChange: (keys) => setSelectedKeys(keys as string[]),
-        }}
-        footer={() => (
-          <TablePagination
-            page={page}
-            pageSize={PAGE_SIZE}
-            total={filtered.length}
-            onPageChange={setPage}
+          <BulkActionBar selectedCount={selectedKeys.length}>
+            <AppButton variant="primary" onClick={() => showToast('✓ Bulk approved')}>
+              ✓ Approve All
+            </AppButton>
+            <AppButton variant="danger" onClick={() => showToast('Bulk denied')}>
+              ✕ Deny All
+            </AppButton>
+          </BulkActionBar>
+
+          <DataTable<Application>
+            rowKey="id"
+            columns={columns}
+            dataSource={pageData}
+            pagination={false}
+            rowSelection={{
+              selectedRowKeys: selectedKeys,
+              onChange: (keys) => setSelectedKeys(keys as string[]),
+            }}
+            footer={() => (
+              <TablePagination
+                page={page}
+                pageSize={PAGE_SIZE}
+                total={filtered.length}
+                onPageChange={setPage}
+              />
+            )}
           />
-        )}
-      />
+        </>
+      )}
     </div>
   );
 }

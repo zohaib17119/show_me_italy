@@ -13,17 +13,19 @@ import {
   FilterSelect,
   GuideCell,
   LangChip,
+  ListErrorState,
   SearchInput,
   StatusBadge,
   TablePagination,
   showToast,
 } from '@/components/ui';
+import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import { ROUTES } from '@/constants/routes';
 import {
-  fetchAllAgents,
-  selectAllGuides,
-  selectAgentStatus,
-  selectVerifiedGuides,
+  fetchAdminGuides,
+  selectAdminGuideError,
+  selectAdminGuideStatus,
+  selectAdminGuides,
 } from '@/features/agent/agentSlice';
 import type { Guide, GuideStatus } from '@/mocks/guides';
 import type { TourStatus } from '@/types';
@@ -39,9 +41,9 @@ function guideStatusToBadge(status: GuideStatus): TourStatus {
 export function GuideRosterPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const guides = useAppSelector(selectAllGuides);
-  const verified = useAppSelector(selectVerifiedGuides);
-  const status = useAppSelector(selectAgentStatus);
+  const guides = useAppSelector(selectAdminGuides);
+  const status = useAppSelector(selectAdminGuideStatus);
+  const error = useAppSelector(selectAdminGuideError);
 
   const [search, setSearch] = useState('');
   const [languageFilter, setLanguageFilter] = useState('all');
@@ -49,9 +51,15 @@ export function GuideRosterPage() {
   const [page, setPage] = useState(1);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
 
+  useFetchErrorToast(status, error);
+
   useEffect(() => {
-    void dispatch(fetchAllAgents());
+    void dispatch(fetchAdminGuides({}));
   }, [dispatch]);
+
+  const activeCount = guides.filter((g) => g.status === 'active').length;
+  const pendingCount = guides.filter((g) => g.status === 'pending').length;
+  const inactiveCount = guides.filter((g) => g.status === 'inactive').length;
 
   const filteredGuides = useMemo(() => {
     return guides.filter((guide) => {
@@ -144,7 +152,7 @@ export function GuideRosterPage() {
 
       <PageHeader
         title="Guide Roster"
-        subtitle={`${guides.length} total · ${verified.length} active`}
+        subtitle={`${guides.length} total · ${activeCount} active · ${pendingCount} pending · ${inactiveCount} inactive`}
         extra={
           <>
             <AppButton variant="secondary" size="xs" onClick={() => showToast('Export started')}>
@@ -155,75 +163,90 @@ export function GuideRosterPage() {
         }
       />
 
-      {status === 'loading' && (
+      {status === 'loading' && guides.length === 0 && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
           <Spin />
         </div>
       )}
 
-      <FilterBar>
-        <SearchInput
-          placeholder="Search guides…"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
+      {status === 'failed' && (
+        <ListErrorState
+          message={error}
+          loading={false}
+          onRetry={() => void dispatch(fetchAdminGuides({}))}
         />
-        <FilterSelect
-          value={languageFilter}
-          onChange={(e) => {
-            setLanguageFilter(e.target.value);
-            setPage(1);
-          }}
-          options={[
-            { value: 'all', label: 'All Languages' },
-            { value: 'EN', label: 'English' },
-            { value: 'IT', label: 'Italian' },
-            { value: 'FR', label: 'French' },
-          ]}
-        />
-        <FilterSelect
-          value={statusFilter}
-          onChange={(e) => {
-            setStatusFilter(e.target.value);
-            setPage(1);
-          }}
-          options={[
-            { value: 'all', label: 'All Status' },
-            { value: 'active', label: 'Active' },
-            { value: 'inactive', label: 'Inactive' },
-            { value: 'pending', label: 'Pending' },
-          ]}
-        />
-      </FilterBar>
+      )}
 
-      <BulkActionBar selectedCount={selectedKeys.length}>
-        <AppButton variant="secondary" size="xs">
-          Activate
-        </AppButton>
-        <AppButton variant="danger" size="xs">
-          Remove
-        </AppButton>
-      </BulkActionBar>
+      {status !== 'failed' && (
+        <>
+          <FilterBar>
+            <SearchInput
+              placeholder="Search guides…"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+            />
+            <FilterSelect
+              value={languageFilter}
+              onChange={(e) => {
+                setLanguageFilter(e.target.value);
+                setPage(1);
+              }}
+              options={[
+                { value: 'all', label: 'All Languages' },
+                { value: 'EN', label: 'English' },
+                { value: 'IT', label: 'Italian' },
+                { value: 'FR', label: 'French' },
+                { value: 'ES', label: 'Spanish' },
+                { value: 'DE', label: 'German' },
+                { value: 'JA', label: 'Japanese' },
+              ]}
+            />
+            <FilterSelect
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+                { value: 'pending', label: 'Pending' },
+              ]}
+            />
+          </FilterBar>
 
-      <DataTable<Guide>
-        rowKey="id"
-        columns={columns}
-        dataSource={pageData}
-        pagination={false}
-        rowSelection={{
-          selectedRowKeys: selectedKeys,
-          onChange: (keys) => setSelectedKeys(keys as string[]),
-        }}
-      />
+          <BulkActionBar selectedCount={selectedKeys.length}>
+            <AppButton variant="secondary" size="xs">
+              Activate
+            </AppButton>
+            <AppButton variant="danger" size="xs">
+              Remove
+            </AppButton>
+          </BulkActionBar>
 
-      <TablePagination
-        page={page}
-        pageSize={PAGE_SIZE}
-        total={filteredGuides.length}
-        onPageChange={setPage}
-      />
+          <DataTable<Guide>
+            rowKey="id"
+            columns={columns}
+            dataSource={pageData}
+            pagination={false}
+            rowSelection={{
+              selectedRowKeys: selectedKeys,
+              onChange: (keys) => setSelectedKeys(keys as string[]),
+            }}
+          />
+
+          <TablePagination
+            page={page}
+            pageSize={PAGE_SIZE}
+            total={filteredGuides.length}
+            onPageChange={setPage}
+          />
+        </>
+      )}
     </div>
   );
 }

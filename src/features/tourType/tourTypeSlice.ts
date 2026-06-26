@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, createSelector } from '@reduxjs/toolkit';
 import type { TourType } from '@/api/types';
 import { getApiErrorMessage } from '@/api/axiosInstance';
 import { tourTypeApi } from './tourTypeApi';
@@ -105,4 +105,9 @@ const tourTypeSlice = createSlice({
 export default tourTypeSlice.reducer;
 
 export const selectTourTypes = (state: RootState) => state.tourType.items;
+
+export const selectActiveTourTypes = createSelector([selectTourTypes], (items) =>
+  items.filter((t) => t.isActive !== false),
+);
+
 export const selectTourTypeStatus = (state: RootState) => state.tourType.status;

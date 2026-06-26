@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Spin } from 'antd';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
@@ -8,15 +8,20 @@ import {
   AppCard,
   BreadcrumbNav,
   LangChip,
+  ListErrorState,
   showToast,
 } from '@/components/ui';
+import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import { ROUTES } from '@/constants/routes';
 import {
   approveAgent,
   fetchUnverifiedAgents,
-  selectAgentStatus,
+  rejectAgent,
+  selectUnverifiedGuideError,
+  selectUnverifiedGuideStatus,
   selectUnverifiedGuides,
 } from '@/features/agent/agentSlice';
+import { RejectAgentModal } from './components/RejectAgentModal';
 import styles from './guides.module.css';
 
 const AVATAR_STYLES = [
@@ -35,18 +40,47 @@ export function ApprovalsPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const pendingGuides = useAppSelector(selectUnverifiedGuides);
-  const status = useAppSelector(selectAgentStatus);
+  const status = useAppSelector(selectUnverifiedGuideStatus);
+  const error = useAppSelector(selectUnverifiedGuideError);
+
+  useFetchErrorToast(status, error);
+
+  const [rejectTarget, setRejectTarget] = useState<{ id: string; name: string } | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
     void dispatch(fetchUnverifiedAgents());
   }, [dispatch]);
 
-  const handleApprove = async (agentId: string, name: string) => {
+  const refreshList = () => {
+    void dispatch(fetchUnverifiedAgents());
+  };
+
+  const handleApprove = async (userId: string, name: string) => {
+    setActionLoading(true);
     try {
-      await dispatch(approveAgent({ agentId })).unwrap();
+      await dispatch(approveAgent(userId)).unwrap();
       showToast(`✓ ${name} approved!`);
+      refreshList();
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to approve guide');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleReject = async (reason: string) => {
+    if (!rejectTarget) return;
+    setActionLoading(true);
+    try {
+      await dispatch(rejectAgent({ userId: rejectTarget.id, reason })).unwrap();
+      showToast(`${rejectTarget.name} rejected`);
+      setRejectTarget(null);
+      refreshList();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to reject guide');
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -65,12 +99,21 @@ export function ApprovalsPage() {
         subtitle={`${pendingGuides.length} guides awaiting review`}
       />
 
-      {status === 'loading' && (
+      {status === 'loading' && pendingGuides.length === 0 && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
           <Spin />
         </div>
       )}
 
+      {status === 'failed' && (
+        <ListErrorState
+          message={error}
+          loading={false}
+          onRetry={() => void dispatch(fetchUnverifiedAgents())}
+        />
+      )}
+
+      {status !== 'failed' && (
       <div className={styles.approvalGrid}>
         {pendingGuides.map((guide, index) => {
           const avatarStyle = AVATAR_STYLES[index % AVATAR_STYLES.length];
@@ -101,18 +144,44 @@ export function ApprovalsPage() {
 
               <div className={styles.licenseRow}>
                 📄 {guide.license}
-                <AppButton variant="secondary" size="xs" style={{ marginLeft: 'auto' }}>
-                  View Doc
-                </AppButton>
+                {guide.certificateUpload ? (
+                  <AppButton
+                    variant="secondary"
+                    size="xs"
+                    style={{ marginLeft: 'auto' }}
+                    onClick={() => window.open(guide.certificateUpload, '_blank', 'noopener')}
+                  >
+                    View Doc
+                  </AppButton>
+                ) : (
+                  <AppButton variant="secondary" size="xs" style={{ marginLeft: 'auto' }} disabled>
+                    No Doc
+                  </AppButton>
+                )}
               </div>
 
               <div className={styles.approvalActions}>
-                <AppButton variant="danger" size="xs" style={{ flex: 1 }}>
+                <AppButton
+                  variant="secondary"
+                  size="xs"
+                  style={{ flex: 1 }}
+                  onClick={() => navigate(`/guides/${guide.id}`)}
+                >
+                  View Profile
+                </AppButton>
+                <AppButton
+                  variant="danger"
+                  size="xs"
+                  style={{ flex: 1 }}
+                  disabled={actionLoading}
+                  onClick={() => setRejectTarget({ id: guide.id, name: guide.name })}
+                >
                   ✕ Reject
                 </AppButton>
                 <AppButton
                   size="xs"
                   style={{ flex: 1 }}
+                  disabled={actionLoading}
                   onClick={() => void handleApprove(guide.id, guide.name)}
                 >
                   ✓ Approve
@@ -122,6 +191,15 @@ export function ApprovalsPage() {
           );
         })}
       </div>
+      )}
+
+      <RejectAgentModal
+        open={Boolean(rejectTarget)}
+        guideName={rejectTarget?.name}
+        loading={actionLoading}
+        onCancel={() => setRejectTarget(null)}
+        onConfirm={(reason) => void handleReject(reason)}
+      />
     </div>
   );
 }

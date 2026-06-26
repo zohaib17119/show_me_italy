@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import type { TourSlot } from '@/api/types';
+import type { TourSlot, TourSlotFilter } from '@/api/types';
 import {
   groupEventsByDate,
   mapTourSlotToCalendarEvent,
@@ -25,13 +25,16 @@ const initialState: TourState = {
   error: null,
 };
 
-export const fetchTours = createAsyncThunk('tour/fetchAll', async (_, { rejectWithValue }) => {
-  try {
-    return await tourApi.getAll();
-  } catch (error) {
-    return rejectWithValue(getApiErrorMessage(error));
-  }
-});
+export const fetchTours = createAsyncThunk(
+  'tour/fetchAll',
+  async (filter: TourSlotFilter | undefined, { rejectWithValue }) => {
+    try {
+      return await tourApi.getAllAdmin(filter ?? {});
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
 
 export const createTourSlot = createAsyncThunk(
   'tour/create',

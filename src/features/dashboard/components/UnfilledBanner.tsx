@@ -1,13 +1,14 @@
 import { useNavigate } from 'react-router-dom';
-import { useAppSelector } from '@/app/hooks';
 import { AppButton } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
-import { selectUnfilledCount } from '@/features/tour/tourSlice';
 import styles from '../dashboard.module.css';
 
-export function UnfilledBanner() {
+interface UnfilledBannerProps {
+  count: number;
+}
+
+export function UnfilledBanner({ count }: UnfilledBannerProps) {
   const navigate = useNavigate();
-  const unfilled = useAppSelector(selectUnfilledCount);
 
   return (
     <div
@@ -21,7 +22,7 @@ export function UnfilledBanner() {
       <div className={styles.unfilledIcon}>⚠️</div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--red)' }}>
-          {unfilled} tour slot{unfilled === 1 ? '' : 's'} still unfilled
+          {count} tour slot{count === 1 ? '' : 's'} still unfilled
         </div>
         <div style={{ fontSize: 11, color: 'var(--text-secondary)', marginTop: 2 }}>
           Assign guides before departure · Click to open Slot Assignment

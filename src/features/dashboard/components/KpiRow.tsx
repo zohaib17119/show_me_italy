@@ -2,14 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '@/app/hooks';
 import { StatCard } from '@/components/ui/StatCard';
 import { ROUTES } from '@/constants/routes';
-import { selectActiveGuideCount } from '@/features/agent/agentSlice';
-import { selectPendingApplicationCount } from '@/features/applications/applicationsSlice';
-import {
-  selectTodayTours,
-  selectTourItems,
-  selectUnfilledCount,
-} from '@/features/tour/tourSlice';
-import { selectWalletSummary } from '@/features/wallet/walletSlice';
+import { selectDashboardData } from '@/features/dashboard/dashboardSlice';
 
 function TrendPill({
   children,
@@ -40,36 +33,32 @@ function TrendPill({
 
 export function KpiRow() {
   const navigate = useNavigate();
-  const todayTours = useAppSelector(selectTodayTours);
-  const allTours = useAppSelector(selectTourItems);
-  const unfilled = useAppSelector(selectUnfilledCount);
-  const pendingApps = useAppSelector(selectPendingApplicationCount);
-  const walletSummary = useAppSelector(selectWalletSummary);
-  const activeGuides = useAppSelector(selectActiveGuideCount);
+  const dashboard = useAppSelector(selectDashboardData);
+  const stats = dashboard?.stats;
 
   return (
     <div className="kpi-row" id="kpiRow">
       <StatCard
         icon="🗓️"
-        value={todayTours.length}
+        value={stats?.toursToday ?? 0}
         label="Tours Today"
-        sub={`${allTours.length} total scheduled`}
+        sub={`${stats?.totalSlots ?? 0} total scheduled`}
         trend={<TrendPill variant="up">Live</TrendPill>}
         accentColor="#27AE60"
         onClick={() => navigate(ROUTES.CALENDAR)}
       />
       <StatCard
         icon="📅"
-        value={allTours.length}
+        value={stats?.totalSlots ?? 0}
         label="All Slots"
-        sub="from API"
+        sub="from dashboard API"
         trend={<TrendPill variant="up">API</TrendPill>}
         accentColor="#2E75B6"
         onClick={() => navigate(ROUTES.CALENDAR)}
       />
       <StatCard
         icon="⚠️"
-        value={unfilled}
+        value={stats?.unfilledSlots ?? 0}
         label="Unfilled Slots"
         sub="assign guides →"
         trend={<TrendPill variant="dn">Urgent</TrendPill>}
@@ -79,7 +68,7 @@ export function KpiRow() {
       />
       <StatCard
         icon="⏳"
-        value={pendingApps}
+        value={stats?.pendingApplications ?? 0}
         label="Pending Apps"
         sub="awaiting decision"
         trend={<TrendPill variant="warn">Review</TrendPill>}
@@ -89,16 +78,20 @@ export function KpiRow() {
       />
       <StatCard
         icon="💰"
-        value={walletSummary.queueCount}
+        value={stats?.pendingPayouts ?? 0}
         label="Payout Requests"
         sub="pending review"
-        trend={<TrendPill variant="warn">€{walletSummary.totalPending.toLocaleString()}</TrendPill>}
+        trend={
+          <TrendPill variant="warn">
+            €{(dashboard?.payout?.pendingAmount ?? 0).toLocaleString()}
+          </TrendPill>
+        }
         accentColor="#F59E0B"
         onClick={() => navigate(ROUTES.PAYOUTS)}
       />
       <StatCard
         icon="👥"
-        value={activeGuides}
+        value={stats?.activeGuides ?? 0}
         label="Active Guides"
         sub="verified agents"
         trend={<TrendPill variant="up">Live</TrendPill>}

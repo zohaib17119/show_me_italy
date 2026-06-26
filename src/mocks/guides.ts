@@ -33,6 +33,7 @@ export interface Guide {
   earnings: GuideEarnings;
   tourHistory: GuideTourHistory[];
   adminNote: string;
+  certificateUpload?: string;
 }
 
 export const MOCK_GUIDES: Guide[] = [

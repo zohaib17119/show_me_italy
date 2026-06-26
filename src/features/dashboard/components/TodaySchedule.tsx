@@ -4,13 +4,28 @@ import { useAppSelector } from '@/app/hooks';
 import { LangChip } from '@/components/ui/LangChip';
 import { StatusBadge } from '@/components/ui/StatusBadge';
 import { ROUTES } from '@/constants/routes';
-import { selectTodayTours } from '@/features/tour/tourSlice';
+import { selectDashboardData } from '@/features/dashboard/dashboardSlice';
 import { languageColors } from '@/theme/tokens';
+import type { LangCode } from '@/types';
 import styles from '../dashboard.module.css';
+
+function languageToCode(language?: string): LangCode {
+  const map: Record<string, LangCode> = {
+    english: 'EN',
+    italian: 'IT',
+    french: 'FR',
+    spanish: 'ES',
+    german: 'DE',
+    japanese: 'JA',
+  };
+  return map[language?.toLowerCase() ?? ''] ?? 'EN';
+}
 
 export function TodaySchedule() {
   const navigate = useNavigate();
-  const todayTours = useAppSelector(selectTodayTours);
+  const dashboard = useAppSelector(selectDashboardData);
+  const schedule = dashboard?.todaySchedule;
+  const tours = schedule?.tours ?? [];
   const todayLabel = new Date().toLocaleDateString('en-GB', {
     weekday: 'short',
     day: 'numeric',
@@ -23,44 +38,43 @@ export function TodaySchedule() {
         <div className={styles.scheduleTitle}>Today&apos;s Schedule</div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span className={styles.scheduleDatePill}>
-            {todayLabel} · {todayTours.length} tours
+            {todayLabel} · {schedule?.totalTours ?? tours.length} tours
           </span>
           <Button size="small" onClick={() => navigate(ROUTES.CALENDAR)}>
             Full Calendar →
           </Button>
         </div>
       </div>
-      {todayTours.length === 0 && (
+      {tours.length === 0 && (
         <div style={{ padding: 16, fontSize: 12, color: 'var(--text-muted)' }}>
           No tours scheduled for today
         </div>
       )}
-      {todayTours.map((item, i) => {
-        const color = languageColors[item.language] ?? '#6B8C75';
-        const isLast = i === todayTours.length - 1;
-        const timeParts = item.label.split(' ');
-        const time = timeParts[0] ?? '—';
-        const tourName = timeParts.slice(1).join(' ');
+      {tours.map((item, i) => {
+        const langCode = languageToCode(item.language);
+        const color = languageColors[langCode] ?? '#6B8C75';
+        const isLast = i === tours.length - 1;
+        const unfilled = !item.guideName;
         return (
           <div
-            key={item.id}
+            key={item.slotId ?? `${item.tourName}-${item.startTime}`}
             className={styles.tl2Row}
-            style={item.unfilled ? { background: '#fff9f8' } : undefined}
+            style={unfilled ? { background: '#fff9f8' } : undefined}
           >
             <div className={styles.tl2TimeCol}>
               <div
                 className={styles.tl2Time}
-                style={item.unfilled ? { color: '#E74C3C' } : undefined}
+                style={unfilled ? { color: '#E74C3C' } : undefined}
               >
-                {time}
+                {item.startTime ?? '—'}
               </div>
             </div>
             <div className={styles.tl2DotCol}>
               <div
                 className={styles.tl2Dot}
                 style={{
-                  background: item.unfilled ? '#E74C3C' : color,
-                  boxShadow: item.unfilled ? undefined : `0 0 0 3px ${color}26`,
+                  background: unfilled ? '#E74C3C' : color,
+                  boxShadow: unfilled ? undefined : `0 0 0 3px ${color}26`,
                 }}
               />
               {!isLast && <div className={styles.tl2Line} />}
@@ -68,22 +82,22 @@ export function TodaySchedule() {
             <div className={styles.tl2Content}>
               <div
                 className={styles.tl2TourName}
-                style={item.unfilled ? { color: '#E74C3C' } : undefined}
+                style={unfilled ? { color: '#E74C3C' } : undefined}
               >
-                {tourName}
-                <LangChip code={item.language} />
+                {item.tourName ?? 'Tour'}
+                <LangChip code={langCode} />
               </div>
               <div
                 className={styles.tl2Meta}
-                style={item.unfilled ? { color: '#E74C3C' } : undefined}
+                style={unfilled ? { color: '#E74C3C' } : undefined}
               >
-                {item.unfilled
+                {unfilled
                   ? '⚠ No guide assigned — needs assignment'
-                  : item.slot.meetingPoint ?? 'Meeting point TBD'}
+                  : `${item.guideName} · ${item.language ?? '—'}`}
               </div>
               <div className={styles.tl2StatusRow}>
-                <StatusBadge status={item.unfilled ? 'unfilled' : 'confirmed'} />
-                {item.unfilled && (
+                <StatusBadge status={unfilled ? 'unfilled' : 'confirmed'} />
+                {unfilled && (
                   <Button
                     danger
                     size="small"

@@ -1,11 +1,22 @@
 import { axiosInstance } from '@/api/axiosInstance';
 import type { AgentApplication } from '@/api/types';
-import { unwrapData } from '@/api/types';
+import { normalizeListResponse } from '@/api/utils/normalizeList';
+
+export interface ApproveGuideApplicationPayload {
+  applicationId: number;
+  status: 'Approved';
+}
 
 export const applicationsApi = {
-  getApplications: async (payload: Record<string, unknown> = {}): Promise<AgentApplication[]> => {
-    const { data } = await axiosInstance.post('/v1/AgentApplications/get-application', payload);
-    return unwrapData<AgentApplication[]>(data) ?? [];
+  getAllAdminPending: async (): Promise<AgentApplication[]> => {
+    const { data } = await axiosInstance.post('/api/AgentApplications/get-all-admin', null, {
+      params: { status: 'pending' },
+    });
+    return normalizeListResponse<AgentApplication>(data);
+  },
+
+  approveGuideApplication: async (payload: ApproveGuideApplicationPayload): Promise<void> => {
+    await axiosInstance.post('/api/AgentApplications/approve-guide-application', payload);
   },
 
   apply: async (payload: Record<string, unknown>): Promise<void> => {

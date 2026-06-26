@@ -19,7 +19,21 @@ function initials(name: string): string {
     .join('');
 }
 
+function formatAppliedAt(iso?: string): string {
+  if (!iso) return '—';
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+  return date.toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
 export function mapApplication(record: AgentApplication, index: number): Application {
+  const applicationId = Number(record.applicationId ?? record.id ?? index);
   const guideName =
     record.guideName ??
     (record as { agentName?: string }).agentName ??
@@ -28,7 +42,8 @@ export function mapApplication(record: AgentApplication, index: number): Applica
   const lang = (record.language?.slice(0, 2).toUpperCase() ?? 'EN') as LangCode;
 
   return {
-    id: String(record.id ?? index),
+    id: String(applicationId),
+    applicationId,
     guideId: String(record.agentId ?? record.guideId ?? index),
     guideName,
     guideInitials: initials(guideName),
@@ -37,7 +52,7 @@ export function mapApplication(record: AgentApplication, index: number): Applica
     dateLabel: record.dateLabel ?? '—',
     time: record.time ?? '—',
     language: lang,
-    appliedAt: record.appliedAt ?? '—',
+    appliedAt: formatAppliedAt(record.appliedAt),
     status: mapStatus(record.status),
   };
 }

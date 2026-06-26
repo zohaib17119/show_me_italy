@@ -1,5 +1,17 @@
 export type { ApiResponse } from './apiResponse';
 export { unwrapData } from './apiResponse';
+export type {
+  AdminDashboardData,
+  DashboardActivityItem,
+  DashboardHeader,
+  DashboardLanguageStat,
+  DashboardPayout,
+  DashboardQuickActions,
+  DashboardStats,
+  DashboardTodaySchedule,
+  DashboardTodayTour,
+  DashboardWeekDay,
+} from './dashboard';
 
 export interface TimeSpan {
   ticks?: number;
@@ -26,6 +38,14 @@ export interface TourSlot {
   createdByAdminId?: number | null;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface TourSlotFilter {
+  startDate?: string | null;
+  endDate?: string | null;
+  languageIds?: string | null;
+  tourTypeId?: number | null;
+  tourTypeIds?: string | null;
 }
 
 export interface TourType {
@@ -74,16 +94,35 @@ export interface AgentRecord {
   email?: string;
   phoneNumber?: string;
   tourGuideLicenseOrCertificationNo?: string;
-  languagesYouSpeak?: string[];
+  languagesYouSpeak?: string | string[];
+  languagesYouSpeakCode?: string;
   isVerified?: boolean;
+  isActive?: boolean;
   status?: string;
   certificateUpload?: string;
+  reasonOfRejection?: string;
   [key: string]: unknown;
+}
+
+export interface AllAgentsAdminFilter {
+  userId?: string | null;
+  isActive?: boolean | null;
+  email?: string | null;
+  phoneNumber?: string | null;
+  language?: string | null;
+}
+
+export interface ApproveRejectAgents {
+  userId?: string | null;
+  isActive?: boolean | null;
+  reasonOfRejection?: string | null;
 }
 
 export interface AgentApplication {
   id?: string | number;
+  applicationId?: number;
   agentId?: string;
+  guideId?: string;
   tourSlotId?: number;
   guideName?: string;
   guideEmail?: string;
@@ -93,7 +132,26 @@ export interface AgentApplication {
   language?: string;
   appliedAt?: string;
   status?: string;
+  payRateSnapshot?: number;
   [key: string]: unknown;
+}
+
+export interface GuideApplicationRecord {
+  applicationId?: number;
+  guideId?: string;
+  tourSlotId?: number;
+  status?: string;
+  payRateSnapshot?: number;
+  slotAssignmentId?: number;
+  appliedAt?: string;
+  withdrawnAt?: string | null;
+  updatedAt?: string;
+  [key: string]: unknown;
+}
+
+export interface AgentProfileResponse {
+  userResponse: AgentRecord;
+  guideApplication?: GuideApplicationRecord[];
 }
 
 export interface WalletTransaction {

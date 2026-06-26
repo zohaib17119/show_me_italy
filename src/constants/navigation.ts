@@ -34,7 +34,6 @@ export const navigationGroups: NavGroupConfig[] = [
         badgeKey: 'approvals',
         badgeColor: 'red',
       },
-      { key: 'guide-detail', label: 'Guide Profile', path: '/guides/guide-marco-rossi' },
     ],
   },
   {
@@ -172,7 +171,7 @@ export function getRouteMeta(pathname: string): RouteMeta {
 
 export function findNavKeyByPath(pathname: string): string {
   if (pathname === ROUTES.DASHBOARD) return 'dashboard';
-  if (pathname.startsWith('/guides/') && pathname !== ROUTES.APPROVALS) return 'guide-detail';
+  if (pathname.startsWith('/guides/') && pathname !== ROUTES.APPROVALS) return 'guides';
   if (pathname.startsWith('/payments/payouts/') && pathname !== ROUTES.PAYOUTS) return 'payout-detail';
 
   for (const group of navigationGroups) {

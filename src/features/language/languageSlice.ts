@@ -1,4 +1,4 @@
-import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, createSelector } from '@reduxjs/toolkit';
 import type { Language } from '@/api/types';
 import { getApiErrorMessage } from '@/api/axiosInstance';
 import { languageApi } from './languageApi';
@@ -103,7 +103,8 @@ export default languageSlice.reducer;
 
 export const selectLanguages = (state: RootState) => state.language.items;
 
-export const selectActiveLanguages = (state: RootState) =>
-  state.language.items.filter((l) => l.isActive !== false);
+export const selectActiveLanguages = createSelector([selectLanguages], (items) =>
+  items.filter((l) => l.isActive !== false),
+);
 
 export const selectLanguageStatus = (state: RootState) => state.language.status;
