@@ -48,6 +48,55 @@ export function groupEventsByDate(events: CalendarEvent[]): Record<string, Calen
   }, {});
 }
 
+export interface TourSlotFormValues {
+  tourTypeId: number;
+  languageId: number;
+  slotDate: string;
+  startTime: string;
+  endTime: string;
+  guidesNeeded: number;
+  guestCount: number;
+  payRatePerHour: number;
+  meetingPoint: string;
+  adminNotes: string;
+  status: string;
+  openApplications: boolean;
+  sendNotification: boolean;
+  guidesFilled?: number;
+  openingsCount?: number;
+  externalRef?: string;
+  isImported?: boolean;
+  conflictFlag?: boolean;
+  languageName?: string;
+  tourImages?: string[];
+}
+
+export function mapTourSlotToFormValues(slot: TourSlot): TourSlotFormValues {
+  const status = slot.status ?? 'Open';
+  return {
+    tourTypeId: slot.tourTypeId,
+    languageId: slot.languageId,
+    slotDate: slotDateKey(slot.slotDate),
+    startTime: ticksToTimeString(slot.startTime),
+    endTime: ticksToTimeString(slot.endTime),
+    guidesNeeded: slot.guidesNeeded,
+    guestCount: slot.guestCount ?? 0,
+    payRatePerHour: slot.payRatePerHour ?? 0,
+    meetingPoint: slot.meetingPoint ?? '',
+    adminNotes: slot.adminNotes ?? '',
+    status,
+    openApplications: status.toLowerCase() === 'open',
+    sendNotification: false,
+    guidesFilled: slot.guidesFilled,
+    openingsCount: slot.openingsCount,
+    externalRef: slot.externalRef ?? undefined,
+    isImported: slot.isImported,
+    conflictFlag: slot.conflictFlag,
+    languageName: slot.languageName,
+    tourImages: slot.tourImages,
+  };
+}
+
 export function buildTourSlotPayload(form: {
   tourTypeId: number;
   slotDate: string;

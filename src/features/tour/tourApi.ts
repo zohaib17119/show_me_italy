@@ -12,7 +12,7 @@ export const tourApi = {
   getAll: async (): Promise<TourSlot[]> => tourApi.getAllAdmin({}),
 
   getById: async (id: number): Promise<TourSlot | null> => {
-    const { data } = await axiosInstance.post('/v1/Tour/getbyid', null, {
+    const { data } = await axiosInstance.get('/v1/Tour/getbyid', {
       params: { id },
     });
     return unwrapData<TourSlot>(data);

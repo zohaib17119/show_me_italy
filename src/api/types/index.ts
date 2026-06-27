@@ -23,6 +23,10 @@ export interface TourSlot {
   meetingPoint?: string | null;
   adminNotes?: string | null;
   languageId: number;
+  languageName?: string;
+  tourImages?: string[];
+  latitude?: number;
+  longitude?: number;
   slotDate: string;
   startTime?: TimeSpan | string;
   endTime?: TimeSpan | string;

@@ -19,7 +19,7 @@ import {
   formatLocalDateKey,
   todayLocalDateKey,
 } from '@/api/utils/date';
-import { ROUTES } from '@/constants/routes';
+import { ROUTES, getTourDetailPath } from '@/constants/routes';
 import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
 import {
   fetchTourTypes,
@@ -386,8 +386,22 @@ export function CalendarPage() {
                       style={{
                         background: languageColors[ev.language],
                         opacity: ev.unfilled ? 0.75 : 1,
+                        cursor: 'pointer',
                       }}
                       title={ev.label}
+                      role="button"
+                      tabIndex={0}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const tourSlotId = ev.slot.tourSlotId ?? Number(ev.id);
+                        if (tourSlotId) navigate(getTourDetailPath(tourSlotId));
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key !== 'Enter' && e.key !== ' ') return;
+                        e.stopPropagation();
+                        const tourSlotId = ev.slot.tourSlotId ?? Number(ev.id);
+                        if (tourSlotId) navigate(getTourDetailPath(tourSlotId));
+                      }}
                     >
                       {ev.label}
                     </div>

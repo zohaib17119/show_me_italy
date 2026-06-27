@@ -3,6 +3,7 @@ export const ROUTES = {
   DASHBOARD: '/',
   CALENDAR: '/schedule/calendar',
   CREATE_TOUR: '/schedule/create',
+  TOUR_DETAIL: '/schedule/tours/:id',
   BULK: '/schedule/bulk',
   IMPORT: '/schedule/import',
   GUIDES: '/guides',
@@ -18,3 +19,7 @@ export const ROUTES = {
 } as const;
 
 export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];
+
+export function getTourDetailPath(id: number | string): string {
+  return `/schedule/tours/${id}`;
+}

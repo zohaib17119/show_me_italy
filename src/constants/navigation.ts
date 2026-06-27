@@ -94,6 +94,11 @@ export const routeMeta: Record<string, RouteMeta> = {
     subtitle: 'Publish a new tour opening for guide applications',
     breadcrumb: 'Schedule / Create Tour Slot',
   },
+  '/schedule/tours/detail': {
+    title: 'Tour Detail',
+    subtitle: 'View tour slot information',
+    breadcrumb: 'Schedule / Tour Detail',
+  },
   [ROUTES.BULK]: {
     title: 'Bulk Schedule Creator',
     subtitle: 'Create recurring tour slots across a date range in 5 steps',
@@ -162,6 +167,9 @@ export function getRouteMeta(pathname: string): RouteMeta {
   if (pathname.startsWith('/payments/payouts/') && pathname !== ROUTES.PAYOUTS) {
     return routeMeta['/payments/payouts/payout-marco-march'];
   }
+  if (pathname.startsWith('/schedule/tours/')) {
+    return routeMeta['/schedule/tours/detail'];
+  }
 
   return {
     title: 'Page',
@@ -172,6 +180,7 @@ export function getRouteMeta(pathname: string): RouteMeta {
 export function findNavKeyByPath(pathname: string): string {
   if (pathname === ROUTES.DASHBOARD) return 'dashboard';
   if (pathname.startsWith('/guides/') && pathname !== ROUTES.APPROVALS) return 'guides';
+  if (pathname.startsWith('/schedule/tours/')) return 'calendar';
   if (pathname.startsWith('/payments/payouts/') && pathname !== ROUTES.PAYOUTS) return 'payout-detail';
 
   for (const group of navigationGroups) {

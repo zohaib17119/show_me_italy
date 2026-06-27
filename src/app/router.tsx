@@ -62,6 +62,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'schedule/tours/:id',
+        element: lazyPage(() =>
+          import('@/features/schedule/TourDetailPage').then((m) => ({
+            default: m.TourDetailPage,
+          })),
+        ),
+      },
+      {
         path: 'schedule/bulk',
         element: lazyPage(() =>
           import('@/features/schedule/BulkCreatorPage').then((m) => ({

@@ -13,16 +13,22 @@ export type RequestStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 
 interface TourState {
   items: TourSlot[];
+  selectedTour: TourSlot | null;
   status: RequestStatus;
+  detailStatus: RequestStatus;
   mutationStatus: RequestStatus;
   error: string | null;
+  detailError: string | null;
 }
 
 const initialState: TourState = {
   items: [],
+  selectedTour: null,
   status: 'idle',
+  detailStatus: 'idle',
   mutationStatus: 'idle',
   error: null,
+  detailError: null,
 };
 
 export const fetchTours = createAsyncThunk(
@@ -30,6 +36,21 @@ export const fetchTours = createAsyncThunk(
   async (filter: TourSlotFilter | undefined, { rejectWithValue }) => {
     try {
       return await tourApi.getAllAdmin(filter ?? {});
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
+export const fetchTourById = createAsyncThunk(
+  'tour/fetchById',
+  async (id: number, { rejectWithValue }) => {
+    try {
+      const tour = await tourApi.getById(id);
+      if (!tour) {
+        return rejectWithValue('Tour not found');
+      }
+      return tour;
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }
@@ -78,7 +99,13 @@ export const deleteTourSlot = createAsyncThunk(
 const tourSlice = createSlice({
   name: 'tour',
   initialState,
-  reducers: {},
+  reducers: {
+    clearSelectedTour(state) {
+      state.selectedTour = null;
+      state.detailStatus = 'idle';
+      state.detailError = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchTours.pending, (state) => {
@@ -92,6 +119,19 @@ const tourSlice = createSlice({
       .addCase(fetchTours.rejected, (state, action) => {
         state.status = 'failed';
         state.error = (action.payload as string) ?? 'Failed to load tours';
+      })
+      .addCase(fetchTourById.pending, (state) => {
+        state.detailStatus = 'loading';
+        state.detailError = null;
+      })
+      .addCase(fetchTourById.fulfilled, (state, action) => {
+        state.detailStatus = 'succeeded';
+        state.selectedTour = action.payload;
+      })
+      .addCase(fetchTourById.rejected, (state, action) => {
+        state.detailStatus = 'failed';
+        state.selectedTour = null;
+        state.detailError = (action.payload as string) ?? 'Failed to load tour';
       })
       .addCase(createTourSlot.pending, (state) => {
         state.mutationStatus = 'loading';
@@ -115,11 +155,15 @@ const tourSlice = createSlice({
   },
 });
 
+export const { clearSelectedTour } = tourSlice.actions;
 export default tourSlice.reducer;
 
 export const selectTourItems = (state: RootState) => state.tour.items;
+export const selectSelectedTour = (state: RootState) => state.tour.selectedTour;
 export const selectTourStatus = (state: RootState) => state.tour.status;
+export const selectTourDetailStatus = (state: RootState) => state.tour.detailStatus;
 export const selectTourError = (state: RootState) => state.tour.error;
+export const selectTourDetailError = (state: RootState) => state.tour.detailError;
 export const selectTourMutationStatus = (state: RootState) => state.tour.mutationStatus;
 
 export const selectCalendarEvents = (state: RootState): CalendarEvent[] => {

@@ -6,16 +6,7 @@ import { buildTourSlotPayload } from '@/api/mappers/tourMapper';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
-  AppCard,
   BreadcrumbNav,
-  FormGrid,
-  FormInput,
-  FormSelect,
-  FormTextarea,
-  PreviewCard,
-  SectionTitle,
-  ToggleRow,
-  formGridSpanFull,
   showToast,
 } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
@@ -25,14 +16,8 @@ import {
   selectTourMutationStatus,
 } from '@/features/tour/tourSlice';
 import { fetchTourTypes, selectActiveTourTypes } from '@/features/tourType/tourTypeSlice';
-import { languageColors } from '@/theme/tokens';
-import styles from './schedule.module.css';
-
-const STATUS_OPTIONS = [
-  { value: 'Open', label: 'Open' },
-  { value: 'Closed', label: 'Closed' },
-  { value: 'Cancelled', label: 'Cancelled' },
-];
+import type { LangCode } from '@/types';
+import { TourSlotFormView } from './components/TourSlotFormView';
 
 export function CreateTourPage() {
   const navigate = useNavigate();
@@ -96,7 +81,7 @@ export function CreateTourPage() {
 
   const selectedTourType = tourTypes.find((t) => t.tourTypeId === tourTypeId);
   const selectedLanguage = languages.find((l) => l.languageId === languageId);
-  const langCode = selectedLanguage?.code?.slice(0, 2).toUpperCase() ?? 'EN';
+  const langCode = (selectedLanguage?.code?.slice(0, 2).toUpperCase() ?? 'EN') as LangCode;
 
   const handlePublish = async () => {
     if (!tourTypeId || !languageId) {
@@ -129,6 +114,22 @@ export function CreateTourPage() {
 
   const isSubmitting = mutationStatus === 'loading';
 
+  const formValues = {
+    tourTypeId,
+    languageId,
+    slotDate,
+    startTime,
+    endTime,
+    guidesNeeded,
+    guestCount,
+    payRatePerHour,
+    meetingPoint,
+    adminNotes,
+    status,
+    openApplications,
+    sendNotification,
+  };
+
   return (
     <div>
       <BreadcrumbNav
@@ -158,120 +159,26 @@ export function CreateTourPage() {
           <Spin />
         </div>
       ) : (
-        <div className={styles.twoColWide}>
-          <AppCard>
-            <FormGrid>
-              <div className={formGridSpanFull}>
-                <FormSelect
-                  label="Tour Type"
-                  options={tourTypeOptions}
-                  value={String(tourTypeId)}
-                  onChange={(e) => setTourTypeId(Number(e.target.value))}
-                />
-              </div>
-              <FormInput
-                label="Date"
-                type="date"
-                value={slotDate}
-                onChange={(e) => setSlotDate(e.target.value)}
-              />
-              <FormSelect
-                label="Language"
-                options={languageOptions}
-                value={String(languageId)}
-                onChange={(e) => setLanguageId(Number(e.target.value))}
-              />
-              <FormInput
-                label="Start Time"
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-              />
-              <FormInput
-                label="End Time"
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-              />
-              <FormInput
-                label="Guides Needed"
-                type="number"
-                value={guidesNeeded}
-                onChange={(e) => setGuidesNeeded(Number(e.target.value))}
-              />
-              <FormInput
-                label="Group Size"
-                type="number"
-                value={guestCount}
-                onChange={(e) => setGuestCount(Number(e.target.value))}
-              />
-              <FormInput
-                label="Pay Rate (€)"
-                type="number"
-                value={payRatePerHour}
-                onChange={(e) => setPayRatePerHour(Number(e.target.value))}
-              />
-              <div className={formGridSpanFull}>
-                <FormInput
-                  label="Meeting Point"
-                  value={meetingPoint}
-                  onChange={(e) => setMeetingPoint(e.target.value)}
-                />
-              </div>
-              <div className={formGridSpanFull}>
-                <FormTextarea
-                  label="Admin Notes"
-                  value={adminNotes}
-                  onChange={(e) => setAdminNotes(e.target.value)}
-                />
-              </div>
-              <FormSelect
-                label="Status"
-                options={STATUS_OPTIONS}
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-              />
-            </FormGrid>
-          </AppCard>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <AppCard>
-              <SectionTitle style={{ marginBottom: 12 }}>Live Preview</SectionTitle>
-              <PreviewCard title={selectedTourType?.name ?? 'Tour'}>
-                <div
-                  className={styles.previewAccent}
-                  style={{ background: languageColors[langCode] ?? languageColors.EN }}
-                />
-                <div className={styles.previewMetaRow}>
-                  <span className={styles.previewBadge}>{langCode}</span>
-                  <span className={styles.previewBadge}>📅 {slotDate}</span>
-                  <span className={styles.previewBadge}>
-                    🕙 {startTime}–{endTime}
-                  </span>
-                  <span className={styles.previewBadge}>👥 max {guestCount}</span>
-                </div>
-                <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>📍 {meetingPoint}</div>
-                <div className={styles.previewPrice}>€{payRatePerHour.toFixed(2)}</div>
-              </PreviewCard>
-            </AppCard>
-
-            <AppCard>
-              <SectionTitle style={{ marginBottom: 10 }}>Options</SectionTitle>
-              <ToggleRow
-                label="Open for Applications"
-                description="Guides can apply immediately"
-                checked={openApplications}
-                onCheckedChange={setOpenApplications}
-              />
-              <ToggleRow
-                label="Send Push Notification"
-                description="Alert matching language guides"
-                checked={sendNotification}
-                onCheckedChange={setSendNotification}
-              />
-            </AppCard>
-          </div>
-        </div>
+        <TourSlotFormView
+          values={formValues}
+          tourTypeOptions={tourTypeOptions}
+          languageOptions={languageOptions}
+          selectedTourTypeName={selectedTourType?.name ?? 'Tour'}
+          langCode={langCode}
+          onTourTypeIdChange={setTourTypeId}
+          onLanguageIdChange={setLanguageId}
+          onSlotDateChange={setSlotDate}
+          onStartTimeChange={setStartTime}
+          onEndTimeChange={setEndTime}
+          onGuidesNeededChange={setGuidesNeeded}
+          onGuestCountChange={setGuestCount}
+          onPayRatePerHourChange={setPayRatePerHour}
+          onMeetingPointChange={setMeetingPoint}
+          onAdminNotesChange={setAdminNotes}
+          onStatusChange={setStatus}
+          onOpenApplicationsChange={setOpenApplications}
+          onSendNotificationChange={setSendNotification}
+        />
       )}
     </div>
   );
