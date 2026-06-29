@@ -1,10 +1,17 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { CreateNotificationPayload, NotificationsDto } from '@/api/types';
+import type { NotificationsDto } from '@/api/types';
+import type { CreateNotificationPayload } from '@/api/types';
+import {
+  mapAnnouncementsToInboxRows,
+  type AnnouncementInboxRow,
+} from '@/api/mappers/notificationMapper';
 import { getApiErrorMessage } from '@/api/axiosInstance';
 import { notificationsApi } from './notificationsApi';
 import type { BadgeKey } from '@/types';
 import type { RootState } from '@/app/store';
 import type { RequestStatus } from '@/features/tour/tourSlice';
+
+export type { AnnouncementInboxRow as InboxItem };
 
 interface NotificationCounts {
   guides: number;
@@ -14,19 +21,9 @@ interface NotificationCounts {
   notifications: number;
 }
 
-export interface InboxItem {
-  id: string;
-  title: string;
-  body: string;
-  time: string;
-  unread: boolean;
-  icon: string;
-  iconBg: string;
-}
-
 interface NotificationState {
   counts: NotificationCounts;
-  inbox: InboxItem[];
+  inbox: AnnouncementInboxRow[];
   inboxStatus: RequestStatus;
   inboxError: string | null;
 }
@@ -44,24 +41,12 @@ const initialState: NotificationState = {
   inboxError: null,
 };
 
-function mapNotification(dto: NotificationsDto): InboxItem {
-  return {
-    id: String(dto.id ?? Math.random()),
-    title: dto.title ?? 'Notification',
-    body: dto.description ?? '',
-    time: dto.time ?? dto.createdOn ?? '—',
-    unread: !dto.isRead,
-    icon: dto.icon ?? '🔔',
-    iconBg: '#e8f5ee',
-  };
-}
-
 export const fetchNotifications = createAsyncThunk(
   'notifications/fetchAll',
   async (_, { rejectWithValue }) => {
     try {
       const items = await notificationsApi.getAll();
-      return items.map(mapNotification);
+      return mapAnnouncementsToInboxRows(items);
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }
@@ -150,6 +135,7 @@ export function selectBadgeCount(counts: NotificationCounts, key: BadgeKey): num
 
 export const selectInboxItems = (state: RootState) => state.notifications.inbox;
 export const selectInboxStatus = (state: RootState) => state.notifications.inboxStatus;
+export const selectInboxError = (state: RootState) => state.notifications.inboxError;
 export const selectNotificationCounts = (state: RootState) => state.notifications.counts;
 
 export default notificationSlice.reducer;

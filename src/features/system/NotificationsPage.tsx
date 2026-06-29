@@ -10,6 +10,7 @@ import {
   FormInput,
   FormSelect,
   FormTextarea,
+  ListErrorState,
   NotificationItem,
   RecipientChip,
   SectionTitle,
@@ -27,6 +28,7 @@ import {
 import {
   createAnnouncement,
   fetchNotifications,
+  selectInboxError,
   selectInboxItems,
   selectInboxStatus,
 } from '@/features/notifications/notificationSlice';
@@ -90,6 +92,7 @@ export function NotificationsPage() {
   const meta = getRouteMeta(ROUTES.NOTIFICATIONS);
   const inbox = useAppSelector(selectInboxItems);
   const inboxStatus = useAppSelector(selectInboxStatus);
+  const inboxError = useAppSelector(selectInboxError);
   const authUser = useAppSelector(selectAuthUser);
   const languages = useAppSelector(selectActiveLanguages);
   const languageStatus = useAppSelector(selectLanguageStatus);
@@ -287,6 +290,13 @@ export function NotificationsPage() {
               <Spin />
             </div>
           )}
+          {inboxStatus === 'failed' && (
+            <ListErrorState
+              message={inboxError}
+              onRetry={() => void dispatch(fetchNotifications())}
+            />
+          )}
+          {inboxStatus !== 'failed' && (
           <AppCard padding="sm">
             {inbox.map((item) => (
               <NotificationItem
@@ -301,13 +311,15 @@ export function NotificationsPage() {
                       height: '100%',
                       background: item.iconBg,
                       borderRadius: 10,
+                      fontSize: 16,
                     }}
                   >
                     {item.icon}
                   </span>
                 }
                 title={item.title}
-                sub={item.body}
+                sub={item.message}
+                meta={item.meta}
                 time={item.time}
                 unread={item.unread}
               />
@@ -318,6 +330,7 @@ export function NotificationsPage() {
               </div>
             )}
           </AppCard>
+          )}
         </div>
       </div>
     </div>

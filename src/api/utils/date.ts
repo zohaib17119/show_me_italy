@@ -60,3 +60,41 @@ export function formatDisplayDate(dateYmd: string): string {
     year: 'numeric',
   });
 }
+
+function parseApiDateTime(value: string): Date | null {
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const normalized = trimmed.replace(/(\.\d{3})\d+/, '$1');
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+export function formatNotificationTime(iso: string): string {
+  const date = parseApiDateTime(iso);
+  if (!date) return '—';
+
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60_000);
+
+  if (diffMins >= 0 && diffMins < 1) return 'Just now';
+  if (diffMins >= 1 && diffMins < 60) return `${diffMins} min ago`;
+
+  const diffHours = Math.floor(diffMins / 60);
+  if (diffHours >= 1 && diffHours < 24 && now.toDateString() === date.toDateString()) {
+    return `${diffHours} hour${diffHours === 1 ? '' : 's'} ago`;
+  }
+
+  return date.toLocaleString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
+
+export function getNotificationSortTime(iso: string): number {
+  const date = parseApiDateTime(iso);
+  return date?.getTime() ?? 0;
+}

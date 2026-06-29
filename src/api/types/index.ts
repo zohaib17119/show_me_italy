@@ -105,6 +105,10 @@ export interface CreateNotificationPayload {
   sentAt: string;
 }
 
+export interface AnnouncementNotification extends CreateNotificationPayload {
+  isRead?: boolean;
+}
+
 export interface AgentRecord {
   id?: string;
   userId?: string;

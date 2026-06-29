@@ -538,6 +538,18 @@
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 2px;
+  white-space: pre-line;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.notificationMeta {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+  line-height: 1.35;
 }
 
 .notificationTime {
