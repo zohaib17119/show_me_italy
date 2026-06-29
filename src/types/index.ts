@@ -6,7 +6,10 @@ export type TourStatus =
   | 'unfilled'
   | 'denied'
   | 'completed'
-  | 'approved';
+  | 'approved'
+  | 'active'
+  | 'inactive'
+  | 'rejected'
 
 export interface User {
   name: string;

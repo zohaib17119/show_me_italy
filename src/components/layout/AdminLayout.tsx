@@ -13,10 +13,14 @@ export function AdminLayout() {
 
   useEffect(() => {
     const handleResize = () => {
-      const mobile = window.innerWidth < 768;
+      const width = window.innerWidth;
+      const mobile = width < 768;
+      const tablet = width >= 768 && width < 992;
       dispatch(setIsMobile(mobile));
-      if (mobile) {
+      if (mobile || tablet) {
         dispatch(setSidebarCollapsed(true));
+      } else {
+        dispatch(setSidebarCollapsed(false));
       }
     };
 

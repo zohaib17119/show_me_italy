@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import type { NotificationsDto } from '@/api/types';
+import type { CreateNotificationPayload, NotificationsDto } from '@/api/types';
 import { getApiErrorMessage } from '@/api/axiosInstance';
 import { notificationsApi } from './notificationsApi';
 import type { BadgeKey } from '@/types';
@@ -62,6 +62,18 @@ export const fetchNotifications = createAsyncThunk(
     try {
       const items = await notificationsApi.getAll();
       return items.map(mapNotification);
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
+export const createAnnouncement = createAsyncThunk(
+  'notifications/createAnnouncement',
+  async (payload: CreateNotificationPayload, { rejectWithValue, dispatch }) => {
+    try {
+      await notificationsApi.create(payload);
+      await dispatch(fetchNotifications());
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }

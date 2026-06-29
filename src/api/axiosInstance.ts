@@ -1,6 +1,10 @@
 import axios, { type AxiosError } from 'axios';
 import { AUTH_TOKEN_KEY } from '@/features/auth/authApi';
 import { dispatchLogout } from './authBridge';
+import {
+  extractApiMessage,
+  FALLBACK_ERROR_MESSAGE,
+} from '@/api/utils/extractApiMessage';
 
 const baseURL = import.meta.env.VITE_API_URL ?? 'https://demo.loade.app';
 
@@ -22,7 +26,7 @@ axiosInstance.interceptors.request.use((config) => {
 
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<{ message?: string }>) => {
+  (error: AxiosError) => {
     if (error.response?.status === 401) {
       dispatchLogout();
       if (window.location.pathname !== '/login') {
@@ -30,14 +34,12 @@ axiosInstance.interceptors.response.use(
       }
     }
     const message =
-      error.response?.data?.message ??
-      error.message ??
-      'Something went wrong. Please try again.';
+      extractApiMessage(error.response?.data) ?? FALLBACK_ERROR_MESSAGE;
     return Promise.reject(new Error(message));
   },
 );
 
 export function getApiErrorMessage(error: unknown): string {
-  if (error instanceof Error) return error.message;
-  return 'Something went wrong. Please try again.';
+  if (error instanceof Error && error.message.trim()) return error.message;
+  return FALLBACK_ERROR_MESSAGE;
 }

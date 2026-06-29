@@ -25,6 +25,7 @@ export interface Guide {
   languages: LangCode[];
   status: GuideStatus;
   certified: boolean;
+  isActive?: boolean;
   tours: number;
   rating: number | null;
   license: string;

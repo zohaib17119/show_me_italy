@@ -91,6 +91,20 @@ export interface NotificationsDto {
   createdOn?: string;
 }
 
+export interface CreateNotificationPayload {
+  id: string;
+  notificationType: string;
+  title: string;
+  message: string;
+  audience: string;
+  channels: string;
+  scheduledAt: string;
+  status: string;
+  createdBy: string;
+  createdAt: string;
+  sentAt: string;
+}
+
 export interface AgentRecord {
   id?: string;
   userId?: string;
@@ -122,12 +136,86 @@ export interface ApproveRejectAgents {
   reasonOfRejection?: string | null;
 }
 
+export interface GuideSlotRecord {
+  tourSlotID?: number;
+  typeName?: string;
+  slotDate?: string;
+  startTime?: string;
+  endTime?: string;
+  code?: string;
+  totalApplicants?: number;
+  guidesNeeded?: number;
+  [key: string]: unknown;
+}
+
+export interface SlotSummaryRecord {
+  tour?: string;
+  date?: string;
+  language?: string;
+  guidesFilled?: number;
+  guidesNeeded?: number;
+  payRate?: number;
+  status?: string;
+  [key: string]: unknown;
+}
+
+export interface GuideSlotApplicantsResponse {
+  slotSummary?: SlotSummaryRecord;
+  applicants?: SlotApplicantRecord[];
+}
+
+export interface AvailableGuideRecord {
+  id?: string;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  tourGuideLicenseOrCertificationNo?: string;
+  languagesYouSpeak?: string;
+  languagesYouSpeakCode?: string;
+  isActive?: boolean;
+  isVerified?: boolean;
+  [key: string]: unknown;
+}
+
+export interface AssignGuideApplicationPayload {
+  applicationId: number;
+  guideId: string;
+  tourSlotId: number;
+  status: 'Approved';
+  payRateSnapshot: number;
+  slotAssignmentId: number;
+  appliedAt: string;
+  updatedAt: string;
+}
+
+export interface SlotApplicantRecord {
+  tourSlotID?: number;
+  id?: string;
+  applicationID?: number;
+  applicationId?: number;
+  fullName?: string;
+  email?: string;
+  phoneNumber?: string;
+  languagesYouSpeak?: string;
+  languagesYouSpeakCode?: string;
+  status?: string;
+  appliedAt?: string;
+  [key: string]: unknown;
+}
+
 export interface AgentApplication {
   id?: string | number;
   applicationId?: number;
+  applicationID?: number;
   agentId?: string;
   guideId?: string;
   tourSlotId?: number;
+  fullName?: string;
+  typeName?: string;
+  slotDate?: string;
+  startTime?: string;
+  endTime?: string;
+  code?: string;
   guideName?: string;
   guideEmail?: string;
   tour?: string;

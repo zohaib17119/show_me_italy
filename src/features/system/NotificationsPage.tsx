@@ -1,5 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Spin } from 'antd';
+import type { Language } from '@/api/types';
+import { getApiErrorMessage } from '@/api/axiosInstance';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
@@ -15,37 +17,127 @@ import {
 } from '@/components/ui';
 import { getRouteMeta } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
-import { ANNOUNCEMENT_RECIPIENT_OPTIONS, ANNOUNCEMENT_TYPES } from '@/mocks';
+import { ANNOUNCEMENT_TYPES } from '@/mocks';
+import { selectAuthUser } from '@/features/auth/authSlice';
 import {
+  fetchLanguages,
+  selectActiveLanguages,
+  selectLanguageStatus,
+} from '@/features/language/languageSlice';
+import {
+  createAnnouncement,
   fetchNotifications,
   selectInboxItems,
   selectInboxStatus,
-  sendNotification,
 } from '@/features/notifications/notificationSlice';
+import type { CreateNotificationPayload } from '@/api/types';
+
+function languageAudienceLabel(lang: Language): string {
+  return lang.name?.trim() || lang.code?.trim() || 'Unknown';
+}
+
+function buildChannels(push: boolean, inApp: boolean, email: boolean): string {
+  return [
+    push ? 'push' : null,
+    inApp ? 'in-app' : null,
+    email ? 'email' : null,
+  ]
+    .filter(Boolean)
+    .join(',');
+}
+
+function dateToIso(date: string): string {
+  if (!date.trim()) return '';
+  return new Date(`${date}T00:00:00.000Z`).toISOString();
+}
+
+function buildCreatePayload(input: {
+  notificationType: string;
+  title: string;
+  message: string;
+  allGuides: boolean;
+  selectedLanguages: Language[];
+  pushEnabled: boolean;
+  inAppEnabled: boolean;
+  emailEnabled: boolean;
+  scheduledDate: string;
+  createdBy: string;
+}): CreateNotificationPayload {
+  const now = new Date().toISOString();
+  const scheduledAt = dateToIso(input.scheduledDate);
+
+  const audience = input.allGuides
+    ? 'All Guides'
+    : input.selectedLanguages.map(languageAudienceLabel).join(',');
+
+  return {
+    id: '',
+    notificationType: input.notificationType,
+    title: input.title.trim(),
+    message: input.message.trim(),
+    audience,
+    channels: buildChannels(input.pushEnabled, input.inAppEnabled, input.emailEnabled),
+    scheduledAt,
+    status: '',
+    createdBy: input.createdBy,
+    createdAt: now,
+    sentAt: now,
+  };
+}
 
 export function NotificationsPage() {
   const dispatch = useAppDispatch();
   const meta = getRouteMeta(ROUTES.NOTIFICATIONS);
   const inbox = useAppSelector(selectInboxItems);
   const inboxStatus = useAppSelector(selectInboxStatus);
+  const authUser = useAppSelector(selectAuthUser);
+  const languages = useAppSelector(selectActiveLanguages);
+  const languageStatus = useAppSelector(selectLanguageStatus);
 
-  const [recipients, setRecipients] = useState<string[]>(['all']);
+  const [allGuides, setAllGuides] = useState(true);
+  const [selectedLanguageIds, setSelectedLanguageIds] = useState<number[]>([]);
   const [pushEnabled, setPushEnabled] = useState(true);
   const [inAppEnabled, setInAppEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [title, setTitle] = useState('');
   const [message, setMessage] = useState('');
   const [type, setType] = useState('announcement');
+  const [scheduledDate, setScheduledDate] = useState('');
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
     void dispatch(fetchNotifications());
+    void dispatch(fetchLanguages());
   }, [dispatch]);
 
-  const toggleRecipient = (id: string) => {
-    setRecipients((prev) =>
-      prev.includes(id) ? prev.filter((r) => r !== id) : [...prev, id],
+  const selectedLanguages = useMemo(
+    () =>
+      languages.filter(
+        (lang) => lang.languageId != null && selectedLanguageIds.includes(lang.languageId),
+      ),
+    [languages, selectedLanguageIds],
+  );
+
+  const handleAllGuidesClick = () => {
+    setAllGuides(true);
+    setSelectedLanguageIds([]);
+  };
+
+  const toggleLanguage = (languageId: number) => {
+    setAllGuides(false);
+    setSelectedLanguageIds((prev) =>
+      prev.includes(languageId)
+        ? prev.filter((id) => id !== languageId)
+        : [...prev, languageId],
     );
+  };
+
+  const resetForm = () => {
+    setTitle('');
+    setMessage('');
+    setScheduledDate('');
+    setAllGuides(true);
+    setSelectedLanguageIds([]);
   };
 
   const handleSend = async () => {
@@ -53,21 +145,31 @@ export function NotificationsPage() {
       showToast('Title and message are required');
       return;
     }
+    if (!allGuides && selectedLanguageIds.length === 0) {
+      showToast('Select All Guides or at least one language');
+      return;
+    }
+
+    const payload = buildCreatePayload({
+      notificationType: type,
+      title,
+      message,
+      allGuides,
+      selectedLanguages,
+      pushEnabled,
+      inAppEnabled,
+      emailEnabled,
+      scheduledDate,
+      createdBy: authUser?.email ?? '',
+    });
+
     setSending(true);
     try {
-      await dispatch(
-        sendNotification({
-          title,
-          description: message,
-          type: type === 'announcement' ? 1 : 2,
-          isRead: false,
-        }),
-      ).unwrap();
-      showToast('✓ Announcement sent!');
-      setTitle('');
-      setMessage('');
+      await dispatch(createAnnouncement(payload)).unwrap();
+      showToast('Announcement sent');
+      resetForm();
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Failed to send notification');
+      showToast(getApiErrorMessage(err));
     } finally {
       setSending(false);
     }
@@ -77,14 +179,7 @@ export function NotificationsPage() {
     <div>
       <PageHeader title={meta.title} />
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1.3fr 1fr',
-          gap: 14,
-          alignItems: 'start',
-        }}
-      >
+      <div className="layoutTwoCol">
         <AppCard>
           <SectionTitle style={{ marginBottom: 16 }}>Compose Announcement</SectionTitle>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 13 }}>
@@ -103,16 +198,26 @@ export function NotificationsPage() {
                 Recipients
               </label>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 5 }}>
-                {ANNOUNCEMENT_RECIPIENT_OPTIONS.map((opt) => (
-                  <RecipientChip
-                    key={opt.id}
-                    selected={recipients.includes(opt.id)}
-                    onClick={() => toggleRecipient(opt.id)}
-                  >
-                    {opt.label}
-                    {opt.count != null ? ` (${opt.count})` : ''}
-                  </RecipientChip>
-                ))}
+                <RecipientChip selected={allGuides} onClick={handleAllGuidesClick}>
+                  All Guides
+                </RecipientChip>
+                {languageStatus === 'loading' && languages.length === 0 && (
+                  <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Loading languages…</span>
+                )}
+                {languages.map((lang) => {
+                  const id = lang.languageId;
+                  if (id == null) return null;
+                  const label = languageAudienceLabel(lang);
+                  return (
+                    <RecipientChip
+                      key={id}
+                      selected={!allGuides && selectedLanguageIds.includes(id)}
+                      onClick={() => toggleLanguage(id)}
+                    >
+                      {label}
+                    </RecipientChip>
+                  );
+                })}
               </div>
             </div>
 
@@ -150,14 +255,19 @@ export function NotificationsPage() {
               >
                 Send Via
               </label>
-              <div style={{ display: 'flex', gap: 16, marginTop: 4 }}>
+              <div style={{ display: 'flex', gap: 16, marginTop: 4, flexWrap: 'wrap' }}>
                 <CheckboxLabel label="Push" checked={pushEnabled} onChange={setPushEnabled} />
                 <CheckboxLabel label="In-App" checked={inAppEnabled} onChange={setInAppEnabled} />
                 <CheckboxLabel label="Email" checked={emailEnabled} onChange={setEmailEnabled} />
               </div>
             </div>
 
-            <FormInput label="Schedule (optional)" type="date" />
+            <FormInput
+              label="Schedule (optional)"
+              type="date"
+              value={scheduledDate}
+              onChange={(e) => setScheduledDate(e.target.value)}
+            />
 
             <AppButton
               variant="primary"

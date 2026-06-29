@@ -86,6 +86,9 @@ export { SettingsRowMenu } from './data/SettingsRowMenu';
 export { ListErrorState } from './data/ListErrorState';
 export type { ListErrorStateProps } from './data/ListErrorState';
 
+export { LoadingOverlay } from './feedback/LoadingOverlay';
+export type { LoadingOverlayProps } from './feedback/LoadingOverlay';
+
 export { PayoutRow } from './data/PayoutRow';
 export type { PayoutRowProps } from './data/PayoutRow';
 

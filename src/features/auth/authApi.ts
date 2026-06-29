@@ -22,11 +22,16 @@ export interface SignInAdminResponse {
   [key: string]: unknown;
 }
 
+export interface SignInAdminResult {
+  raw: unknown;
+  body: SignInAdminResponse;
+}
+
 export const AUTH_REFRESH_TOKEN_KEY = 'refreshToken';
 
-export function extractToken(payload: SignInAdminResponse): string | null {
+export function extractToken(payload: SignInAdminResponse | unknown): string | null {
   const nested = payload as { data?: SignInAdminResponse };
-  const source = nested.data ?? payload;
+  const source = nested.data ?? (payload as SignInAdminResponse);
   const token =
     source.jwtToken ??
     source.token ??
@@ -37,9 +42,10 @@ export function extractToken(payload: SignInAdminResponse): string | null {
 }
 
 export const authApi = {
-  signInAdmin: async (payload: SignInAdminRequest): Promise<SignInAdminResponse> => {
+  signInAdmin: async (payload: SignInAdminRequest): Promise<SignInAdminResult> => {
     const { data } = await axiosInstance.post('/v1/Agent/sign-in-admin', payload);
-    return unwrapData<SignInAdminResponse>(data) ?? (data as SignInAdminResponse);
+    const body = unwrapData<SignInAdminResponse>(data) ?? (data as SignInAdminResponse);
+    return { raw: data, body };
   },
 };
 

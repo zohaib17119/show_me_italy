@@ -32,14 +32,42 @@ function formatAppliedAt(iso?: string): string {
   });
 }
 
+function formatSlotDate(iso?: string): string {
+  if (!iso) return '—';
+  const date = new Date(iso.slice(0, 10));
+  if (Number.isNaN(date.getTime())) return iso.slice(0, 10);
+  return date.toLocaleDateString('en-GB', {
+    weekday: 'short',
+    day: 'numeric',
+    month: 'short',
+  });
+}
+
+function formatTimeRange(startTime?: string, endTime?: string, fallback?: string): string {
+  if (startTime && endTime) return `${startTime}–${endTime}`;
+  return fallback ?? '—';
+}
+
+function formatPayRate(value?: number): string {
+  if (value == null) return '—';
+  return `€${value}`;
+}
+
 export function mapApplication(record: AgentApplication, index: number): Application {
-  const applicationId = Number(record.applicationId ?? record.id ?? index);
+  const applicationId = Number(
+    record.applicationID ?? record.applicationId ?? record.id ?? index,
+  );
   const guideName =
+    record.fullName ??
     record.guideName ??
     (record as { agentName?: string }).agentName ??
-    (record as { fullName?: string }).fullName ??
     'Unknown';
-  const lang = (record.language?.slice(0, 2).toUpperCase() ?? 'EN') as LangCode;
+  const lang = (
+    record.code?.slice(0, 2).toUpperCase() ??
+    record.language?.slice(0, 2).toUpperCase() ??
+    'EN'
+  ) as LangCode;
+  const slotDateKey = record.slotDate?.slice(0, 10) ?? '—';
 
   return {
     id: String(applicationId),
@@ -47,11 +75,12 @@ export function mapApplication(record: AgentApplication, index: number): Applica
     guideId: String(record.agentId ?? record.guideId ?? index),
     guideName,
     guideInitials: initials(guideName),
-    tour: record.tour ?? `Tour #${record.tourSlotId ?? '—'}`,
-    date: record.dateLabel ?? '—',
-    dateLabel: record.dateLabel ?? '—',
-    time: record.time ?? '—',
+    tour: record.typeName ?? record.tour ?? '—',
+    date: slotDateKey,
+    dateLabel: record.dateLabel ?? formatSlotDate(record.slotDate),
+    time: formatTimeRange(record.startTime, record.endTime, record.time),
     language: lang,
+    payRate: formatPayRate(record.payRateSnapshot),
     appliedAt: formatAppliedAt(record.appliedAt),
     status: mapStatus(record.status),
   };

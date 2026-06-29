@@ -1,6 +1,7 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { User } from '@/types';
 import { getApiErrorMessage } from '@/api/axiosInstance';
+import { extractApiMessage, FALLBACK_ERROR_MESSAGE } from '@/api/utils/extractApiMessage';
 import {
   AUTH_REFRESH_TOKEN_KEY,
   AUTH_TOKEN_KEY,
@@ -53,19 +54,20 @@ export const loginAdmin = createAsyncThunk(
   'auth/loginAdmin',
   async (payload: SignInAdminRequest, { rejectWithValue }) => {
     try {
-      const response = await authApi.signInAdmin(payload);
-      const token = extractToken(response);
+      const { raw, body } = await authApi.signInAdmin(payload);
+      const token = extractToken(body) ?? extractToken(raw);
       if (!token) {
-        return rejectWithValue('Login succeeded but no token was returned.');
+        const apiMessage = extractApiMessage(raw) ?? extractApiMessage(body);
+        return rejectWithValue(apiMessage ?? FALLBACK_ERROR_MESSAGE);
       }
-      const email = response.email ?? payload.email;
+      const email = body.email ?? payload.email;
       const name =
-        response.fullName ??
-        response.name ??
-        (response as { userName?: string }).userName;
+        body.fullName ??
+        body.name ??
+        (body as { userName?: string }).userName;
       return {
         token,
-        refreshToken: response.refreshToken ?? null,
+        refreshToken: body.refreshToken ?? null,
         user: userFromEmail(email, name),
       };
     } catch (error) {
@@ -121,7 +123,7 @@ const authSlice = createSlice({
       })
       .addCase(loginAdmin.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = (action.payload as string) ?? 'Login failed';
+        state.error = (action.payload as string) ?? FALLBACK_ERROR_MESSAGE;
         state.isAuthenticated = false;
         state.token = null;
         state.user = null;

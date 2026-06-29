@@ -11,6 +11,7 @@ export interface Application {
   dateLabel: string;
   time: string;
   language: LangCode;
+  payRate: string;
   appliedAt: string;
   status: TourStatus;
 }
@@ -27,6 +28,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     dateLabel: 'Fri 17 Apr',
     time: '10:00–12:30',
     language: 'EN',
+    payRate: '€70',
     appliedAt: '2h ago',
     status: 'pending',
   },
@@ -41,6 +43,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     dateLabel: 'Fri 17 Apr',
     time: '10:00–12:30',
     language: 'IT',
+    payRate: '€70',
     appliedAt: '3h ago',
     status: 'pending',
   },
@@ -55,6 +58,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     dateLabel: 'Sun 19 Apr',
     time: '09:00–11:30',
     language: 'JA',
+    payRate: '€65',
     appliedAt: 'Yesterday',
     status: 'approved',
   },
@@ -69,6 +73,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     dateLabel: 'Fri 17 Apr',
     time: '10:00–12:30',
     language: 'DE',
+    payRate: '€70',
     appliedAt: '5h ago',
     status: 'pending',
   },
@@ -83,6 +88,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     dateLabel: 'Sat 18 Apr',
     time: '14:00–16:30',
     language: 'FR',
+    payRate: '€70',
     appliedAt: '6h ago',
     status: 'pending',
   },

@@ -274,6 +274,12 @@
   gap: 8px;
 }
 
+@media (max-width: 480px) {
+  .quickActions {
+    grid-template-columns: 1fr;
+  }
+}
+
 .qaBtn {
   display: flex;
   align-items: center;

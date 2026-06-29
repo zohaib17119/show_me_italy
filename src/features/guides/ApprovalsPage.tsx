@@ -1,14 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Spin } from 'antd';
+import type { ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
-  AppCard,
   BreadcrumbNav,
+  DataTable,
+  GuideCell,
   LangChip,
   ListErrorState,
+  LoadingOverlay,
   showToast,
 } from '@/components/ui';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
@@ -21,14 +23,8 @@ import {
   selectUnverifiedGuideStatus,
   selectUnverifiedGuides,
 } from '@/features/agent/agentSlice';
+import type { Guide } from '@/mocks/guides';
 import { RejectAgentModal } from './components/RejectAgentModal';
-import styles from './guides.module.css';
-
-const AVATAR_STYLES = [
-  { background: '#fce4f3', color: '#E91E90' },
-  { background: '#e8f8f5', color: '#1ABC9C' },
-  { background: '#fff0e0', color: '#E67E22' },
-];
 
 function registeredLabel(adminNote: string): string {
   const match = adminNote.match(/Registered (.+)/);
@@ -84,8 +80,94 @@ export function ApprovalsPage() {
     }
   };
 
+  const columns: ColumnsType<Guide> = useMemo(
+    () => [
+      {
+        title: 'Guide',
+        key: 'guide',
+        render: (_, record) => (
+          <GuideCell initials={record.initials} name={record.name} sub={record.email} />
+        ),
+      },
+      {
+        title: 'Languages',
+        key: 'languages',
+        render: (_, record) => (
+          <span style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+            {record.languages.map((lang) => (
+              <LangChip key={lang} code={lang} />
+            ))}
+          </span>
+        ),
+      },
+      {
+        title: 'Registered',
+        key: 'registered',
+        render: (_, record) => (
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            {registeredLabel(record.adminNote)}
+          </span>
+        ),
+      },
+      {
+        title: 'License',
+        key: 'license',
+        render: (_, record) => (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12 }}>{record.license}</span>
+            {record.certificateUpload ? (
+              <AppButton
+                variant="secondary"
+                size="xs"
+                onClick={() => window.open(record.certificateUpload, '_blank', 'noopener')}
+              >
+                View Doc
+              </AppButton>
+            ) : (
+              <AppButton variant="secondary" size="xs" disabled>
+                No Doc
+              </AppButton>
+            )}
+          </div>
+        ),
+      },
+      {
+        title: 'Actions',
+        key: 'actions',
+        render: (_, record) => (
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+            <AppButton
+              variant="secondary"
+              size="xs"
+              onClick={() => navigate(`/guides/${record.id}`)}
+            >
+              View Profile
+            </AppButton>
+            <AppButton
+              variant="danger"
+              size="xs"
+              disabled={actionLoading}
+              onClick={() => setRejectTarget({ id: record.id, name: record.name })}
+            >
+              Reject
+            </AppButton>
+            <AppButton
+              size="xs"
+              disabled={actionLoading}
+              onClick={() => void handleApprove(record.id, record.name)}
+            >
+              Approve
+            </AppButton>
+          </div>
+        ),
+      },
+    ],
+    [actionLoading, navigate],
+  );
+
   return (
     <div>
+      <LoadingOverlay visible={status === 'loading'} />
       <BreadcrumbNav
         items={[
           { label: 'Dashboard', onClick: () => navigate(ROUTES.DASHBOARD) },
@@ -99,12 +181,6 @@ export function ApprovalsPage() {
         subtitle={`${pendingGuides.length} guides awaiting review`}
       />
 
-      {status === 'loading' && pendingGuides.length === 0 && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
-          <Spin />
-        </div>
-      )}
-
       {status === 'failed' && (
         <ListErrorState
           message={error}
@@ -114,83 +190,12 @@ export function ApprovalsPage() {
       )}
 
       {status !== 'failed' && (
-      <div className={styles.approvalGrid}>
-        {pendingGuides.map((guide, index) => {
-          const avatarStyle = AVATAR_STYLES[index % AVATAR_STYLES.length];
-
-          return (
-            <AppCard key={guide.id}>
-              <div style={{ display: 'flex', gap: 12, alignItems: 'center', marginBottom: 12 }}>
-                <div
-                  className={styles.approvalAvatar}
-                  style={{ background: avatarStyle.background, color: avatarStyle.color }}
-                >
-                  {guide.initials}
-                </div>
-                <div>
-                  <div className={styles.approvalName}>{guide.name}</div>
-                  <div className={styles.approvalEmail}>{guide.email}</div>
-                  <div className={styles.approvalRegistered}>
-                    {registeredLabel(guide.adminNote)}
-                  </div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-                {guide.languages.map((lang) => (
-                  <LangChip key={lang} code={lang} size="md" />
-                ))}
-              </div>
-
-              <div className={styles.licenseRow}>
-                📄 {guide.license}
-                {guide.certificateUpload ? (
-                  <AppButton
-                    variant="secondary"
-                    size="xs"
-                    style={{ marginLeft: 'auto' }}
-                    onClick={() => window.open(guide.certificateUpload, '_blank', 'noopener')}
-                  >
-                    View Doc
-                  </AppButton>
-                ) : (
-                  <AppButton variant="secondary" size="xs" style={{ marginLeft: 'auto' }} disabled>
-                    No Doc
-                  </AppButton>
-                )}
-              </div>
-
-              <div className={styles.approvalActions}>
-                <AppButton
-                  variant="secondary"
-                  size="xs"
-                  style={{ flex: 1 }}
-                  onClick={() => navigate(`/guides/${guide.id}`)}
-                >
-                  View Profile
-                </AppButton>
-                <AppButton
-                  variant="danger"
-                  size="xs"
-                  style={{ flex: 1 }}
-                  disabled={actionLoading}
-                  onClick={() => setRejectTarget({ id: guide.id, name: guide.name })}
-                >
-                  ✕ Reject
-                </AppButton>
-                <AppButton
-                  size="xs"
-                  style={{ flex: 1 }}
-                  disabled={actionLoading}
-                  onClick={() => void handleApprove(guide.id, guide.name)}
-                >
-                  ✓ Approve
-                </AppButton>
-              </div>
-            </AppCard>
-          );
-        })}
-      </div>
+        <DataTable<Guide>
+          rowKey="id"
+          columns={columns}
+          dataSource={pendingGuides}
+          pagination={false}
+        />
       )}
 
       <RejectAgentModal

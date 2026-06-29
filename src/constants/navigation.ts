@@ -46,7 +46,7 @@ export const navigationGroups: NavGroupConfig[] = [
         badgeKey: 'applications',
         badgeColor: 'red',
       },
-      { key: 'assignment', label: 'Slot Assignment', path: ROUTES.ASSIGNMENT },
+      { key: 'assignment', label: 'Slot Assignment', path: ROUTES.GUIDE_SLOTS },
     ],
   },
   {
@@ -128,9 +128,14 @@ export const routeMeta: Record<string, RouteMeta> = {
     subtitle: '12 pending · nearest first',
     breadcrumb: 'Applications / Queue',
   },
+  [ROUTES.GUIDE_SLOTS]: {
+    title: 'Guide Slots',
+    subtitle: 'Tour slots with pending guide applications',
+    breadcrumb: 'Applications / Guide Slots',
+  },
   [ROUTES.ASSIGNMENT]: {
     title: 'Tour Slot Assignment',
-    subtitle: 'Colosseum Arena · Fri 17 Apr · 10:00–12:30 · English',
+    subtitle: 'Assign guides to tour slot applicants',
     breadcrumb: 'Applications / Slot Assignment',
   },
   [ROUTES.PAYOUTS]: {

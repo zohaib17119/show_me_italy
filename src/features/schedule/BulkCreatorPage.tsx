@@ -10,6 +10,7 @@ import {
   AppCard,
   BreadcrumbNav,
   FilterChip,
+  FormGrid,
   FormInput,
   FormSelect,
   IconButton,
@@ -160,17 +161,10 @@ export function BulkCreatorPage() {
             <AppCard>
               <Stepper steps={STEPPER_STEPS} />
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  gap: '14px 16px',
-                  marginBottom: 12,
-                }}
-              >
+              <FormGrid className={styles.bulkFormGrid}>
                 <FormInput label="From Date" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
                 <FormInput label="To Date" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
-              </div>
+              </FormGrid>
 
               <SectionLabel style={{ marginBottom: 8 }}>Days of Week</SectionLabel>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 12 }}>
@@ -207,7 +201,7 @@ export function BulkCreatorPage() {
                 <IconButton icon={<MinusOutlined />} variant="danger" aria-label="Remove slot" />
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 12 }}>
+              <FormGrid className={styles.bulkFormGridMt}>
                 <FormInput
                   label="Guides Needed"
                   type="number"
@@ -220,7 +214,7 @@ export function BulkCreatorPage() {
                   value={payRate}
                   onChange={(e) => setPayRate(Number(e.target.value))}
                 />
-              </div>
+              </FormGrid>
             </AppCard>
           </div>
 

@@ -28,6 +28,11 @@
   --blue: #2e75b6;
   --blue-bg: #eaf3fb;
   --purple: #8e44ad;
+
+  /* Responsive breakpoints (match @media queries below) */
+  --bp-mobile: 768px;
+  --bp-tablet: 992px;
+  --bp-desktop-sm: 1200px;
 }
 
 *,
@@ -125,8 +130,8 @@ body {
 .sidebar-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 18px 16px 14px;
+  gap: 6px;
+  padding: 18px 16px 12px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   margin-bottom: 6px;
 }
@@ -184,11 +189,147 @@ body {
   flex: 1;
   font-size: 12px;
   color: var(--text-muted);
+  padding-left:20px;
 }
 
 .admin-header-breadcrumb strong {
   color: var(--text-secondary);
   font-weight: 600;
+}
+
+.admin-header-search {
+  flex-shrink: 0;
+}
+
+@media (max-width: 991px) {
+  .admin-header {
+    gap: 8px;
+    padding: 0 12px;
+  }
+
+  .admin-header-breadcrumb {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    padding-left: 4px;
+  }
+
+  .admin-header-search {
+    display: none;
+  }
+}
+
+@media (max-width: 767px) {
+  .admin-header-breadcrumb {
+    display: none;
+  }
+}
+
+/* Shared page layout grids */
+.layoutTwoCol,
+.layoutTwoColWide,
+.layoutThreeCol,
+.layoutSidebar {
+  display: grid;
+  align-items: start;
+  gap: 14px;
+}
+
+.layoutTwoCol {
+  grid-template-columns: 1.6fr 1fr;
+}
+
+.layoutTwoColWide {
+  grid-template-columns: minmax(0, 2fr) minmax(240px, 1fr);
+}
+
+.layoutThreeCol {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.layoutSidebar {
+  grid-template-columns: 1fr 190px;
+}
+
+.layoutTwoCol > *,
+.layoutTwoColWide > *,
+.layoutThreeCol > *,
+.layoutSidebar > * {
+  min-width: 0;
+}
+
+@media (max-width: 992px) {
+  .layoutTwoCol,
+  .layoutTwoColWide,
+  .layoutSidebar {
+    grid-template-columns: 1fr;
+  }
+
+  .layoutThreeCol {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .layoutThreeCol {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Page header */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 22px;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-header-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1.15;
+}
+
+.page-header-subtitle {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.page-header-extra {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 767px) {
+  .page-header-title {
+    font-size: 18px;
+  }
+}
+
+/* Calendar month grid horizontal scroll on narrow viewports */
+.calMonthScroll {
+  overflow-x: auto;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  .calMonthScroll {
+    margin: 0 -4px;
+    padding: 0 4px;
+  }
+
+  .calMonthScrollInner {
+    min-width: 560px;
+  }
 }
 
 /* KPI row responsive */

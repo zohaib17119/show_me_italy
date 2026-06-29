@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Spin } from 'antd';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -11,6 +10,7 @@ import {
   FilterChip,
   IconButton,
   ListErrorState,
+  LoadingOverlay,
   SectionLabel,
 } from '@/components/ui';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
@@ -268,6 +268,7 @@ export function CalendarPage() {
 
   return (
     <div>
+      <LoadingOverlay visible={status === 'loading'} />
       <BreadcrumbNav
         items={[
           { label: 'Dashboard', onClick: () => navigate(ROUTES.DASHBOARD) },
@@ -305,12 +306,6 @@ export function CalendarPage() {
         }
       />
 
-      {status === 'loading' && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 40 }}>
-          <Spin />
-        </div>
-      )}
-
       {status === 'failed' && (
         <ListErrorState
           message={error}
@@ -338,21 +333,23 @@ export function CalendarPage() {
             </div>
           }
         >
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(7, 1fr)',
-              marginBottom: 4,
-            }}
-          >
-            {WEEKDAYS.map((day) => (
-              <div key={day} className={styles.calDayHd}>
-                {day}
+          <div className="calMonthScroll">
+            <div className="calMonthScrollInner">
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(7, 1fr)',
+                  marginBottom: 4,
+                }}
+              >
+                {WEEKDAYS.map((day) => (
+                  <div key={day} className={styles.calDayHd}>
+                    {day}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
 
-          <div className={styles.calMonth}>
+              <div className={styles.calMonth}>
             {monthDays.map((cell) => {
               const events = eventsByDate[cell.date] ?? [];
               return (
@@ -409,6 +406,8 @@ export function CalendarPage() {
                 </div>
               );
             })}
+              </div>
+            </div>
           </div>
         </AppCard>
 

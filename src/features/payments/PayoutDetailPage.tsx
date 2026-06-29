@@ -68,14 +68,7 @@ export function PayoutDetailPage() {
         }
       />
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1.7fr 1fr',
-          gap: 14,
-          alignItems: 'start',
-        }}
-      >
+      <div className="layoutTwoCol">
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
           <AppCard>
             <SectionTitle style={{ marginBottom: 12 }}>

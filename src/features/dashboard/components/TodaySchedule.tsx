@@ -103,7 +103,7 @@ export function TodaySchedule() {
                     size="small"
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(ROUTES.ASSIGNMENT);
+                      navigate(ROUTES.GUIDE_SLOTS);
                     }}
                   >
                     Assign →

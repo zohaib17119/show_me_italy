@@ -1,8 +1,8 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Spin } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import type { AllAgentsAdminFilter } from '@/api/types';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
@@ -14,6 +14,7 @@ import {
   GuideCell,
   LangChip,
   ListErrorState,
+  LoadingOverlay,
   SearchInput,
   StatusBadge,
   TablePagination,
@@ -27,15 +28,16 @@ import {
   selectAdminGuideStatus,
   selectAdminGuides,
 } from '@/features/agent/agentSlice';
+import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
 import type { Guide, GuideStatus } from '@/mocks/guides';
 import type { TourStatus } from '@/types';
 
 const PAGE_SIZE = 5;
 
 function guideStatusToBadge(status: GuideStatus): TourStatus {
-  if (status === 'active') return 'approved';
+  if (status === 'active') return 'active';
   if (status === 'pending') return 'pending';
-  return 'denied';
+  return 'inactive';
 }
 
 export function GuideRosterPage() {
@@ -44,6 +46,7 @@ export function GuideRosterPage() {
   const guides = useAppSelector(selectAdminGuides);
   const status = useAppSelector(selectAdminGuideStatus);
   const error = useAppSelector(selectAdminGuideError);
+  const languages = useAppSelector(selectActiveLanguages);
 
   const [search, setSearch] = useState('');
   const [languageFilter, setLanguageFilter] = useState('all');
@@ -51,28 +54,53 @@ export function GuideRosterPage() {
   const [page, setPage] = useState(1);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
 
+  const apiFilter = useMemo((): AllAgentsAdminFilter => {
+    const filter: AllAgentsAdminFilter = {};
+    if (languageFilter !== 'all') filter.language = languageFilter;
+    if (statusFilter === 'active') filter.isActive = true;
+    else if (statusFilter === 'inactive') filter.isActive = false;
+    return filter;
+  }, [languageFilter, statusFilter]);
+
+  const languageOptions = useMemo(
+    () => [
+      { value: 'all', label: 'All Languages' },
+      ...languages
+        .filter((l) => l.code)
+        .map((l) => ({
+          value: l.code!.toUpperCase(),
+          label: l.name ?? l.code!,
+        })),
+    ],
+    [languages],
+  );
+
+  const loadGuides = useCallback(() => {
+    void dispatch(fetchAdminGuides(apiFilter));
+  }, [dispatch, apiFilter]);
+
   useFetchErrorToast(status, error);
 
   useEffect(() => {
-    void dispatch(fetchAdminGuides({}));
+    void dispatch(fetchLanguages());
   }, [dispatch]);
 
-  const activeCount = guides.filter((g) => g.status === 'active').length;
-  const pendingCount = guides.filter((g) => g.status === 'pending').length;
-  const inactiveCount = guides.filter((g) => g.status === 'inactive').length;
+  useEffect(() => {
+    loadGuides();
+  }, [loadGuides]);
+
+  const activeCount = guides.filter((g) => g.isActive === true).length;
+  const inactiveCount = guides.filter((g) => g.isActive === false).length;
 
   const filteredGuides = useMemo(() => {
-    return guides.filter((guide) => {
-      const matchesSearch =
-        search.trim() === '' ||
-        guide.name.toLowerCase().includes(search.toLowerCase()) ||
-        guide.email.toLowerCase().includes(search.toLowerCase());
-      const matchesLang =
-        languageFilter === 'all' || guide.languages.includes(languageFilter as Guide['languages'][0]);
-      const matchesStatus = statusFilter === 'all' || guide.status === statusFilter;
-      return matchesSearch && matchesLang && matchesStatus;
-    });
-  }, [guides, search, languageFilter, statusFilter]);
+    const query = search.trim().toLowerCase();
+    if (query === '') return guides;
+    return guides.filter(
+      (guide) =>
+        guide.name.toLowerCase().includes(query) ||
+        guide.email.toLowerCase().includes(query),
+    );
+  }, [guides, search]);
 
   const pageData = filteredGuides.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
@@ -98,7 +126,9 @@ export function GuideRosterPage() {
     {
       title: 'Status',
       key: 'status',
-      render: (_, record) => <StatusBadge status={guideStatusToBadge(record.status)} />,
+      render: (_, record) => (
+        <StatusBadge status={guideStatusToBadge(record.isActive ? 'active' : 'inactive')} />
+      ),
     },
     {
       title: 'Certified',
@@ -110,12 +140,12 @@ export function GuideRosterPage() {
           <span style={{ color: 'var(--orange)', fontWeight: 700, fontSize: 12 }}>⏳</span>
         ),
     },
-    {
-      title: 'Tours',
-      dataIndex: 'tours',
-      key: 'tours',
-      render: (tours: number) => <strong>{tours}</strong>,
-    },
+    // {
+    //   title: 'Tours',
+    //   dataIndex: 'tours',
+    //   key: 'tours',
+    //   render: (tours: number) => <strong>{tours}</strong>,
+    // },
     {
       title: 'Rating',
       key: 'rating',
@@ -142,6 +172,7 @@ export function GuideRosterPage() {
 
   return (
     <div>
+      <LoadingOverlay visible={status === 'loading'} />
       <BreadcrumbNav
         items={[
           { label: 'Dashboard', onClick: () => navigate(ROUTES.DASHBOARD) },
@@ -152,7 +183,7 @@ export function GuideRosterPage() {
 
       <PageHeader
         title="Guide Roster"
-        subtitle={`${guides.length} total · ${activeCount} active · ${pendingCount} pending · ${inactiveCount} inactive`}
+        subtitle={`${guides.length} total · ${activeCount} active · ${inactiveCount} inactive`}
         extra={
           <>
             <AppButton variant="secondary" size="xs" onClick={() => showToast('Export started')}>
@@ -163,18 +194,8 @@ export function GuideRosterPage() {
         }
       />
 
-      {status === 'loading' && guides.length === 0 && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
-          <Spin />
-        </div>
-      )}
-
       {status === 'failed' && (
-        <ListErrorState
-          message={error}
-          loading={false}
-          onRetry={() => void dispatch(fetchAdminGuides({}))}
-        />
+        <ListErrorState message={error} loading={false} onRetry={loadGuides} />
       )}
 
       {status !== 'failed' && (
@@ -194,15 +215,7 @@ export function GuideRosterPage() {
                 setLanguageFilter(e.target.value);
                 setPage(1);
               }}
-              options={[
-                { value: 'all', label: 'All Languages' },
-                { value: 'EN', label: 'English' },
-                { value: 'IT', label: 'Italian' },
-                { value: 'FR', label: 'French' },
-                { value: 'ES', label: 'Spanish' },
-                { value: 'DE', label: 'German' },
-                { value: 'JA', label: 'Japanese' },
-              ]}
+              options={languageOptions}
             />
             <FilterSelect
               value={statusFilter}
@@ -214,7 +227,6 @@ export function GuideRosterPage() {
                 { value: 'all', label: 'All Status' },
                 { value: 'active', label: 'Active' },
                 { value: 'inactive', label: 'Inactive' },
-                { value: 'pending', label: 'Pending' },
               ]}
             />
           </FilterBar>

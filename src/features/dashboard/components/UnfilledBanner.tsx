@@ -14,10 +14,10 @@ export function UnfilledBanner({ count }: UnfilledBannerProps) {
     <div
       className={styles.unfilledBanner}
       id="unfilledBanner"
-      onClick={() => navigate(ROUTES.ASSIGNMENT)}
+      onClick={() => navigate(ROUTES.GUIDE_SLOTS)}
       role="button"
       tabIndex={0}
-      onKeyDown={(e) => e.key === 'Enter' && navigate(ROUTES.ASSIGNMENT)}
+      onKeyDown={(e) => e.key === 'Enter' && navigate(ROUTES.GUIDE_SLOTS)}
     >
       <div className={styles.unfilledIcon}>⚠️</div>
       <div style={{ flex: 1 }}>

@@ -56,6 +56,7 @@ export function Topbar() {
       )}
       <div className="admin-header-breadcrumb">{breadcrumbHtml}</div>
       <Input
+        className="admin-header-search"
         prefix={<SearchOutlined style={{ color: 'var(--text-muted)' }} />}
         placeholder="Search guides, tours…"
         style={{

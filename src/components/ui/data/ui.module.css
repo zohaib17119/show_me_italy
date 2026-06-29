@@ -112,6 +112,16 @@
   outline: none;
   font-family: inherit;
   min-width: 0;
+  height: 100%;
+  padding: 0;
+  line-height: 1;
+  align-self: center;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.searchInputField::-webkit-search-cancel-button {
+  display: none;
 }
 
 .searchInputField::placeholder {
@@ -179,6 +189,7 @@
   border: 1px solid var(--border-color);
   border-radius: 16px;
   overflow: hidden;
+  max-width: 100%;
 }
 
 .tbl :global(.ant-table) {

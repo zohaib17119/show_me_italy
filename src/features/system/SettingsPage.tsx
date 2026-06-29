@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Modal, Spin } from 'antd';
+import { Modal } from 'antd';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import type { Language, TourType } from '@/api/types';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -9,6 +9,7 @@ import {
   FormGrid,
   FormInput,
   FormTextarea,
+  LoadingOverlay,
   SettingsRow,
   SettingsRowMenu,
   ToggleSwitch,
@@ -180,22 +181,10 @@ export function SettingsPage() {
 
   return (
     <div>
+      <LoadingOverlay visible={loading} />
       <PageHeader title={meta.title} />
 
-      {loading && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
-          <Spin />
-        </div>
-      )}
-
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(3, 1fr)',
-          gap: 14,
-          alignItems: 'start',
-        }}
-      >
+      <div className="layoutThreeCol">
         <AppCard title="Tour Settings">
           <p style={{ fontSize: 11, color: 'var(--text-muted)', margin: '0 0 12px' }}>
             Types, meeting points, default rates

@@ -91,8 +91,12 @@ export function mapAgentToGuide(record: AgentRecord, options?: { pending?: boole
     languages: parseLanguages(record),
     status,
     certified: Boolean(record.tourGuideLicenseOrCertificationNo ?? record.certificateUpload),
+    isActive: record.isActive === true,
     tours: Number((record as { tours?: number }).tours ?? (record as { totalTours?: number }).totalTours ?? 0),
-    rating: (record as { rating?: number }).rating ?? null,
+    rating:
+      typeof (record as { rating?: number }).rating === 'number'
+        ? (record as { rating?: number }).rating!
+        : 5,
     license: record.tourGuideLicenseOrCertificationNo ?? '—',
     phone: record.phoneNumber ?? '—',
     activeSince: (record as { activeSince?: string }).activeSince ?? '—',

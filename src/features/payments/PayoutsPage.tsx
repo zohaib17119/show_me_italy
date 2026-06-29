@@ -1,6 +1,5 @@
 import { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Spin } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -8,6 +7,7 @@ import {
   AppButton,
   DataTable,
   GuideCell,
+  LoadingOverlay,
   showToast,
   StatMini,
   StatMiniRow,
@@ -95,6 +95,7 @@ export function PayoutsPage() {
 
   return (
     <div>
+      <LoadingOverlay visible={status === 'loading'} />
       <PageHeader
         title={meta.title}
         subtitle={meta.subtitle}
@@ -104,12 +105,6 @@ export function PayoutsPage() {
           </AppButton>
         }
       />
-
-      {status === 'loading' && (
-        <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
-          <Spin />
-        </div>
-      )}
 
       <StatMiniRow>
         <StatMini icon="💰" value={`€${summary.totalPending.toLocaleString()}`} label="Total Pending" />

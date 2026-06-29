@@ -108,8 +108,9 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
   return (
     <>
       <div className="sidebar-logo">
-        <div className="sidebar-logo-mark">▲</div>
-        {!collapsed && (
+        
+        <img src="/favicon.png" alt="Show Me Italy" className="sidebar-logo-mark" /> :
+         {!collapsed && (
           <div>
             <div className="sidebar-logo-name">Show Me Italy</div>
             <div className="sidebar-logo-sub">Admin Dashboard</div>

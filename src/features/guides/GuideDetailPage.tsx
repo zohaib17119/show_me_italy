@@ -189,15 +189,21 @@ export function GuideDetailPage() {
                 </div>
               </div>
               <div>
+                <SectionLabel>Phone</SectionLabel>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {guide.phone}
+                </div>
+              </div>
+              <div>
                 <SectionLabel>License</SectionLabel>
                 <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
                   {guide.license}
                 </div>
               </div>
               <div>
-                <SectionLabel>Certification</SectionLabel>
-                <span className={styles.certYes}>
-                  {guide.certified ? '✓ Verified' : '⏳ Pending'}
+                <SectionLabel>Verification</SectionLabel>
+                <span className={guide.isActive ? styles.certYes : styles.certPending}>
+                  {guide.isActive ? '✓ Verified' : 'Unverified'}
                 </span>
                 {guide.certificateUpload && (
                   <div style={{ marginTop: 6 }}>
@@ -214,7 +220,7 @@ export function GuideDetailPage() {
               <div>
                 <SectionLabel>Rating</SectionLabel>
                 <div className={styles.ratingValue}>
-                  {guide.rating != null ? `⭐ ${guide.rating} / 5.0` : '—'}
+                  ⭐ {guide.rating ?? 5} / 5.0
                 </div>
               </div>
             </div>

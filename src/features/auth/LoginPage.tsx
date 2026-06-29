@@ -4,6 +4,7 @@ import { Spin } from 'antd';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { AppButton, AppCard, FormInput, showToast } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
+import { getApiErrorMessage } from '@/api/axiosInstance';
 import { loginAdmin, selectAuthError, selectAuthStatus } from './authSlice';
 
 export function LoginPage() {
@@ -24,7 +25,7 @@ export function LoginPage() {
       await dispatch(loginAdmin({ email: email.trim(), password })).unwrap();
       navigate(ROUTES.DASHBOARD, { replace: true });
     } catch (err) {
-      showToast(err instanceof Error ? err.message : 'Login failed');
+      showToast(getApiErrorMessage(err));
     }
   };
 
@@ -36,13 +37,17 @@ export function LoginPage() {
         alignItems: 'center',
         justifyContent: 'center',
         background: 'var(--g50)',
-        padding: 24,
+        padding: '24px 16px',
       }}
     >
       <div style={{ width: '100%', maxWidth: 420 }}>
         <div style={{ textAlign: 'center', marginBottom: 24 }}>
-          <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--g600)' }}>Show Me Italy</div>
-          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 4 }}>
+          <img
+            src="/logo.png"
+            alt="Show Me Italy"
+            style={{ maxWidth: 280, width: '100%', height: 'auto' }}
+          />
+          <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 12 }}>
             Admin Sign In
           </div>
         </div>

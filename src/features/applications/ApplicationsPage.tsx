@@ -6,7 +6,6 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
-  BulkActionBar,
   DataTable,
   FilterBar,
   FilterSelect,
@@ -44,7 +43,6 @@ export function ApplicationsPage() {
 
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
-  const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [approvingId, setApprovingId] = useState<number | null>(null);
 
   const loadApplications = useCallback(() => {
@@ -56,12 +54,6 @@ export function ApplicationsPage() {
   useEffect(() => {
     loadApplications();
   }, [loadApplications]);
-
-  useEffect(() => {
-    if (applications.length > 0 && selectedKeys.length === 0) {
-      setSelectedKeys(applications.map((a) => a.id));
-    }
-  }, [applications, selectedKeys.length]);
 
   const filtered = useMemo(() => {
     return applications.filter((app) => {
@@ -116,6 +108,12 @@ export function ApplicationsPage() {
         render: (lang: Application['language']) => <LangChip code={lang} />,
       },
       {
+        title: 'Pay Rate',
+        dataIndex: 'payRate',
+        key: 'payRate',
+        render: (value: string) => <strong>{value}</strong>,
+      },
+      {
         title: 'Applied At',
         dataIndex: 'appliedAt',
         key: 'appliedAt',
@@ -145,7 +143,7 @@ export function ApplicationsPage() {
             <AppButton
               variant="secondary"
               size="xs"
-              onClick={() => navigate(ROUTES.ASSIGNMENT)}
+              onClick={() => navigate(ROUTES.GUIDE_SLOTS)}
             >
               Assign
             </AppButton>
@@ -206,6 +204,7 @@ export function ApplicationsPage() {
             />
           </FilterBar>
 
+          {/* TODO: restore when bulk approve/reject API is available
           <BulkActionBar selectedCount={selectedKeys.length}>
             <AppButton variant="primary" onClick={() => showToast('✓ Bulk approved')}>
               ✓ Approve All
@@ -214,16 +213,13 @@ export function ApplicationsPage() {
               ✕ Deny All
             </AppButton>
           </BulkActionBar>
+          */}
 
           <DataTable<Application>
             rowKey="id"
             columns={columns}
             dataSource={pageData}
             pagination={false}
-            rowSelection={{
-              selectedRowKeys: selectedKeys,
-              onChange: (keys) => setSelectedKeys(keys as string[]),
-            }}
             footer={() => (
               <TablePagination
                 page={page}

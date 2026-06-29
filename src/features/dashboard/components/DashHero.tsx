@@ -65,7 +65,7 @@ export function DashHero() {
             onClick={() => navigate(ROUTES.APPLICATIONS)}
           >
             <UnorderedListOutlined style={{ color: 'white' }} />{' '}
-            {header?.pendingApplications ?? 0} Pending Apps
+            {header?.pendingApplications ?? 0} Pending Applications
           </button>
           <button
             type="button"

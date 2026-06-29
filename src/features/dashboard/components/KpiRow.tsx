@@ -64,12 +64,12 @@ export function KpiRow() {
         trend={<TrendPill variant="dn">Urgent</TrendPill>}
         valueColor="#E74C3C"
         alert
-        onClick={() => navigate(ROUTES.ASSIGNMENT)}
+        onClick={() => navigate(ROUTES.GUIDE_SLOTS)}
       />
       <StatCard
         icon="⏳"
         value={stats?.pendingApplications ?? 0}
-        label="Pending Apps"
+        label="Pending Applications"
         sub="awaiting decision"
         trend={<TrendPill variant="warn">Review</TrendPill>}
         valueColor="#92400E"
