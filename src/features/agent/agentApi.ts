@@ -5,6 +5,7 @@ import type {
   AgentRecord,
   AllAgentsAdminFilter,
   ApproveRejectAgents,
+  GuideUpdateProfilePayload,
 } from '@/api/types';
 import { unwrapData } from '@/api/types';
 
@@ -30,5 +31,9 @@ export const agentApi = {
 
   approveRejectAgent: async (payload: ApproveRejectAgents): Promise<void> => {
     await axiosInstance.post('/v1/Agent/approve-reject-agent', payload);
+  },
+
+  updateGuideProfile: async (payload: GuideUpdateProfilePayload): Promise<void> => {
+    await axiosInstance.post('/v1/Agent/guide-update-profile', payload);
   },
 };

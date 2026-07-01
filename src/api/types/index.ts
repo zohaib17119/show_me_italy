@@ -161,6 +161,14 @@ export interface ApproveRejectAgents {
   reasonOfRejection?: string | null;
 }
 
+export interface GuideUpdateProfilePayload {
+  userId: string;
+  favorite: boolean;
+  adminNotes: string;
+  cancellationPercentage: number;
+  rating: number;
+}
+
 export interface GuideSlotRecord {
   tourSlotID?: number;
   typeName?: string;

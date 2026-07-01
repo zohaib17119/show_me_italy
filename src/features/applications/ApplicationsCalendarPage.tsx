@@ -182,6 +182,7 @@ export function ApplicationsCalendarPage() {
         open={modalDate != null}
         dateKey={modalDate}
         onClose={() => setModalDate(null)}
+        onQueueMutated={() => void dispatch(fetchPendingApplicationCounts())}
       />
     </div>
   );

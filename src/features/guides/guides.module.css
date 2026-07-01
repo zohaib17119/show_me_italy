@@ -12,10 +12,21 @@
   flex-shrink: 0;
 }
 
+.detailPage {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 .detailGrid {
   display: grid;
-  grid-template-columns: 1.6fr 1fr;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
   gap: 16px;
+  max-width: 100%;
+}
+
+.detailGrid > * {
+  min-width: 0;
 }
 
 @media (max-width: 992px) {

@@ -12,13 +12,19 @@ interface ApplicationsQueueModalProps {
   open: boolean;
   dateKey: string | null;
   onClose: () => void;
+  onQueueMutated?: () => void;
 }
 
 function formatModalTitle(dateKey: string): string {
   return `Pending Applications — ${formatDisplayDate(dateKey)}`;
 }
 
-export function ApplicationsQueueModal({ open, dateKey, onClose }: ApplicationsQueueModalProps) {
+export function ApplicationsQueueModal({
+  open,
+  dateKey,
+  onClose,
+  onQueueMutated,
+}: ApplicationsQueueModalProps) {
   const [rows, setRows] = useState<Application[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'succeeded' | 'failed'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -40,6 +46,11 @@ export function ApplicationsQueueModal({ open, dateKey, onClose }: ApplicationsQ
       setRows([]);
     }
   }, [dateKey]);
+
+  const refreshAfterMutation = useCallback(async () => {
+    await loadApplications();
+    onQueueMutated?.();
+  }, [loadApplications, onQueueMutated]);
 
   useEffect(() => {
     if (open && dateKey) {
@@ -64,7 +75,7 @@ export function ApplicationsQueueModal({ open, dateKey, onClose }: ApplicationsQ
           status: 'Approved',
         });
         showToast('✓ Application approved');
-        await loadApplications();
+        await refreshAfterMutation();
       } catch (err) {
         showToast(err instanceof Error ? err.message : 'Failed to approve application');
       } finally {
@@ -72,7 +83,7 @@ export function ApplicationsQueueModal({ open, dateKey, onClose }: ApplicationsQ
         setMutationLoading(false);
       }
     },
-    [loadApplications],
+    [refreshAfterMutation],
   );
 
   const handleHold = useCallback(
@@ -85,7 +96,7 @@ export function ApplicationsQueueModal({ open, dateKey, onClose }: ApplicationsQ
           status: 'Hold',
         });
         showToast('Application placed on hold');
-        await loadApplications();
+        await refreshAfterMutation();
       } catch (err) {
         showToast(err instanceof Error ? err.message : 'Failed to hold application');
       } finally {
@@ -93,7 +104,7 @@ export function ApplicationsQueueModal({ open, dateKey, onClose }: ApplicationsQ
         setMutationLoading(false);
       }
     },
-    [loadApplications],
+    [refreshAfterMutation],
   );
 
   return (

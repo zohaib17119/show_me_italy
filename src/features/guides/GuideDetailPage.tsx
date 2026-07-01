@@ -16,6 +16,7 @@ import {
   StatusBadge,
   showToast,
 } from '@/components/ui';
+import uiStyles from '@/components/ui/data/ui.module.css';
 import { ROUTES } from '@/constants/routes';
 import {
   approveAgent,
@@ -26,8 +27,21 @@ import {
   selectSelectedAgent,
   selectSelectedAgentApplications,
 } from '@/features/agent/agentSlice';
+import type { GuideStatus } from '@/mocks/guides';
+import type { TourStatus } from '@/types';
 import { RejectAgentModal } from './components/RejectAgentModal';
 import styles from './guides.module.css';
+
+function formatRating(rating: number | null): string {
+  if (rating == null) return '—';
+  return Number.isInteger(rating) ? String(rating) : rating.toFixed(1);
+}
+
+function guideStatusToBadge(status: GuideStatus, isActive?: boolean): TourStatus {
+  if (status === 'pending') return 'pending';
+  if (isActive === false) return 'inactive';
+  return 'active';
+}
 
 export function GuideDetailPage() {
   const { id } = useParams<{ id: string }>();
@@ -88,7 +102,7 @@ export function GuideDetailPage() {
 
   if (!guide) {
     return (
-      <div>
+      <div className={styles.detailPage}>
         <BreadcrumbNav
           items={[
             { label: 'Dashboard', onClick: () => navigate(ROUTES.DASHBOARD) },
@@ -128,7 +142,7 @@ export function GuideDetailPage() {
   ];
 
   return (
-    <div>
+    <div className={styles.detailPage}>
       <BreadcrumbNav
         items={[
           { label: 'Dashboard', onClick: () => navigate(ROUTES.DASHBOARD) },
@@ -137,14 +151,26 @@ export function GuideDetailPage() {
         ]}
       />
 
-      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start' }}>
+      <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', minWidth: 0 }}>
         <div className={styles.guideHeaderAvatar}>{guide.initials}</div>
         <div style={{ flex: 1, minWidth: 0 }}>
-          <PageHeader
-            title={guide.name}
-            subtitle={`${guide.email} · ${guide.phone} · Active since ${guide.activeSince}`}
-            extra={
-              isPending ? (
+          <div className="page-header">
+            <div style={{ minWidth: 0 }}>
+              <h1 className="page-header-title">
+                {guide.name}
+                {guide.favorite && (
+                  <span className={uiStyles.guideFavoriteStar} aria-label="Favorite">
+                    {' '}
+                    ★
+                  </span>
+                )}
+              </h1>
+              <p className="page-header-subtitle">
+                {guide.email} · {guide.phone} · Active since {guide.activeSince}
+              </p>
+            </div>
+            <div className="page-header-extra">
+              {isPending ? (
                 <>
                   <AppButton
                     variant="danger"
@@ -170,14 +196,14 @@ export function GuideDetailPage() {
                     Add Note
                   </AppButton>
                 </>
-              )
-            }
-          />
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
       <div className={styles.detailGrid}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 14, minWidth: 0 }}>
           <AppCard>
             <div className={styles.infoGrid}>
               <div>
@@ -187,6 +213,18 @@ export function GuideDetailPage() {
                     <LangChip key={lang} code={lang} size="md" />
                   ))}
                 </div>
+              </div>
+              <div>
+                <SectionLabel>Status</SectionLabel>
+                <StatusBadge status={guideStatusToBadge(guide.status, guide.isActive)} />
+              </div>
+              <div>
+                <SectionLabel>Certified</SectionLabel>
+                {guide.certified ? (
+                  <span className={styles.certYes}>✓ Yes</span>
+                ) : (
+                  <span className={styles.certPending}>⏳ Pending</span>
+                )}
               </div>
               <div>
                 <SectionLabel>Phone</SectionLabel>
@@ -218,9 +256,21 @@ export function GuideDetailPage() {
                 )}
               </div>
               <div>
+                <SectionLabel>Admin Notes</SectionLabel>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {guide.adminNotes?.trim() ? guide.adminNotes : '—'}
+                </div>
+              </div>
+              <div>
                 <SectionLabel>Rating</SectionLabel>
                 <div className={styles.ratingValue}>
-                  ⭐ {guide.rating ?? 5} / 5.0
+                  {guide.rating != null ? `⭐ ${formatRating(guide.rating)}` : '—'}
+                </div>
+              </div>
+              <div>
+                <SectionLabel>Cancellation %</SectionLabel>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {guide.cancellationPercentage != null ? `${guide.cancellationPercentage}%` : '—'}
                 </div>
               </div>
             </div>
@@ -234,11 +284,12 @@ export function GuideDetailPage() {
               dataSource={applications}
               pagination={false}
               size="small"
+              scroll={{ x: '100%' }}
             />
           </AppCard>
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
           <AppCard>
             <SectionTitle style={{ marginBottom: 12 }}>Earnings</SectionTitle>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>

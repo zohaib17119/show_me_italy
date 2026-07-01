@@ -31,6 +31,7 @@ import {
 import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
 import type { Guide, GuideStatus } from '@/mocks/guides';
 import type { TourStatus } from '@/types';
+import { UpdateGuideModal } from './components/UpdateGuideModal';
 
 function formatRating(rating: number | null): string {
   if (rating == null) return '—';
@@ -57,6 +58,7 @@ export function GuideRosterPage() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
+  const [editGuide, setEditGuide] = useState<Guide | null>(null);
 
   const apiFilter = useMemo((): AllAgentsAdminFilter => {
     const filter: AllAgentsAdminFilter = {};
@@ -115,7 +117,8 @@ export function GuideRosterPage() {
       render: (_, record) => (
         <GuideCell
           initials={record.initials}
-          name={`${record.favorite ? '★ ' : ''}${record.name}`}
+          name={record.name}
+          favorite={record.favorite}
           sub={record.email}
         />
       ),
@@ -180,17 +183,22 @@ export function GuideRosterPage() {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
-        <AppButton
-          variant="secondary"
-          size="xs"
-          onClick={() =>
-            record.status === 'pending'
-              ? navigate(ROUTES.APPROVALS)
-              : navigate(`/guides/${record.id}`)
-          }
-        >
-          {record.status === 'pending' ? 'Review' : 'View'}
-        </AppButton>
+        <div style={{ display: 'flex', gap: 5 }}>
+          <AppButton variant="secondary" size="xs" onClick={() => setEditGuide(record)}>
+            Edit
+          </AppButton>
+          <AppButton
+            variant="secondary"
+            size="xs"
+            onClick={() =>
+              record.status === 'pending'
+                ? navigate(ROUTES.APPROVALS)
+                : navigate(`/guides/${record.id}`)
+            }
+          >
+            {record.status === 'pending' ? 'Review' : 'View'}
+          </AppButton>
+        </div>
       ),
     },
   ];
@@ -289,6 +297,13 @@ export function GuideRosterPage() {
           />
         </>
       )}
+
+      <UpdateGuideModal
+        open={editGuide != null}
+        guide={editGuide}
+        onClose={() => setEditGuide(null)}
+        onUpdated={loadGuides}
+      />
     </div>
   );
 }
