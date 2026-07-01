@@ -112,8 +112,8 @@ export const router = createBrowserRouter([
       {
         path: 'applications',
         element: lazyPage(() =>
-          import('@/features/applications/ApplicationsPage').then((m) => ({
-            default: m.ApplicationsPage,
+          import('@/features/applications/ApplicationsCalendarPage').then((m) => ({
+            default: m.ApplicationsCalendarPage,
           })),
         ),
       },

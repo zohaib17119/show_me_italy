@@ -69,11 +69,119 @@
 }
 
 .calCell {
-  min-height: 72px;
-  padding: 6px;
+  min-height: 108px;
+  padding: 8px;
   border-right: 1px solid var(--border-color);
   border-bottom: 1px solid var(--border-color);
   background: var(--card-bg);
+}
+
+.calDayCard {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  min-height: 108px;
+  border: none;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, box-shadow 0.15s, transform 0.12s;
+}
+
+.calDayCard:hover {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--g500) 25%, transparent);
+  transform: translateY(-1px);
+}
+
+.calDayCard:not(.calDayCardFilled):hover {
+  background: var(--g50);
+}
+
+.calDayCardHasData {
+  background: #2f4239;
+}
+
+.calDayCardHasData:hover {
+  background: #3a5247;
+}
+
+.calDayCardToday {
+  background: #900000;
+}
+
+.calDayCardToday:hover {
+  background: #a30000;
+}
+
+.calDayCardFilled .calStatLabel,
+.calDayCardFilled .calStatValue,
+.calDayCardFilled .calStatValueMuted {
+  color: rgba(255, 255, 255, 0.88);
+}
+
+.calDayCardFilled .calStatValueGood {
+  color: #86efac;
+}
+
+.calDayCardFilled .calStatValueWarn {
+  color: #fcd34d;
+}
+
+.calDayCardFilled .calDnFilled {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.calDnTodayFilled {
+  background: rgba(255, 255, 255, 0.22);
+  color: white;
+}
+
+.calDayHeader {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 6px;
+}
+
+.calDayStats {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: auto;
+}
+
+.calStatRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  font-size: 9px;
+  line-height: 1.2;
+}
+
+.calStatLabel {
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.calStatValue {
+  font-weight: 800;
+  color: var(--text-primary);
+  font-size: 10px;
+}
+
+.calStatValueGood {
+  color: var(--g600);
+}
+
+.calStatValueWarn {
+  color: var(--orange);
+}
+
+.calStatValueMuted {
+  color: var(--text-muted);
 }
 
 .calCell:nth-child(7n) {
@@ -90,6 +198,10 @@
 
 .calCellToday {
   background: var(--g50);
+}
+
+.calDayCardToday.calCellToday {
+  background: #900000;
 }
 
 .calDn {

@@ -1,6 +1,10 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import { mapApplications } from '@/api/mappers/applicationMapper';
 import {
+  indexApplicationCalendarByDate,
+  type ApplicationCalendarDaySummary,
+} from '@/api/mappers/applicationCalendarMapper';
+import {
   mapAvailableGuides,
   type AvailableGuideRow,
 } from '@/api/mappers/availableGuideMapper';
@@ -32,6 +36,9 @@ interface ApplicationsState {
   availableGuides: AvailableGuideRow[];
   availableGuidesStatus: RequestStatus;
   availableGuidesError: string | null;
+  applicationCalendarByDate: Record<string, ApplicationCalendarDaySummary>;
+  applicationCalendarStatus: RequestStatus;
+  applicationCalendarError: string | null;
 }
 
 const initialState: ApplicationsState = {
@@ -52,6 +59,9 @@ const initialState: ApplicationsState = {
   availableGuides: [],
   availableGuidesStatus: 'idle',
   availableGuidesError: null,
+  applicationCalendarByDate: {},
+  applicationCalendarStatus: 'idle',
+  applicationCalendarError: null,
 };
 
 export const fetchApplications = createAsyncThunk(
@@ -60,6 +70,18 @@ export const fetchApplications = createAsyncThunk(
     try {
       const records = await applicationsApi.getAllAdminPending();
       return mapApplications(records);
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
+export const fetchPendingApplicationCounts = createAsyncThunk(
+  'applications/fetchPendingApplicationCounts',
+  async (_, { rejectWithValue }) => {
+    try {
+      const records = await applicationsApi.getAllPendingCounts();
+      return indexApplicationCalendarByDate(records);
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }
@@ -258,6 +280,19 @@ const applicationsSlice = createSlice({
       .addCase(assignGuideManually.rejected, (state, action) => {
         state.manualAssignStatus = 'failed';
         state.error = (action.payload as string) ?? 'Failed to assign guide';
+      })
+      .addCase(fetchPendingApplicationCounts.pending, (state) => {
+        state.applicationCalendarStatus = 'loading';
+        state.applicationCalendarError = null;
+      })
+      .addCase(fetchPendingApplicationCounts.fulfilled, (state, action) => {
+        state.applicationCalendarStatus = 'succeeded';
+        state.applicationCalendarByDate = action.payload;
+      })
+      .addCase(fetchPendingApplicationCounts.rejected, (state, action) => {
+        state.applicationCalendarStatus = 'failed';
+        state.applicationCalendarError =
+          (action.payload as string) ?? 'Failed to load application calendar';
       });
   },
 });
@@ -291,3 +326,10 @@ export const selectAvailableGuidesStatus = (state: RootState) =>
   state.applications.availableGuidesStatus;
 export const selectAvailableGuidesError = (state: RootState) =>
   state.applications.availableGuidesError;
+
+export const selectApplicationCalendarByDate = (state: RootState) =>
+  state.applications.applicationCalendarByDate;
+export const selectApplicationCalendarStatus = (state: RootState) =>
+  state.applications.applicationCalendarStatus;
+export const selectApplicationCalendarError = (state: RootState) =>
+  state.applications.applicationCalendarError;

@@ -93,10 +93,13 @@ export function mapAgentToGuide(record: AgentRecord, options?: { pending?: boole
     certified: Boolean(record.tourGuideLicenseOrCertificationNo ?? record.certificateUpload),
     isActive: record.isActive === true,
     tours: Number((record as { tours?: number }).tours ?? (record as { totalTours?: number }).totalTours ?? 0),
-    rating:
-      typeof (record as { rating?: number }).rating === 'number'
-        ? (record as { rating?: number }).rating!
-        : 5,
+    rating: typeof record.rating === 'number' ? record.rating : null,
+    cancellationPercentage:
+      typeof record.cancellationPercentage === 'number'
+        ? record.cancellationPercentage
+        : null,
+    favorite: record.favorite === true,
+    adminNotes: record.adminNotes ?? '',
     license: record.tourGuideLicenseOrCertificationNo ?? '—',
     phone: record.phoneNumber ?? '—',
     activeSince: (record as { activeSince?: string }).activeSince ?? '—',

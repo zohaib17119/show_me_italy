@@ -41,7 +41,7 @@ export const navigationGroups: NavGroupConfig[] = [
     items: [
       {
         key: 'applications',
-        label: 'Applications Queue',
+        label: 'Applications Calendar',
         path: ROUTES.APPLICATIONS,
         badgeKey: 'applications',
         badgeColor: 'red',
@@ -124,9 +124,9 @@ export const routeMeta: Record<string, RouteMeta> = {
     breadcrumb: 'Guides / Guide Profile',
   },
   [ROUTES.APPLICATIONS]: {
-    title: 'Applications Queue',
-    subtitle: '12 pending · nearest first',
-    breadcrumb: 'Applications / Queue',
+    title: 'Applications Calendar',
+    subtitle: 'Click a day to view pending applications',
+    breadcrumb: 'Applications / Calendar',
   },
   [ROUTES.GUIDE_SLOTS]: {
     title: 'Guide Slots',

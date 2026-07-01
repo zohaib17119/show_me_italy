@@ -1,6 +1,7 @@
 import { axiosInstance } from '@/api/axiosInstance';
 import type {
   AgentApplication,
+  ApplicationCalendarDayRecord,
   AssignGuideApplicationPayload,
   AvailableGuideRecord,
   GuideSlotApplicantsResponse,
@@ -9,7 +10,7 @@ import type {
 import { unwrapData } from '@/api/types';
 import { normalizeListResponse } from '@/api/utils/normalizeList';
 
-export type ApplicationStatus = 'Approved' | 'Rejected';
+export type ApplicationStatus = 'Approved' | 'Rejected' | 'Hold';
 
 export interface ApproveGuideApplicationPayload {
   applicationId: number;
@@ -17,15 +18,32 @@ export interface ApproveGuideApplicationPayload {
 }
 
 export const applicationsApi = {
-  getAllAdminPending: async (): Promise<AgentApplication[]> => {
+  getAllAdminPending: async (options?: { date?: string }): Promise<AgentApplication[]> => {
     const { data } = await axiosInstance.post('/api/AgentApplications/get-all-admin', null, {
-      params: { status: 'pending' },
+      params: {
+        status: 'pending',
+        ...(options?.date ? { date: options.date } : {}),
+      },
     });
     return normalizeListResponse<AgentApplication>(data);
   },
 
-  getGuideSlots: async (): Promise<GuideSlotRecord[]> => {
-    const { data } = await axiosInstance.get('/api/AgentApplications/guide-slots');
+  getAllPendingCounts: async (): Promise<ApplicationCalendarDayRecord[]> => {
+    try {
+      const { data } = await axiosInstance.post(
+        '/api/AgentApplications/get-all-pending-counts',
+        null,
+      );
+      return normalizeListResponse<ApplicationCalendarDayRecord>(data);
+    } catch {
+      return [];
+    }
+  },
+
+  getGuideSlots: async (date?: string): Promise<GuideSlotRecord[]> => {
+    const { data } = await axiosInstance.get('/api/AgentApplications/guide-slots', {
+      params: date ? { date } : undefined,
+    });
     return normalizeListResponse<GuideSlotRecord>(data);
   },
 

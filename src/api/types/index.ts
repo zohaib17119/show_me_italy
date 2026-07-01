@@ -52,6 +52,23 @@ export interface TourSlotFilter {
   tourTypeIds?: string | null;
 }
 
+export interface CalendarDaySummaryRecord {
+  slotDate?: string;
+  totalTours?: number;
+  amTours?: number;
+  pmTours?: number;
+  tourStartTime?: string;
+  tourEndTime?: string;
+  assignedGuides?: number;
+  missingSlots?: number;
+}
+
+export interface ApplicationCalendarDayRecord {
+  slotDate?: string;
+  pendingCount?: number;
+  applicationCount?: number;
+}
+
 export interface TourType {
   tourTypeId?: number;
   name?: string | null;
@@ -123,6 +140,10 @@ export interface AgentRecord {
   status?: string;
   certificateUpload?: string;
   reasonOfRejection?: string;
+  favorite?: boolean;
+  adminNotes?: string;
+  rating?: number;
+  cancellationPercentage?: number;
   [key: string]: unknown;
 }
 
@@ -214,6 +235,7 @@ export interface AgentApplication {
   agentId?: string;
   guideId?: string;
   tourSlotId?: number;
+  tourSlotID?: number;
   fullName?: string;
   typeName?: string;
   slotDate?: string;

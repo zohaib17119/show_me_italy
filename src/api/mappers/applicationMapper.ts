@@ -4,6 +4,7 @@ import type { LangCode, TourStatus } from '@/types';
 
 function mapStatus(status?: string): TourStatus {
   const raw = (status ?? 'pending').toLowerCase();
+  if (raw.includes('hold')) return 'hold';
   if (raw.includes('approve')) return 'approved';
   if (raw.includes('den') || raw.includes('reject')) return 'denied';
   if (raw.includes('complete')) return 'completed';
@@ -68,6 +69,11 @@ export function mapApplication(record: AgentApplication, index: number): Applica
     'EN'
   ) as LangCode;
   const slotDateKey = record.slotDate?.slice(0, 10) ?? '—';
+  const tourSlotIdRaw = record.tourSlotID ?? record.tourSlotId;
+  const tourSlotId =
+    tourSlotIdRaw != null && !Number.isNaN(Number(tourSlotIdRaw))
+      ? Number(tourSlotIdRaw)
+      : null;
 
   return {
     id: String(applicationId),
@@ -75,6 +81,7 @@ export function mapApplication(record: AgentApplication, index: number): Applica
     guideId: String(record.agentId ?? record.guideId ?? index),
     guideName,
     guideInitials: initials(guideName),
+    tourSlotId,
     tour: record.typeName ?? record.tour ?? '—',
     date: slotDateKey,
     dateLabel: record.dateLabel ?? formatSlotDate(record.slotDate),

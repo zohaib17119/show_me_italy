@@ -19,20 +19,22 @@ import {
   formatLocalDateKey,
   todayLocalDateKey,
 } from '@/api/utils/date';
-import { ROUTES, getTourDetailPath } from '@/constants/routes';
+import { ROUTES } from '@/constants/routes';
+import { GuideSlotsModal } from '@/features/applications/components/GuideSlotsModal';
 import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
 import {
   fetchTourTypes,
   selectActiveTourTypes,
 } from '@/features/tourType/tourTypeSlice';
 import {
-  fetchTours,
-  selectEventsByDate,
-  selectTourError,
-  selectTourStatus,
+  fetchCalendarSummaries,
+  selectCalendarError,
+  selectCalendarStatus,
+  selectCalendarSummariesByDate,
 } from '@/features/tour/tourSlice';
 import { languageColors } from '@/theme/tokens';
 import type { LangCode } from '@/types';
+import { CalDayCard } from './components/CalDayCard';
 import {
   buildTourSlotFilter,
   calendarTitle,
@@ -100,11 +102,11 @@ const MONTH_NAMES = [
 export function CalendarPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const eventsByDate = useAppSelector(selectEventsByDate);
+  const summariesByDate = useAppSelector(selectCalendarSummariesByDate);
   const languages = useAppSelector(selectActiveLanguages);
   const tourTypes = useAppSelector(selectActiveTourTypes);
-  const status = useAppSelector(selectTourStatus);
-  const error = useAppSelector(selectTourError);
+  const status = useAppSelector(selectCalendarStatus);
+  const error = useAppSelector(selectCalendarError);
 
   const [viewMode, setViewMode] = useState<CalendarViewMode>('month');
   const [cursor, setCursor] = useState(() => {
@@ -115,6 +117,7 @@ export function CalendarPage() {
   const [enabledLangs, setEnabledLangs] = useState<Set<LangCode>>(() => new Set());
   const [enabledTourTypeIds, setEnabledTourTypeIds] = useState<Set<number>>(() => new Set());
   const [filtersReady, setFiltersReady] = useState(false);
+  const [modalDate, setModalDate] = useState<string | null>(null);
 
   useFetchErrorToast(status, error);
 
@@ -202,7 +205,7 @@ export function CalendarPage() {
 
   useEffect(() => {
     if (!filtersReady) return;
-    void dispatch(fetchTours(tourFilterRef.current));
+    void dispatch(fetchCalendarSummaries(tourFilterRef.current));
   }, [dispatch, filterKey, filtersReady]);
 
   const toggleLang = (code: LangCode) => {
@@ -278,7 +281,7 @@ export function CalendarPage() {
 
       <PageHeader
         title="Master Calendar"
-        subtitle="Color-coded by language · Click slot to edit"
+        subtitle="Daily tour summary · Click a day to view guide slots"
         extra={
           <>
             <div className={styles.viewChips}>
@@ -310,7 +313,7 @@ export function CalendarPage() {
         <ListErrorState
           message={error}
           loading={false}
-          onRetry={() => void dispatch(fetchTours(tourFilter))}
+          onRetry={() => void dispatch(fetchCalendarSummaries(tourFilter))}
         />
       )}
 
@@ -350,62 +353,16 @@ export function CalendarPage() {
               </div>
 
               <div className={styles.calMonth}>
-            {monthDays.map((cell) => {
-              const events = eventsByDate[cell.date] ?? [];
-              return (
-                <div
-                  key={cell.date}
-                  className={[
-                    styles.calCell,
-                    cell.otherMonth ? styles.calCellOther : '',
-                    cell.isToday ? styles.calCellToday : '',
-                    viewMode === 'day' && cell.date === selectedDate ? styles.calCellToday : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  onClick={() => {
-                    if (viewMode === 'day') setSelectedDate(cell.date);
-                  }}
-                  role={viewMode === 'day' ? 'button' : undefined}
-                  tabIndex={viewMode === 'day' ? 0 : undefined}
-                >
-                  <div className={styles.calDn}>
-                    {cell.isToday ? (
-                      <div className={styles.calDnToday}>{cell.day}</div>
-                    ) : (
-                      cell.day
-                    )}
-                  </div>
-                  {events.map((ev) => (
-                    <div
-                      key={ev.id}
-                      className={styles.calEv}
-                      style={{
-                        background: languageColors[ev.language],
-                        opacity: ev.unfilled ? 0.75 : 1,
-                        cursor: 'pointer',
-                      }}
-                      title={ev.label}
-                      role="button"
-                      tabIndex={0}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const tourSlotId = ev.slot.tourSlotId ?? Number(ev.id);
-                        if (tourSlotId) navigate(getTourDetailPath(tourSlotId));
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key !== 'Enter' && e.key !== ' ') return;
-                        e.stopPropagation();
-                        const tourSlotId = ev.slot.tourSlotId ?? Number(ev.id);
-                        if (tourSlotId) navigate(getTourDetailPath(tourSlotId));
-                      }}
-                    >
-                      {ev.label}
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
+                {monthDays.map((cell) => (
+                  <CalDayCard
+                    key={cell.date}
+                    day={cell.day}
+                    isToday={cell.isToday}
+                    otherMonth={cell.otherMonth}
+                    summary={summariesByDate[cell.date]}
+                    onClick={() => setModalDate(cell.date)}
+                  />
+                ))}
               </div>
             </div>
           </div>
@@ -465,6 +422,12 @@ export function CalendarPage() {
         </div>
       </div>
       )}
+
+      <GuideSlotsModal
+        open={modalDate != null}
+        dateKey={modalDate}
+        onClose={() => setModalDate(null)}
+      />
     </div>
   );
 }

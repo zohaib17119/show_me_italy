@@ -28,12 +28,15 @@ export interface Guide {
   isActive?: boolean;
   tours: number;
   rating: number | null;
+  cancellationPercentage?: number | null;
   license: string;
   phone: string;
   activeSince: string;
   earnings: GuideEarnings;
   tourHistory: GuideTourHistory[];
   adminNote: string;
+  adminNotes?: string;
+  favorite?: boolean;
   certificateUpload?: string;
 }
 

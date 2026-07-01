@@ -6,6 +6,7 @@ export interface Application {
   guideId: string;
   guideName: string;
   guideInitials: string;
+  tourSlotId: number | null;
   tour: string;
   date: string;
   dateLabel: string;
@@ -23,6 +24,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     guideId: 'guide-marco-rossi',
     guideName: 'Marco Rossi',
     guideInitials: 'MR',
+    tourSlotId: 101,
     tour: 'Colosseum Arena',
     date: '2026-04-17',
     dateLabel: 'Fri 17 Apr',
@@ -38,6 +40,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     guideId: 'guide-sofia-conti',
     guideName: 'Sofia Conti',
     guideInitials: 'SC',
+    tourSlotId: 101,
     tour: 'Colosseum Arena',
     date: '2026-04-17',
     dateLabel: 'Fri 17 Apr',
@@ -53,6 +56,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     guideId: 'guide-yuki-tanaka',
     guideName: 'Yuki Tanaka',
     guideInitials: 'YT',
+    tourSlotId: 102,
     tour: 'Vatican Museums',
     date: '2026-04-19',
     dateLabel: 'Sun 19 Apr',
@@ -68,6 +72,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     guideId: 'guide-hans-muller',
     guideName: 'Hans Müller',
     guideInitials: 'HM',
+    tourSlotId: 101,
     tour: 'Colosseum Arena',
     date: '2026-04-17',
     dateLabel: 'Fri 17 Apr',
@@ -83,6 +88,7 @@ export const MOCK_APPLICATIONS: Application[] = [
     guideId: 'guide-amelie-dubois',
     guideName: 'Amélie Dubois',
     guideInitials: 'AD',
+    tourSlotId: 103,
     tour: 'Colosseum Arena',
     date: '2026-04-18',
     dateLabel: 'Sat 18 Apr',

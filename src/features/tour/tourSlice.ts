@@ -1,10 +1,9 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
 import type { TourSlot, TourSlotFilter } from '@/api/types';
 import {
-  groupEventsByDate,
-  mapTourSlotToCalendarEvent,
-  type CalendarEvent,
-} from '@/api/mappers/tourMapper';
+  indexSummariesByDate,
+  type CalendarDaySummary,
+} from '@/api/mappers/calendarSummaryMapper';
 import { getApiErrorMessage } from '@/api/axiosInstance';
 import { tourApi } from './tourApi';
 import type { RootState } from '@/app/store';
@@ -14,20 +13,26 @@ export type RequestStatus = 'idle' | 'loading' | 'succeeded' | 'failed';
 interface TourState {
   items: TourSlot[];
   selectedTour: TourSlot | null;
+  calendarSummaries: Record<string, CalendarDaySummary>;
   status: RequestStatus;
+  calendarStatus: RequestStatus;
   detailStatus: RequestStatus;
   mutationStatus: RequestStatus;
   error: string | null;
+  calendarError: string | null;
   detailError: string | null;
 }
 
 const initialState: TourState = {
   items: [],
   selectedTour: null,
+  calendarSummaries: {},
   status: 'idle',
+  calendarStatus: 'idle',
   detailStatus: 'idle',
   mutationStatus: 'idle',
   error: null,
+  calendarError: null,
   detailError: null,
 };
 
@@ -36,6 +41,18 @@ export const fetchTours = createAsyncThunk(
   async (filter: TourSlotFilter | undefined, { rejectWithValue }) => {
     try {
       return await tourApi.getAllAdmin(filter ?? {});
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
+export const fetchCalendarSummaries = createAsyncThunk(
+  'tour/fetchCalendarSummaries',
+  async (filter: TourSlotFilter | undefined, { rejectWithValue }) => {
+    try {
+      const records = await tourApi.getCalendarSummaries(filter ?? {});
+      return indexSummariesByDate(records);
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }
@@ -120,6 +137,18 @@ const tourSlice = createSlice({
         state.status = 'failed';
         state.error = (action.payload as string) ?? 'Failed to load tours';
       })
+      .addCase(fetchCalendarSummaries.pending, (state) => {
+        state.calendarStatus = 'loading';
+        state.calendarError = null;
+      })
+      .addCase(fetchCalendarSummaries.fulfilled, (state, action) => {
+        state.calendarStatus = 'succeeded';
+        state.calendarSummaries = action.payload;
+      })
+      .addCase(fetchCalendarSummaries.rejected, (state, action) => {
+        state.calendarStatus = 'failed';
+        state.calendarError = (action.payload as string) ?? 'Failed to load calendar';
+      })
       .addCase(fetchTourById.pending, (state) => {
         state.detailStatus = 'loading';
         state.detailError = null;
@@ -165,21 +194,6 @@ export const selectTourDetailStatus = (state: RootState) => state.tour.detailSta
 export const selectTourError = (state: RootState) => state.tour.error;
 export const selectTourDetailError = (state: RootState) => state.tour.detailError;
 export const selectTourMutationStatus = (state: RootState) => state.tour.mutationStatus;
-
-export const selectCalendarEvents = (state: RootState): CalendarEvent[] => {
-  const { items } = state.tour;
-  const tourTypes = state.tourType.items;
-  const languages = state.language.items;
-  return items.map((slot) => mapTourSlotToCalendarEvent(slot, tourTypes, languages));
-};
-
-export const selectEventsByDate = (state: RootState) =>
-  groupEventsByDate(selectCalendarEvents(state));
-
-export const selectTodayTours = (state: RootState) => {
-  const today = new Date().toISOString().slice(0, 10);
-  return selectEventsByDate(state)[today] ?? [];
-};
-
-export const selectUnfilledCount = (state: RootState) =>
-  selectCalendarEvents(state).filter((e) => e.unfilled).length;
+export const selectCalendarSummariesByDate = (state: RootState) => state.tour.calendarSummaries;
+export const selectCalendarStatus = (state: RootState) => state.tour.calendarStatus;
+export const selectCalendarError = (state: RootState) => state.tour.calendarError;

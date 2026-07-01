@@ -48,15 +48,6 @@ export function KpiRow() {
         onClick={() => navigate(ROUTES.CALENDAR)}
       />
       <StatCard
-        icon="📅"
-        value={stats?.totalSlots ?? 0}
-        label="All Slots"
-        sub="from dashboard API"
-        trend={<TrendPill variant="up">API</TrendPill>}
-        accentColor="#2E75B6"
-        onClick={() => navigate(ROUTES.CALENDAR)}
-      />
-      <StatCard
         icon="⚠️"
         value={stats?.unfilledSlots ?? 0}
         label="Unfilled Slots"

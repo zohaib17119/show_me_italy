@@ -32,7 +32,10 @@ import { fetchLanguages, selectActiveLanguages } from '@/features/language/langu
 import type { Guide, GuideStatus } from '@/mocks/guides';
 import type { TourStatus } from '@/types';
 
-const PAGE_SIZE = 5;
+function formatRating(rating: number | null): string {
+  if (rating == null) return '—';
+  return Number.isInteger(rating) ? String(rating) : rating.toFixed(1);
+}
 
 function guideStatusToBadge(status: GuideStatus): TourStatus {
   if (status === 'active') return 'active';
@@ -52,6 +55,7 @@ export function GuideRosterPage() {
   const [languageFilter, setLanguageFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
 
   const apiFilter = useMemo((): AllAgentsAdminFilter => {
@@ -102,14 +106,18 @@ export function GuideRosterPage() {
     );
   }, [guides, search]);
 
-  const pageData = filteredGuides.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const pageData = filteredGuides.slice((page - 1) * pageSize, page * pageSize);
 
   const columns: ColumnsType<Guide> = [
     {
       title: 'Guide',
       key: 'guide',
       render: (_, record) => (
-        <GuideCell initials={record.initials} name={record.name} sub={record.email} />
+        <GuideCell
+          initials={record.initials}
+          name={`${record.favorite ? '★ ' : ''}${record.name}`}
+          sub={record.email}
+        />
       ),
     },
     {
@@ -147,9 +155,26 @@ export function GuideRosterPage() {
     //   render: (tours: number) => <strong>{tours}</strong>,
     // },
     {
+      title: 'Admin Notes',
+      key: 'adminNotes',
+      render: (_, record) =>
+        record.adminNotes?.trim() ? (
+          <span>{record.adminNotes}</span>
+        ) : (
+          <span style={{ color: 'var(--text-muted)' }}>—</span>
+        ),
+    },
+    {
       title: 'Rating',
       key: 'rating',
-      render: (_, record) => (record.rating != null ? `⭐ ${record.rating}` : '—'),
+      render: (_, record) =>
+        record.rating != null ? `⭐ ${formatRating(record.rating)}` : '—',
+    },
+    {
+      title: 'Cancellation %',
+      key: 'cancellationPercentage',
+      render: (_, record) =>
+        record.cancellationPercentage != null ? `${record.cancellationPercentage}%` : '—',
     },
     {
       title: 'Actions',
@@ -253,9 +278,14 @@ export function GuideRosterPage() {
 
           <TablePagination
             page={page}
-            pageSize={PAGE_SIZE}
+            pageSize={pageSize}
             total={filteredGuides.length}
+            pageSizeOptions={[25, 50, 100]}
             onPageChange={setPage}
+            onPageSizeChange={(size) => {
+              setPageSize(size);
+              setPage(1);
+            }}
           />
         </>
       )}

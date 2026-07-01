@@ -1,21 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
 import { Spin } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
-  DataTable,
-  FilterBar,
-  FilterSelect,
-  GuideCell,
-  LangChip,
   ListErrorState,
-  SearchInput,
   showToast,
-  StatusBadge,
-  TablePagination,
 } from '@/components/ui';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import { getRouteMeta } from '@/constants/navigation';
@@ -28,12 +18,9 @@ import {
   selectApplicationsMutationStatus,
   selectApplicationsStatus,
 } from '@/features/applications/applicationsSlice';
-import type { Application } from '@/mocks/applications';
-
-const PAGE_SIZE = 10;
+import { ApplicationsQueueTable } from './components/ApplicationsQueueTable';
 
 export function ApplicationsPage() {
-  const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const meta = getRouteMeta(ROUTES.APPLICATIONS);
   const applications = useAppSelector(selectApplications);
@@ -41,8 +28,6 @@ export function ApplicationsPage() {
   const error = useAppSelector(selectApplicationsError);
   const mutationStatus = useAppSelector(selectApplicationsMutationStatus);
 
-  const [page, setPage] = useState(1);
-  const [search, setSearch] = useState('');
   const [approvingId, setApprovingId] = useState<number | null>(null);
 
   const loadApplications = useCallback(() => {
@@ -54,19 +39,6 @@ export function ApplicationsPage() {
   useEffect(() => {
     loadApplications();
   }, [loadApplications]);
-
-  const filtered = useMemo(() => {
-    return applications.filter((app) => {
-      const query = search.trim().toLowerCase();
-      if (query === '') return true;
-      return (
-        app.guideName.toLowerCase().includes(query) ||
-        app.tour.toLowerCase().includes(query)
-      );
-    });
-  }, [applications, search]);
-
-  const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   const handleApprove = useCallback(
     async (applicationId: number) => {
@@ -81,77 +53,6 @@ export function ApplicationsPage() {
       }
     },
     [dispatch],
-  );
-
-  const columns: ColumnsType<Application> = useMemo(
-    () => [
-      {
-        title: 'Guide',
-        dataIndex: 'guideName',
-        key: 'guide',
-        render: (_, row) => (
-          <GuideCell initials={row.guideInitials} name={row.guideName} />
-        ),
-      },
-      { title: 'Tour', dataIndex: 'tour', key: 'tour' },
-      {
-        title: 'Date',
-        dataIndex: 'dateLabel',
-        key: 'date',
-        render: (label: string) => <strong>{label}</strong>,
-      },
-      { title: 'Time', dataIndex: 'time', key: 'time' },
-      {
-        title: 'Language',
-        dataIndex: 'language',
-        key: 'language',
-        render: (lang: Application['language']) => <LangChip code={lang} />,
-      },
-      {
-        title: 'Pay Rate',
-        dataIndex: 'payRate',
-        key: 'payRate',
-        render: (value: string) => <strong>{value}</strong>,
-      },
-      {
-        title: 'Applied At',
-        dataIndex: 'appliedAt',
-        key: 'appliedAt',
-        render: (value: string) => (
-          <span style={{ color: 'var(--text-muted)' }}>{value}</span>
-        ),
-      },
-      {
-        title: 'Status',
-        dataIndex: 'status',
-        key: 'status',
-        render: (s: Application['status']) => <StatusBadge status={s} />,
-      },
-      {
-        title: 'Actions',
-        key: 'actions',
-        render: (_, row) => (
-          <div style={{ display: 'flex', gap: 5 }}>
-            <AppButton
-              variant="primary"
-              size="xs"
-              disabled={mutationStatus === 'loading' && approvingId === row.applicationId}
-              onClick={() => void handleApprove(row.applicationId)}
-            >
-              Approve
-            </AppButton>
-            <AppButton
-              variant="secondary"
-              size="xs"
-              onClick={() => navigate(ROUTES.GUIDE_SLOTS)}
-            >
-              Assign
-            </AppButton>
-          </div>
-        ),
-      },
-    ],
-    [approvingId, handleApprove, mutationStatus, navigate],
   );
 
   return (
@@ -177,59 +78,14 @@ export function ApplicationsPage() {
       )}
 
       {status !== 'failed' && (
-        <>
-          <FilterBar>
-            <SearchInput
-              placeholder="Search…"
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-            />
-            <FilterSelect
-              options={[
-                { value: 'all', label: 'All Tours' },
-                { value: 'colosseum', label: 'Colosseum Arena' },
-              ]}
-              defaultValue="all"
-            />
-            <FilterSelect
-              options={[
-                { value: 'all', label: 'All Languages' },
-                { value: 'EN', label: 'English' },
-                { value: 'IT', label: 'Italian' },
-              ]}
-              defaultValue="all"
-            />
-          </FilterBar>
-
-          {/* TODO: restore when bulk approve/reject API is available
-          <BulkActionBar selectedCount={selectedKeys.length}>
-            <AppButton variant="primary" onClick={() => showToast('✓ Bulk approved')}>
-              ✓ Approve All
-            </AppButton>
-            <AppButton variant="danger" onClick={() => showToast('Bulk denied')}>
-              ✕ Deny All
-            </AppButton>
-          </BulkActionBar>
-          */}
-
-          <DataTable<Application>
-            rowKey="id"
-            columns={columns}
-            dataSource={pageData}
-            pagination={false}
-            footer={() => (
-              <TablePagination
-                page={page}
-                pageSize={PAGE_SIZE}
-                total={filtered.length}
-                onPageChange={setPage}
-              />
-            )}
-          />
-        </>
+        <ApplicationsQueueTable
+          rows={applications}
+          loading={status === 'loading'}
+          showSearch
+          approvingId={approvingId}
+          mutationLoading={mutationStatus === 'loading'}
+          onApprove={handleApprove}
+        />
       )}
     </div>
   );

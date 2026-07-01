@@ -12,6 +12,7 @@ const statusConfig: Record<TourStatus, { label: string; className: string }> = {
   completed: { label: 'Completed', className: styles.success },
   approved: { label: 'Approved', className: styles.approved },
   denied: { label: 'Revision', className: styles.danger },
+  hold: { label: 'Hold', className: styles.pending },
 };
 
 interface StatusBadgeProps {

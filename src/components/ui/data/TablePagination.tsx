@@ -5,6 +5,8 @@ export interface TablePaginationProps {
   pageSize: number;
   total: number;
   onPageChange: (page: number) => void;
+  pageSizeOptions?: number[];
+  onPageSizeChange?: (pageSize: number) => void;
   className?: string;
 }
 
@@ -13,6 +15,8 @@ export function TablePagination({
   pageSize,
   total,
   onPageChange,
+  pageSizeOptions,
+  onPageSizeChange,
   className,
 }: TablePaginationProps) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
@@ -29,6 +33,23 @@ export function TablePagination({
     <div className={[styles.pagination, className].filter(Boolean).join(' ')}>
       <span className={styles.paginationInfo}>
         Showing {start}–{end} of {total}
+        {pageSizeOptions && pageSizeOptions.length > 0 && onPageSizeChange && (
+          <>
+            {' · '}
+            <select
+              className={styles.pageSizeSelect}
+              value={pageSize}
+              aria-label="Rows per page"
+              onChange={(e) => onPageSizeChange(Number(e.target.value))}
+            >
+              {pageSizeOptions.map((size) => (
+                <option key={size} value={size}>
+                  {size} / page
+                </option>
+              ))}
+            </select>
+          </>
+        )}
       </span>
       <div className={styles.paginationControls}>
         <button
