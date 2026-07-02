@@ -6,7 +6,9 @@ export interface GuideSlotRow {
   tourSlotId: number;
   tourName: string;
   dateLabel: string;
-  time: string;
+  startTime: string;
+  entranceTime: string;
+  guideName: string;
   language: LangCode;
   guidesNeeded: number;
   totalApplicants: number;
@@ -24,9 +26,8 @@ function formatSlotDate(iso?: string): string {
   });
 }
 
-function formatTimeRange(startTime?: string, endTime?: string): string {
-  if (startTime && endTime) return `${startTime}–${endTime}`;
-  return '—';
+function formatTime(value?: string): string {
+  return value?.trim() ? value : '—';
 }
 
 export function mapGuideSlot(record: GuideSlotRecord, index: number): GuideSlotRow {
@@ -40,7 +41,9 @@ export function mapGuideSlot(record: GuideSlotRecord, index: number): GuideSlotR
     tourSlotId,
     tourName: record.typeName ?? '—',
     dateLabel: formatSlotDate(record.slotDate),
-    time: formatTimeRange(record.startTime, record.endTime),
+    startTime: formatTime(record.startTime),
+    entranceTime: formatTime(record.entranceTime),
+    guideName: record.guideName?.trim() ? record.guideName : '—',
     language: lang,
     guidesNeeded,
     totalApplicants,

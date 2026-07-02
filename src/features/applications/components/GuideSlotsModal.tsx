@@ -61,7 +61,8 @@ export function GuideSlotsModal({ open, dateKey, onClose }: GuideSlotsModalProps
       title={dateKey ? formatModalTitle(dateKey) : 'Guide Slots'}
       onCancel={onClose}
       footer={null}
-      width={920}
+      width="80%"
+      style={{ maxWidth: 1200 }}
       destroyOnClose
     >
       {status === 'loading' && (

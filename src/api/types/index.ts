@@ -175,6 +175,8 @@ export interface GuideSlotRecord {
   slotDate?: string;
   startTime?: string;
   endTime?: string;
+  entranceTime?: string;
+  guideName?: string;
   code?: string;
   totalApplicants?: number;
   guidesNeeded?: number;
@@ -259,6 +261,7 @@ export interface AgentApplication {
   appliedAt?: string;
   status?: string;
   payRateSnapshot?: number;
+  adminNotes?: string | null;
   [key: string]: unknown;
 }
 

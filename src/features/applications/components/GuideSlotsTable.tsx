@@ -51,23 +51,15 @@ export function GuideSlotsTable({
         key: 'date',
         render: (label: string) => <strong>{label}</strong>,
       },
-      { title: 'Time', dataIndex: 'time', key: 'time' },
+      { title: 'Start Time', dataIndex: 'startTime', key: 'startTime' },
+      { title: 'Entrance Time', dataIndex: 'entranceTime', key: 'entranceTime' },
       {
         title: 'Language',
         dataIndex: 'language',
         key: 'language',
         render: (lang: GuideSlotRow['language']) => <LangChip code={lang} />,
       },
-      {
-        title: 'Needed / Applied',
-        dataIndex: 'applicantsLabel',
-        key: 'applicantsLabel',
-        render: (label: string, row) => (
-          <strong title={`${row.guidesNeeded} needed · ${row.totalApplicants} applied`}>
-            {label}
-          </strong>
-        ),
-      },
+      { title: 'Guide Name', dataIndex: 'guideName', key: 'guideName' },
       {
         title: 'Actions',
         key: 'actions',

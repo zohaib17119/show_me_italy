@@ -99,11 +99,11 @@
 }
 
 .calDayCardHasData {
-  background: #2f4239;
+  background: #eef4ef;
 }
 
 .calDayCardHasData:hover {
-  background: #3a5247;
+  background: #e4ece6;
 }
 
 .calDayCardToday {

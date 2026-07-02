@@ -21,12 +21,13 @@ import {
 } from './queueTableRows';
 
 const PAGE_SIZE = 10;
-const COLUMN_COUNT = 9;
 
 export interface ApplicationsQueueTableProps {
   rows: Application[];
   loading?: boolean;
   showSearch?: boolean;
+  showPayRate?: boolean;
+  showGuideNotes?: boolean;
   groupByTourSlot?: boolean;
   approvingId?: number | null;
   holdingId?: number | null;
@@ -39,6 +40,8 @@ export function ApplicationsQueueTable({
   rows,
   loading = false,
   showSearch = false,
+  showPayRate = false,
+  showGuideNotes = false,
   groupByTourSlot = false,
   approvingId = null,
   holdingId = null,
@@ -72,16 +75,19 @@ export function ApplicationsQueueTable({
     ? tableRows
     : tableRows.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
+  const columnCount = 8 + (showPayRate ? 1 : 0) + (showGuideNotes ? 1 : 0);
+
   const groupCell = (record: QueueTableRow) =>
     isQueueGroupRow(record) ? { colSpan: 0 } : {};
 
   const columns: ColumnsType<QueueTableRow> = useMemo(
-    () => [
+    () => {
+      const cols: ColumnsType<QueueTableRow> = [
       {
         title: 'Guide',
         key: 'guide',
         onCell: (record) =>
-          isQueueGroupRow(record) ? { colSpan: COLUMN_COUNT } : {},
+          isQueueGroupRow(record) ? { colSpan: columnCount } : {},
         render: (_, row) =>
           isQueueGroupRow(row) ? (
             <strong style={{ fontSize: 13 }}>{row.typeName}</strong>
@@ -115,13 +121,31 @@ export function ApplicationsQueueTable({
         render: (_, row) =>
           isQueueGroupRow(row) ? null : <LangChip code={row.language} />,
       },
-      {
-        title: 'Pay Rate',
-        key: 'payRate',
-        onCell: groupCell,
-        render: (_, row) =>
-          isQueueGroupRow(row) ? null : <strong>{row.payRate}</strong>,
-      },
+      ];
+
+      if (showPayRate) {
+        cols.push({
+          title: 'Pay Rate',
+          key: 'payRate',
+          onCell: groupCell,
+          render: (_, row) =>
+            isQueueGroupRow(row) ? null : <strong>{row.payRate}</strong>,
+        });
+      }
+
+      if (showGuideNotes) {
+        cols.push({
+          title: 'Guide Notes',
+          key: 'adminNotes',
+          onCell: groupCell,
+          render: (_, row) =>
+            isQueueGroupRow(row) ? null : (
+              <span>{row.adminNotes?.trim() ? row.adminNotes : '—'}</span>
+            ),
+        });
+      }
+
+      cols.push(
       {
         title: 'Applied At',
         key: 'appliedAt',
@@ -179,8 +203,11 @@ export function ApplicationsQueueTable({
             </div>
           ),
       },
-    ],
-    [approvingId, holdingId, mutationLoading, navigate, onApprove, onHold],
+      );
+
+      return cols;
+    },
+    [approvingId, columnCount, holdingId, mutationLoading, navigate, onApprove, onHold, showGuideNotes, showPayRate],
   );
 
   return (

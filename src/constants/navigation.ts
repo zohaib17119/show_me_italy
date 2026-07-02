@@ -128,6 +128,11 @@ export const routeMeta: Record<string, RouteMeta> = {
     subtitle: 'Click a day to view pending applications',
     breadcrumb: 'Applications / Calendar',
   },
+  '/applications/queue/detail': {
+    title: 'Pending Applications',
+    subtitle: 'Review and approve guide applications',
+    breadcrumb: 'Applications / Queue',
+  },
   [ROUTES.GUIDE_SLOTS]: {
     title: 'Guide Slots',
     subtitle: 'Tour slots with pending guide applications',
@@ -175,6 +180,9 @@ export function getRouteMeta(pathname: string): RouteMeta {
   if (pathname.startsWith('/schedule/tours/')) {
     return routeMeta['/schedule/tours/detail'];
   }
+  if (pathname.startsWith('/applications/queue/')) {
+    return routeMeta['/applications/queue/detail'];
+  }
 
   return {
     title: 'Page',
@@ -186,6 +194,7 @@ export function findNavKeyByPath(pathname: string): string {
   if (pathname === ROUTES.DASHBOARD) return 'dashboard';
   if (pathname.startsWith('/guides/') && pathname !== ROUTES.APPROVALS) return 'guides';
   if (pathname.startsWith('/schedule/tours/')) return 'calendar';
+  if (pathname.startsWith('/applications/queue/')) return 'applications';
   if (pathname.startsWith('/payments/payouts/') && pathname !== ROUTES.PAYOUTS) return 'payout-detail';
 
   for (const group of navigationGroups) {

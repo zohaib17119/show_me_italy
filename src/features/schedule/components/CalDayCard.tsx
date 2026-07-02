@@ -36,18 +36,16 @@ export function CalDayCard(props: CalDayCardProps) {
       ? props.applicationSummary != null
       : props.summary != null);
 
-  const filled = hasData || isToday;
-
   return (
     <button
       type="button"
       className={[
         styles.calCell,
         styles.calDayCard,
-        otherMonth && !filled ? styles.calCellOther : '',
-        filled && !isToday ? styles.calDayCardHasData : '',
+        otherMonth && !hasData && !isToday ? styles.calCellOther : '',
+        hasData && !isToday ? styles.calDayCardHasData : '',
         isToday ? styles.calDayCardToday : '',
-        filled ? styles.calDayCardFilled : '',
+        isToday ? styles.calDayCardFilled : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -55,23 +53,23 @@ export function CalDayCard(props: CalDayCardProps) {
     >
       <div className={styles.calDayHeader}>
         {isToday ? (
-          <div className={[styles.calDnToday, filled ? styles.calDnTodayFilled : ''].filter(Boolean).join(' ')}>
+          <div className={[styles.calDnToday, styles.calDnTodayFilled].join(' ')}>
             {day}
           </div>
         ) : (
-          <span className={[styles.calDn, filled ? styles.calDnFilled : ''].filter(Boolean).join(' ')}>
-            {day}
-          </span>
+          <span className={styles.calDn}>{day}</span>
         )}
       </div>
 
       {hasData && !applicationsMode && (
         <div className={styles.calDayStats}>
           <div className={styles.calStatRow}>
-            {/* <span className={styles.calStatLabel}>Tours</span>
+            <span className={styles.calStatLabel}>Tours</span>
             <span className={styles.calStatValue}>
               {props.summary?.totalTours ?? 0}
-            </span> */}
+            </span>
+          </div>
+          <div className={styles.calStatRow}>
             <span className={styles.calStatLabel}>Tours AM</span>
             <span className={styles.calStatValue}>
               {props.summary?.amTours ?? 0}

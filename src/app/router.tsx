@@ -118,6 +118,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'applications/queue/:date',
+        element: lazyPage(() =>
+          import('@/features/applications/ApplicationsQueuePage').then((m) => ({
+            default: m.ApplicationsQueuePage,
+          })),
+        ),
+      },
+      {
         path: 'applications/slots',
         element: lazyPage(() =>
           import('@/features/applications/GuideSlotsPage').then((m) => ({

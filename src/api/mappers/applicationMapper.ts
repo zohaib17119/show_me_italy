@@ -88,6 +88,7 @@ export function mapApplication(record: AgentApplication, index: number): Applica
     time: formatTimeRange(record.startTime, record.endTime, record.time),
     language: lang,
     payRate: formatPayRate(record.payRateSnapshot),
+    adminNotes: record.adminNotes?.trim() ?? '',
     appliedAt: formatAppliedAt(record.appliedAt),
     status: mapStatus(record.status),
   };

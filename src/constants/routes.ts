@@ -10,6 +10,7 @@ export const ROUTES = {
   APPROVALS: '/guides/approvals',
   GUIDE_DETAIL: '/guides/:id',
   APPLICATIONS: '/applications',
+  APPLICATIONS_QUEUE: '/applications/queue/:date',
   GUIDE_SLOTS: '/applications/slots',
   ASSIGNMENT: '/applications/assignment',
   PAYOUTS: '/payments/payouts',
@@ -27,4 +28,8 @@ export function getTourDetailPath(id: number | string): string {
 
 export function getAssignmentPath(tourSlotId: number | string): string {
   return `${ROUTES.ASSIGNMENT}?tourSlotId=${tourSlotId}`;
+}
+
+export function getApplicationsQueuePath(date: string): string {
+  return `/applications/queue/${date}`;
 }

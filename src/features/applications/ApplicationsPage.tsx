@@ -82,6 +82,7 @@ export function ApplicationsPage() {
           rows={applications}
           loading={status === 'loading'}
           showSearch
+          showPayRate
           approvingId={approvingId}
           mutationLoading={mutationStatus === 'loading'}
           onApprove={handleApprove}

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
+import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
@@ -10,7 +11,7 @@ import {
 } from '@/components/ui';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import { getRouteMeta } from '@/constants/navigation';
-import { ROUTES } from '@/constants/routes';
+import { ROUTES, getApplicationsQueuePath } from '@/constants/routes';
 import {
   formatLocalDateKey,
   todayLocalDateKey,
@@ -23,7 +24,6 @@ import {
 } from '@/features/applications/applicationsSlice';
 import { CalDayCard } from '@/features/schedule/components/CalDayCard';
 import styles from '@/features/schedule/schedule.module.css';
-import { ApplicationsQueueModal } from './components/ApplicationsQueueModal';
 
 interface CalendarDay {
   date: string;
@@ -82,6 +82,7 @@ function buildMonthGrid(year: number, month: number): CalendarDay[] {
 
 export function ApplicationsCalendarPage() {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const meta = getRouteMeta(ROUTES.APPLICATIONS);
   const summariesByDate = useAppSelector(selectApplicationCalendarByDate);
   const status = useAppSelector(selectApplicationCalendarStatus);
@@ -91,7 +92,6 @@ export function ApplicationsCalendarPage() {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
   });
-  const [modalDate, setModalDate] = useState<string | null>(null);
 
   useFetchErrorToast(status, error);
 
@@ -169,7 +169,7 @@ export function ApplicationsCalendarPage() {
                     isToday={cell.isToday}
                     otherMonth={cell.otherMonth}
                     applicationSummary={summariesByDate[cell.date]}
-                    onClick={() => setModalDate(cell.date)}
+                    onClick={() => navigate(getApplicationsQueuePath(cell.date))}
                   />
                 ))}
               </div>
@@ -177,13 +177,6 @@ export function ApplicationsCalendarPage() {
           </div>
         </AppCard>
       )}
-
-      <ApplicationsQueueModal
-        open={modalDate != null}
-        dateKey={modalDate}
-        onClose={() => setModalDate(null)}
-        onQueueMutated={() => void dispatch(fetchPendingApplicationCounts())}
-      />
     </div>
   );
 }
