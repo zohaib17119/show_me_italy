@@ -116,8 +116,13 @@
 
 .calDayCardFilled .calStatLabel,
 .calDayCardFilled .calStatValue,
-.calDayCardFilled .calStatValueMuted {
+.calDayCardFilled .calStatValueMuted,
+.calDayCardFilled .calStatValueText {
   color: rgba(255, 255, 255, 0.88);
+}
+
+.calDayCardFilled .calStatTourCount {
+  color: rgba(255, 255, 255, 0.98);
 }
 
 .calDayCardFilled .calStatValueGood {
@@ -126,6 +131,21 @@
 
 .calDayCardFilled .calStatValueWarn {
   color: #fcd34d;
+}
+
+.calDayCardFilled .calStatIcon {
+  background: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+.calDayCardFilled .calStatIconGood {
+  background: rgba(134, 239, 172, 0.22);
+  color: #bbf7d0;
+}
+
+.calDayCardFilled .calStatIconWarn {
+  background: rgba(252, 211, 77, 0.22);
+  color: #fde68a;
 }
 
 .calDayCardFilled .calDnFilled {
@@ -153,23 +173,71 @@
 .calStatRow {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  gap: 5px;
+  padding: 2px 4px;
+  border-radius: 6px;
   font-size: 9px;
   line-height: 1.2;
 }
 
-.calStatLabel {
+.calStatIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  font-size: 10px;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--g500) 12%, transparent);
+  color: var(--g600);
+}
+
+.calStatIconGood {
+  background: color-mix(in srgb, var(--g500) 18%, transparent);
+  color: var(--g600);
+}
+
+.calStatIconWarn {
+  background: color-mix(in srgb, var(--orange) 18%, transparent);
+  color: var(--orange);
+}
+
+.calStatIconMuted {
+  background: color-mix(in srgb, var(--text-muted) 12%, transparent);
   color: var(--text-muted);
+}
+
+.calStatLabel {
+  flex: 1;
+  color: var(--text-secondary);
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 9px;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .calStatValue {
+  min-width: 14px;
+  text-align: right;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
   color: var(--text-primary);
-  font-size: 10px;
+  font-size: 11px;
+}
+
+.calStatValueText {
+  flex: 1;
+  min-width: 0;
+  font-size: 9px;
+  line-height: 1.25;
+  color: var(--text-secondary);
+}
+
+.calStatTourCount {
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
 }
 
 .calStatValueGood {

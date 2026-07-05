@@ -3,6 +3,7 @@ import type { NotificationsDto } from '@/api/types';
 import type { CreateNotificationPayload } from '@/api/types';
 import {
   mapAnnouncementsToInboxRows,
+  mapRecipientsToInboxRows,
   type AnnouncementInboxRow,
 } from '@/api/mappers/notificationMapper';
 import { getApiErrorMessage } from '@/api/axiosInstance';
@@ -26,6 +27,9 @@ interface NotificationState {
   inbox: AnnouncementInboxRow[];
   inboxStatus: RequestStatus;
   inboxError: string | null;
+  recipientInbox: AnnouncementInboxRow[];
+  recipientStatus: RequestStatus;
+  recipientError: string | null;
 }
 
 const initialState: NotificationState = {
@@ -39,6 +43,9 @@ const initialState: NotificationState = {
   inbox: [],
   inboxStatus: 'idle',
   inboxError: null,
+  recipientInbox: [],
+  recipientStatus: 'idle',
+  recipientError: null,
 };
 
 export const fetchNotifications = createAsyncThunk(
@@ -47,6 +54,21 @@ export const fetchNotifications = createAsyncThunk(
     try {
       const items = await notificationsApi.getAll();
       return mapAnnouncementsToInboxRows(items);
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
+export const fetchRecipientNotifications = createAsyncThunk(
+  'notifications/fetchRecipients',
+  async (guideId: string, { rejectWithValue }) => {
+    if (!guideId.trim()) {
+      return [];
+    }
+    try {
+      const items = await notificationsApi.getRecipientsByGuideId(guideId);
+      return mapRecipientsToInboxRows(items);
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }
@@ -118,11 +140,24 @@ const notificationSlice = createSlice({
       .addCase(fetchNotifications.fulfilled, (state, action) => {
         state.inboxStatus = 'succeeded';
         state.inbox = action.payload;
-        state.counts.notifications = action.payload.filter((n) => n.unread).length;
       })
       .addCase(fetchNotifications.rejected, (state, action) => {
         state.inboxStatus = 'failed';
         state.inboxError = (action.payload as string) ?? 'Failed to load notifications';
+      })
+      .addCase(fetchRecipientNotifications.pending, (state) => {
+        state.recipientStatus = 'loading';
+        state.recipientError = null;
+      })
+      .addCase(fetchRecipientNotifications.fulfilled, (state, action) => {
+        state.recipientStatus = 'succeeded';
+        state.recipientInbox = action.payload;
+        state.counts.notifications = action.payload.filter((n) => n.unread).length;
+      })
+      .addCase(fetchRecipientNotifications.rejected, (state, action) => {
+        state.recipientStatus = 'failed';
+        state.recipientError =
+          (action.payload as string) ?? 'Failed to load recipient notifications';
       });
   },
 });
@@ -136,6 +171,11 @@ export function selectBadgeCount(counts: NotificationCounts, key: BadgeKey): num
 export const selectInboxItems = (state: RootState) => state.notifications.inbox;
 export const selectInboxStatus = (state: RootState) => state.notifications.inboxStatus;
 export const selectInboxError = (state: RootState) => state.notifications.inboxError;
+export const selectRecipientInbox = (state: RootState) => state.notifications.recipientInbox;
+export const selectRecipientStatus = (state: RootState) => state.notifications.recipientStatus;
+export const selectRecipientError = (state: RootState) => state.notifications.recipientError;
 export const selectNotificationCounts = (state: RootState) => state.notifications.counts;
+export const selectUnreadNotificationCount = (state: RootState) =>
+  state.notifications.counts.notifications;
 
 export default notificationSlice.reducer;

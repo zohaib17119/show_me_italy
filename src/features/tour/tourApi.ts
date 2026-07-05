@@ -38,4 +38,12 @@ export const tourApi = {
   delete: async (id: number): Promise<void> => {
     await axiosInstance.post('/v1/Tour/delete', null, { params: { id } });
   },
+
+  updateTicketTour: async (payload: { tourSlotId: number; ticket: string }): Promise<void> => {
+    payload = {
+      tourSlotId : payload.tourSlotId,
+      ticket : payload.ticket,
+    }
+    await axiosInstance.post('/v1/Tour/update-ticket-tour', payload);
+  },
 };

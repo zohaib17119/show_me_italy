@@ -1,11 +1,23 @@
 import { axiosInstance } from '@/api/axiosInstance';
-import type { AnnouncementNotification, CreateNotificationPayload, NotificationsDto } from '@/api/types';
+import type {
+  AnnouncementNotification,
+  CreateNotificationPayload,
+  NotificationRecipientRecord,
+  NotificationsDto,
+} from '@/api/types';
 import { unwrapData } from '@/api/types';
 
 export const notificationsApi = {
   getAll: async (): Promise<AnnouncementNotification[]> => {
     const { data } = await axiosInstance.get('/v1/Notification/notification-all', {});
     return unwrapData<AnnouncementNotification[]>(data) ?? [];
+  },
+
+  getRecipientsByGuideId: async (guideId: string): Promise<NotificationRecipientRecord[]> => {
+    const { data } = await axiosInstance.get('/api/NotificationRecipient/all', {
+      params: { GuideId: guideId },
+    });
+    return unwrapData<NotificationRecipientRecord[]>(data) ?? [];
   },
 
   create: async (payload: CreateNotificationPayload): Promise<unknown> => {

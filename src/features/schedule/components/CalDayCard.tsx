@@ -1,3 +1,10 @@
+import type { ReactNode } from 'react';
+import {
+  CompassOutlined,
+  FileSearchOutlined,
+  TeamOutlined,
+  WarningOutlined,
+} from '@ant-design/icons';
 import type { ApplicationCalendarDaySummary } from '@/api/mappers/applicationCalendarMapper';
 import type { CalendarDaySummary } from '@/api/mappers/calendarSummaryMapper';
 import styles from '../schedule.module.css';
@@ -22,6 +29,77 @@ type CalDayCardApplicationsProps = CalDayCardBaseProps & {
 
 export type CalDayCardProps = CalDayCardScheduleProps | CalDayCardApplicationsProps;
 
+type CalDayStatTone = 'default' | 'good' | 'warn' | 'muted';
+
+interface CalDayStatProps {
+  icon: ReactNode;
+  label?: string;
+  value?: number;
+  children?: ReactNode;
+  tone?: CalDayStatTone;
+  title?: string;
+}
+
+function CalDayStat({
+  icon,
+  label,
+  value,
+  children,
+  tone = 'default',
+  title,
+}: CalDayStatProps) {
+  const iconClass = [
+    styles.calStatIcon,
+    tone === 'good' ? styles.calStatIconGood : '',
+    tone === 'warn' ? styles.calStatIconWarn : '',
+    tone === 'muted' ? styles.calStatIconMuted : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const valueClass = [
+    styles.calStatValue,
+    tone === 'good' ? styles.calStatValueGood : '',
+    tone === 'warn' ? styles.calStatValueWarn : '',
+    tone === 'muted' ? styles.calStatValueMuted : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  return (
+    <div className={styles.calStatRow} title={title}>
+      <span className={iconClass}>{icon}</span>
+      {children ?? (
+        <>
+          <span className={styles.calStatLabel}>{label}</span>
+          <span className={valueClass}>{value ?? 0}</span>
+        </>
+      )}
+    </div>
+  );
+}
+
+function ToursStatLine({
+  total,
+  am,
+  pm,
+}: {
+  total: number;
+  am: number;
+  pm: number;
+}) {
+  return (
+    <span className={styles.calStatValueText}>
+      <span className={styles.calStatTourCount}>{total}</span>
+      {' tours ('}
+      <span className={styles.calStatTourCount}>{am}</span>
+      {' AM) ('}
+      <span className={styles.calStatTourCount}>{pm}</span>
+      {' PM)'}
+    </span>
+  );
+}
+
 function isApplicationsMode(props: CalDayCardProps): props is CalDayCardApplicationsProps {
   return props.mode === 'applications';
 }
@@ -35,6 +113,10 @@ export function CalDayCard(props: CalDayCardProps) {
     (applicationsMode
       ? props.applicationSummary != null
       : props.summary != null);
+
+  const summary = !applicationsMode ? props.summary : undefined;
+  const assigned = summary?.assignedGuides ?? 0;
+  const missing = summary?.missingSlots ?? 0;
 
   return (
     <button
@@ -63,63 +145,41 @@ export function CalDayCard(props: CalDayCardProps) {
 
       {hasData && !applicationsMode && (
         <div className={styles.calDayStats}>
-          <div className={styles.calStatRow}>
-            <span className={styles.calStatLabel}>Tours</span>
-            <span className={styles.calStatValue}>
-              {props.summary?.totalTours ?? 0}
-            </span>
-          </div>
-          <div className={styles.calStatRow}>
-            <span className={styles.calStatLabel}>Tours AM</span>
-            <span className={styles.calStatValue}>
-              {props.summary?.amTours ?? 0}
-            </span>
-          </div>
-          <div className={styles.calStatRow}>
-            <span className={styles.calStatLabel}>Tours PM</span>
-            <span className={styles.calStatValue}>
-              {props.summary?.pmTours ?? 0}
-            </span>
-          </div>
-          <div className={styles.calStatRow}>
-            <span className={styles.calStatLabel}>Assigned</span>
-            <span
-              className={[
-                styles.calStatValue,
-                (props.summary?.assignedGuides ?? 0) > 0 ? styles.calStatValueGood : '',
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              {props.summary?.assignedGuides ?? 0}
-            </span>
-          </div>
-          <div className={styles.calStatRow}>
-            <span className={styles.calStatLabel}>Missing</span>
-            <span
-              className={[
-                styles.calStatValue,
-                (props.summary?.missingSlots ?? 0) > 0
-                  ? styles.calStatValueWarn
-                  : styles.calStatValueMuted,
-              ]
-                .filter(Boolean)
-                .join(' ')}
-            >
-              {props.summary?.missingSlots ?? 0}
-            </span>
-          </div>
+          <CalDayStat
+            icon={<CompassOutlined />}
+            title="Total tours · morning · afternoon"
+          >
+            <ToursStatLine
+              total={summary?.totalTours ?? 0}
+              am={summary?.amTours ?? 0}
+              pm={summary?.pmTours ?? 0}
+            />
+          </CalDayStat>
+          <CalDayStat
+            icon={<TeamOutlined />}
+            label="Assigned"
+            value={assigned}
+            tone={assigned > 0 ? 'good' : 'default'}
+            title="Guides assigned"
+          />
+          <CalDayStat
+            icon={<WarningOutlined />}
+            label="Missing"
+            value={missing}
+            tone={missing > 0 ? 'warn' : 'muted'}
+            title="Missing guide slots"
+          />
         </div>
       )}
 
       {hasData && applicationsMode && (
         <div className={styles.calDayStats}>
-          <div className={styles.calStatRow}>
-            <span className={styles.calStatLabel}>Applications</span>
-            <span className={styles.calStatValue}>
-              {props.applicationSummary?.applicationCount ?? 0}
-            </span>
-          </div>
+          <CalDayStat
+            icon={<FileSearchOutlined />}
+            label="Pending"
+            value={props.applicationSummary?.applicationCount ?? 0}
+            title="Pending applications"
+          />
         </div>
       )}
     </button>

@@ -31,7 +31,6 @@ export function CreateTourPage() {
   const [slotDate, setSlotDate] = useState('2026-07-15');
   const [startTime, setStartTime] = useState('10:00');
   const [endTime, setEndTime] = useState('12:30');
-  const [guidesNeeded, setGuidesNeeded] = useState(2);
   const [guestCount, setGuestCount] = useState(20);
   const [payRatePerHour, setPayRatePerHour] = useState(70);
   const [meetingPoint, setMeetingPoint] = useState(
@@ -95,7 +94,7 @@ export function CreateTourPage() {
       startTime,
       endTime,
       languageId,
-      guidesNeeded,
+      guidesNeeded: 1,
       guestCount,
       payRatePerHour,
       meetingPoint,
@@ -120,7 +119,7 @@ export function CreateTourPage() {
     slotDate,
     startTime,
     endTime,
-    guidesNeeded,
+    guidesNeeded: 1,
     guestCount,
     payRatePerHour,
     meetingPoint,
@@ -165,12 +164,12 @@ export function CreateTourPage() {
           languageOptions={languageOptions}
           selectedTourTypeName={selectedTourType?.name ?? 'Tour'}
           langCode={langCode}
+          showGuidesNeeded={false}
           onTourTypeIdChange={setTourTypeId}
           onLanguageIdChange={setLanguageId}
           onSlotDateChange={setSlotDate}
           onStartTimeChange={setStartTime}
           onEndTimeChange={setEndTime}
-          onGuidesNeededChange={setGuidesNeeded}
           onGuestCountChange={setGuestCount}
           onPayRatePerHourChange={setPayRatePerHour}
           onMeetingPointChange={setMeetingPoint}

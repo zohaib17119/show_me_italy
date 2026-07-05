@@ -112,11 +112,11 @@ export function AssignmentPage() {
 
   const subtitle = useMemo(() => {
     if (slotSummary) {
-      const timePart = slotFromState?.startTime ? ` · ${slotFromState.startTime}` : '';
+      const timePart = slotFromState?.timeRange ? ` · ${slotFromState.timeRange}` : '';
       return `${slotSummary.tourName} · ${slotSummary.dateLabel}${timePart} · ${slotSummary.languageLabel}`;
     }
     if (slotFromState) {
-      return `${slotFromState.tourName} · ${slotFromState.dateLabel} · ${slotFromState.startTime} · ${slotFromState.language}`;
+      return `${slotFromState.tourName} · ${slotFromState.dateLabel} · ${slotFromState.timeRange} · ${slotFromState.language}`;
     }
     if (hasValidTourSlotId) {
       return `Tour slot #${tourSlotId}`;
@@ -497,7 +497,7 @@ export function AssignmentPage() {
               label="Language"
               value={slotSummary?.languageLabel ?? slotFromState?.language ?? '—'}
             />
-            <SummaryRow label="Time" value={slotFromState?.startTime ?? '—'} />
+            <SummaryRow label="Time" value={slotFromState?.timeRange ?? '—'} />
             <SummaryRow
               label="Filled"
               value={slotSummary?.filledLabel ?? '—'}

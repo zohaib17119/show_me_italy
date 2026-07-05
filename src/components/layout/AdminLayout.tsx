@@ -3,13 +3,16 @@ import { Layout } from 'antd';
 import { Outlet } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
-import { useAppDispatch } from '@/app/hooks';
+import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import { selectAuthUserId } from '@/features/auth/authSlice';
+import { fetchRecipientNotifications } from '@/features/notifications/notificationSlice';
 import { setIsMobile, setSidebarCollapsed } from '@/features/ui/uiSlice';
 
 const { Content } = Layout;
 
 export function AdminLayout() {
   const dispatch = useAppDispatch();
+  const userId = useAppSelector(selectAuthUserId);
 
   useEffect(() => {
     const handleResize = () => {
@@ -28,6 +31,12 @@ export function AdminLayout() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [dispatch]);
+
+  useEffect(() => {
+    if (userId) {
+      void dispatch(fetchRecipientNotifications(userId));
+    }
+  }, [dispatch, userId]);
 
   return (
     <Layout className="admin-layout">

@@ -1,4 +1,4 @@
-import type { AnnouncementNotification } from '@/api/types';
+import type { AnnouncementNotification, NotificationRecipientRecord } from '@/api/types';
 import { formatNotificationTime, getNotificationSortTime } from '@/api/utils/date';
 import { ANNOUNCEMENT_TYPES } from '@/mocks/notifications';
 
@@ -55,6 +55,14 @@ function resolveTypeStyle(notificationType: string) {
   return TYPE_STYLES[notificationType] ?? { icon: '🔔', iconBg: 'var(--g50)' };
 }
 
+export function getNotificationTypeStyle(notificationType: string) {
+  return resolveTypeStyle(notificationType);
+}
+
+export function getNotificationTypeLabel(notificationType: string): string {
+  return typeLabel(notificationType);
+}
+
 export function mapAnnouncementToInboxRow(dto: AnnouncementNotification): AnnouncementInboxRow {
   const style = resolveTypeStyle(dto.notificationType ?? '');
   const timeSource = dto.sentAt?.trim() || dto.createdAt?.trim() || '';
@@ -82,4 +90,43 @@ export function mapAnnouncementsToInboxRows(
       return bTime - aTime;
     })
     .map(mapAnnouncementToInboxRow);
+}
+
+function buildRecipientMeta(record: NotificationRecipientRecord): string {
+  const parts: string[] = [];
+  const type = typeLabel(record.notificationType ?? '');
+  if (type) parts.push(type);
+  if (record.audience?.trim()) parts.push(record.audience.trim());
+  const channels = formatChannels(record.channels ?? '');
+  if (channels) parts.push(channels);
+  return parts.join(' · ');
+}
+
+export function mapRecipientToInboxRow(record: NotificationRecipientRecord): AnnouncementInboxRow {
+  const style = resolveTypeStyle(record.notificationType ?? '');
+  const timeSource = record.readDate?.trim() || record.scheduledAt?.trim() || '';
+
+  return {
+    id: record.notificationId ?? crypto.randomUUID(),
+    title: record.title?.trim() || 'Notification',
+    message: record.message?.trim() ?? '',
+    meta: buildRecipientMeta(record),
+    time: timeSource ? formatNotificationTime(timeSource) : '—',
+    notificationType: record.notificationType ?? '',
+    icon: style.icon,
+    iconBg: style.iconBg,
+    unread: record.isRead === false,
+  };
+}
+
+export function mapRecipientsToInboxRows(
+  items: NotificationRecipientRecord[],
+): AnnouncementInboxRow[] {
+  return [...items]
+    .sort((a, b) => {
+      const bTime = getNotificationSortTime(b.readDate ?? b.scheduledAt ?? '');
+      const aTime = getNotificationSortTime(a.readDate ?? a.scheduledAt ?? '');
+      return bTime - aTime;
+    })
+    .map(mapRecipientToInboxRow);
 }

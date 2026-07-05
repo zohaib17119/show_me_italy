@@ -11,6 +11,8 @@ import {
 } from './authApi';
 import type { RootState } from '@/app/store';
 
+export const AUTH_USER_ID_KEY = 'authUserId';
+
 interface AuthState {
   user: User | null;
   token: string | null;
@@ -19,7 +21,7 @@ interface AuthState {
   error: string | null;
 }
 
-function userFromEmail(email: string, name?: string): User {
+function userFromStored(email: string, name?: string, id?: string): User {
   const displayName = name?.trim() || email.split('@')[0] || 'Admin';
   const initials = displayName
     .split(/\s+/)
@@ -28,6 +30,7 @@ function userFromEmail(email: string, name?: string): User {
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('');
   return {
+    id: id?.trim() ?? '',
     name: displayName,
     email,
     role: 'Administrator',
@@ -39,9 +42,10 @@ const storedToken = localStorage.getItem(AUTH_TOKEN_KEY);
 
 const initialState: AuthState = {
   user: storedToken
-    ? userFromEmail(
+    ? userFromStored(
         localStorage.getItem('authEmail') ?? 'admin@showmeitaly.com',
         localStorage.getItem('authName') ?? undefined,
+        localStorage.getItem(AUTH_USER_ID_KEY) ?? undefined,
       )
     : null,
   token: storedToken,
@@ -65,10 +69,11 @@ export const loginAdmin = createAsyncThunk(
         body.fullName ??
         body.name ??
         (body as { userName?: string }).userName;
+      const id = String(body.id ?? body.userId ?? '').trim();
       return {
         token,
         refreshToken: body.refreshToken ?? null,
-        user: userFromEmail(email, name),
+        user: userFromStored(email, name, id),
       };
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
@@ -90,15 +95,17 @@ const authSlice = createSlice({
       localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY);
       localStorage.removeItem('authEmail');
       localStorage.removeItem('authName');
+      localStorage.removeItem(AUTH_USER_ID_KEY);
     },
     hydrateAuth(state) {
       const token = localStorage.getItem(AUTH_TOKEN_KEY);
       state.token = token;
       state.isAuthenticated = Boolean(token);
       if (token) {
-        state.user = userFromEmail(
+        state.user = userFromStored(
           localStorage.getItem('authEmail') ?? 'admin@showmeitaly.com',
           localStorage.getItem('authName') ?? undefined,
+          localStorage.getItem(AUTH_USER_ID_KEY) ?? undefined,
         );
       }
     },
@@ -117,6 +124,11 @@ const authSlice = createSlice({
         localStorage.setItem(AUTH_TOKEN_KEY, action.payload.token);
         localStorage.setItem('authEmail', action.payload.user.email);
         localStorage.setItem('authName', action.payload.user.name);
+        if (action.payload.user.id) {
+          localStorage.setItem(AUTH_USER_ID_KEY, action.payload.user.id);
+        } else {
+          localStorage.removeItem(AUTH_USER_ID_KEY);
+        }
         if (action.payload.refreshToken) {
           localStorage.setItem(AUTH_REFRESH_TOKEN_KEY, action.payload.refreshToken);
         }
@@ -135,6 +147,7 @@ export const { logout, hydrateAuth } = authSlice.actions;
 export default authSlice.reducer;
 
 export const selectAuthUser = (state: RootState) => state.auth.user;
+export const selectAuthUserId = (state: RootState) => state.auth.user?.id ?? '';
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
 export const selectAuthStatus = (state: RootState) => state.auth.status;
 export const selectAuthError = (state: RootState) => state.auth.error;

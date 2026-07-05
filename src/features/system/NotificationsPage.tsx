@@ -38,9 +38,8 @@ function languageAudienceLabel(lang: Language): string {
   return lang.name?.trim() || lang.code?.trim() || 'Unknown';
 }
 
-function buildChannels(push: boolean, inApp: boolean, email: boolean): string {
+function buildChannels(inApp: boolean, email: boolean): string {
   return [
-    push ? 'push' : null,
     inApp ? 'in-app' : null,
     email ? 'email' : null,
   ]
@@ -59,7 +58,6 @@ function buildCreatePayload(input: {
   message: string;
   allGuides: boolean;
   selectedLanguages: Language[];
-  pushEnabled: boolean;
   inAppEnabled: boolean;
   emailEnabled: boolean;
   scheduledDate: string;
@@ -78,7 +76,7 @@ function buildCreatePayload(input: {
     title: input.title.trim(),
     message: input.message.trim(),
     audience,
-    channels: buildChannels(input.pushEnabled, input.inAppEnabled, input.emailEnabled),
+    channels: buildChannels(input.inAppEnabled, input.emailEnabled),
     scheduledAt,
     status: '',
     createdBy: input.createdBy,
@@ -99,7 +97,6 @@ export function NotificationsPage() {
 
   const [allGuides, setAllGuides] = useState(true);
   const [selectedLanguageIds, setSelectedLanguageIds] = useState<number[]>([]);
-  const [pushEnabled, setPushEnabled] = useState(true);
   const [inAppEnabled, setInAppEnabled] = useState(true);
   const [emailEnabled, setEmailEnabled] = useState(false);
   const [title, setTitle] = useState('');
@@ -159,7 +156,6 @@ export function NotificationsPage() {
       message,
       allGuides,
       selectedLanguages,
-      pushEnabled,
       inAppEnabled,
       emailEnabled,
       scheduledDate,
@@ -259,7 +255,6 @@ export function NotificationsPage() {
                 Send Via
               </label>
               <div style={{ display: 'flex', gap: 16, marginTop: 4, flexWrap: 'wrap' }}>
-                <CheckboxLabel label="Push" checked={pushEnabled} onChange={setPushEnabled} />
                 <CheckboxLabel label="In-App" checked={inAppEnabled} onChange={setInAppEnabled} />
                 <CheckboxLabel label="Email" checked={emailEnabled} onChange={setEmailEnabled} />
               </div>

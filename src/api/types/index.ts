@@ -126,6 +126,23 @@ export interface AnnouncementNotification extends CreateNotificationPayload {
   isRead?: boolean;
 }
 
+export interface NotificationRecipientRecord {
+  notificationId?: string;
+  guideId?: string;
+  title?: string;
+  message?: string;
+  notificationType?: string;
+  isRead?: boolean;
+  readDate?: string | null;
+  scheduledAt?: string | null;
+  fullName?: string;
+  email?: string;
+  recipientStatus?: string;
+  notificationStatus?: string;
+  audience?: string | null;
+  channels?: string | null;
+}
+
 export interface AgentRecord {
   id?: string;
   userId?: string;
@@ -177,6 +194,9 @@ export interface GuideSlotRecord {
   endTime?: string;
   entranceTime?: string;
   guideName?: string;
+  fullName?: string;
+  totalPAX?: number;
+  tickets?: string;
   code?: string;
   totalApplicants?: number;
   guidesNeeded?: number;

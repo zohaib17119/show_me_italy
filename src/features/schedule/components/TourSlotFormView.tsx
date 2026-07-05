@@ -30,6 +30,7 @@ export interface TourSlotFormViewProps {
   readOnly?: boolean;
   showOptions?: boolean;
   showExtraFields?: boolean;
+  showGuidesNeeded?: boolean;
   onTourTypeIdChange?: (value: number) => void;
   onLanguageIdChange?: (value: number) => void;
   onSlotDateChange?: (value: string) => void;
@@ -54,6 +55,7 @@ export function TourSlotFormView({
   readOnly = false,
   showOptions = true,
   showExtraFields = false,
+  showGuidesNeeded = true,
   onTourTypeIdChange,
   onLanguageIdChange,
   onSlotDateChange,
@@ -111,13 +113,15 @@ export function TourSlotFormView({
             disabled={disabled}
             onChange={(e) => onEndTimeChange?.(e.target.value)}
           />
-          <FormInput
-            label="Guides Needed"
-            type="number"
-            value={values.guidesNeeded}
-            disabled={disabled}
-            onChange={(e) => onGuidesNeededChange?.(Number(e.target.value))}
-          />
+          {showGuidesNeeded && (
+            <FormInput
+              label="Guides Needed"
+              type="number"
+              value={values.guidesNeeded}
+              disabled={disabled}
+              onChange={(e) => onGuidesNeededChange?.(Number(e.target.value))}
+            />
+          )}
           <FormInput
             label="Group Size"
             type="number"

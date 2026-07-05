@@ -1,5 +1,6 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
+import type { GuideSlotRow } from '@/api/mappers/guideSlotMapper';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   ListErrorState,
@@ -15,6 +16,8 @@ import {
   selectGuideSlotsStatus,
 } from '@/features/applications/applicationsSlice';
 import { GuideSlotsTable } from '@/features/applications/components/GuideSlotsTable';
+import { PreviewTicketModal } from '@/features/applications/components/PreviewTicketModal';
+import { UploadTicketModal } from '@/features/applications/components/UploadTicketModal';
 
 export function GuideSlotsPage() {
   const dispatch = useAppDispatch();
@@ -22,6 +25,8 @@ export function GuideSlotsPage() {
   const guideSlots = useAppSelector(selectGuideSlots);
   const status = useAppSelector(selectGuideSlotsStatus);
   const error = useAppSelector(selectGuideSlotsError);
+  const [uploadTarget, setUploadTarget] = useState<GuideSlotRow | null>(null);
+  const [previewTarget, setPreviewTarget] = useState<GuideSlotRow | null>(null);
 
   const loadGuideSlots = useCallback(() => {
     void dispatch(fetchGuideSlots());
@@ -32,6 +37,11 @@ export function GuideSlotsPage() {
   useEffect(() => {
     loadGuideSlots();
   }, [loadGuideSlots]);
+
+  const handleUploadSuccess = () => {
+    setUploadTarget(null);
+    loadGuideSlots();
+  };
 
   return (
     <div style={{ position: 'relative' }}>
@@ -50,8 +60,25 @@ export function GuideSlotsPage() {
         <GuideSlotsTable
           rows={guideSlots}
           loading={status === 'loading' && guideSlots.length === 0}
+          onUploadTicket={setUploadTarget}
+          onPreviewTicket={setPreviewTarget}
         />
       )}
+
+      <UploadTicketModal
+        open={uploadTarget != null}
+        tourSlotId={uploadTarget?.tourSlotId ?? null}
+        tourName={uploadTarget?.tourName}
+        onClose={() => setUploadTarget(null)}
+        onSuccess={handleUploadSuccess}
+      />
+
+      <PreviewTicketModal
+        open={previewTarget != null}
+        ticketUrl={previewTarget?.tickets ?? null}
+        tourName={previewTarget?.tourName}
+        onClose={() => setPreviewTarget(null)}
+      />
     </div>
   );
 }
