@@ -111,6 +111,44 @@ export const markNotificationRead = createAsyncThunk(
   },
 );
 
+export const markRecipientNotificationRead = createAsyncThunk(
+  'notifications/markRecipientRead',
+  async (
+    payload: { guideId: string; notificationRecipientId: number },
+    { rejectWithValue, dispatch },
+  ) => {
+    try {
+      await notificationsApi.markRecipientAsRead({
+        guideId: payload.guideId,
+        notificationRecipientId: payload.notificationRecipientId,
+        markAll: false,
+      });
+      await dispatch(fetchRecipientNotifications(payload.guideId));
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
+export const markAllRecipientNotificationsRead = createAsyncThunk(
+  'notifications/markAllRecipientRead',
+  async (guideId: string, { rejectWithValue, dispatch }) => {
+    if (!guideId.trim()) {
+      return rejectWithValue('User id is required');
+    }
+    try {
+      await notificationsApi.markRecipientAsRead({
+        guideId,
+        notificationRecipientId: 0,
+        markAll: true,
+      });
+      await dispatch(fetchRecipientNotifications(guideId));
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
 export const deleteNotification = createAsyncThunk(
   'notifications/delete',
   async (id: number, { rejectWithValue, dispatch }) => {
@@ -128,7 +166,8 @@ const notificationSlice = createSlice({
   initialState,
   reducers: {
     setBadgeCounts(state, action: { payload: Partial<NotificationCounts> }) {
-      state.counts = { ...state.counts, ...action.payload };
+      const { notifications: _ignored, ...rest } = action.payload;
+      state.counts = { ...state.counts, ...rest };
     },
   },
   extraReducers: (builder) => {

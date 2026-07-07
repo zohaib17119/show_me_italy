@@ -29,7 +29,7 @@ type CalDayCardApplicationsProps = CalDayCardBaseProps & {
 
 export type CalDayCardProps = CalDayCardScheduleProps | CalDayCardApplicationsProps;
 
-type CalDayStatTone = 'default' | 'good' | 'warn' | 'muted';
+type CalDayStatTone = 'default' | 'good' | 'warn' | 'muted' | 'pending';
 
 interface CalDayStatProps {
   icon: ReactNode;
@@ -53,6 +53,14 @@ function CalDayStat({
     tone === 'good' ? styles.calStatIconGood : '',
     tone === 'warn' ? styles.calStatIconWarn : '',
     tone === 'muted' ? styles.calStatIconMuted : '',
+    tone === 'pending' ? styles.calStatIconPending : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+
+  const labelClass = [
+    styles.calStatLabel,
+    tone === 'pending' ? styles.calStatLabelPending : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -62,6 +70,7 @@ function CalDayStat({
     tone === 'good' ? styles.calStatValueGood : '',
     tone === 'warn' ? styles.calStatValueWarn : '',
     tone === 'muted' ? styles.calStatValueMuted : '',
+    tone === 'pending' ? styles.calStatValuePending : '',
   ]
     .filter(Boolean)
     .join(' ');
@@ -71,7 +80,7 @@ function CalDayStat({
       <span className={iconClass}>{icon}</span>
       {children ?? (
         <>
-          <span className={styles.calStatLabel}>{label}</span>
+          <span className={labelClass}>{label}</span>
           <span className={valueClass}>{value ?? 0}</span>
         </>
       )}
@@ -178,6 +187,7 @@ export function CalDayCard(props: CalDayCardProps) {
             icon={<FileSearchOutlined />}
             label="Pending"
             value={props.applicationSummary?.applicationCount ?? 0}
+            tone="pending"
             title="Pending applications"
           />
         </div>

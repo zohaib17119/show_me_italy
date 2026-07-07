@@ -9,12 +9,14 @@ import {
 } from '@ant-design/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { logout } from '@/features/auth/authSlice';
+import { logout, selectAuthUserId } from '@/features/auth/authSlice';
 import { ROUTES } from '@/constants/routes';
 import { setMobileDrawerOpen } from '@/features/ui/uiSlice';
 import { getRouteMeta } from '@/constants/navigation';
-import { NotificationItem } from '@/components/ui';
+import { NotificationItem, AppButton } from '@/components/ui';
 import {
+  markAllRecipientNotificationsRead,
+  markRecipientNotificationRead,
   selectRecipientInbox,
   selectRecipientStatus,
   selectUnreadNotificationCount,
@@ -32,6 +34,20 @@ export function Topbar() {
   const recipientInbox = useAppSelector(selectRecipientInbox);
   const recipientStatus = useAppSelector(selectRecipientStatus);
   const unreadCount = useAppSelector(selectUnreadNotificationCount);
+  const userId = useAppSelector(selectAuthUserId);
+  const markingRead = recipientStatus === 'loading' && recipientInbox.length > 0;
+
+  const handleMarkAsRead = (notificationRecipientId: number) => {
+    if (!userId || notificationRecipientId == null) return;
+    void dispatch(
+      markRecipientNotificationRead({ guideId: userId, notificationRecipientId }),
+    );
+  };
+
+  const handleMarkAllAsRead = () => {
+    if (!userId || unreadCount === 0) return;
+    void dispatch(markAllRecipientNotificationsRead(userId));
+  };
 
   const breadcrumbParts = meta.breadcrumb.split(' / ');
   const breadcrumbHtml = (
@@ -127,6 +143,21 @@ export function Topbar() {
             meta={item.meta}
             time={item.time}
             unread={item.unread}
+            titleAction={
+              item.recipientId != null && item.unread ? (
+                <AppButton
+                  variant="secondary"
+                  size="xs"
+                  disabled={markingRead}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMarkAsRead(item.recipientId!);
+                  }}
+                >
+                  Mark as read
+                </AppButton>
+              ) : null
+            }
           />
         ))}
       </div>
@@ -141,10 +172,11 @@ export function Topbar() {
         <Button
           type="link"
           size="small"
-          onClick={() => navigate(ROUTES.NOTIFICATIONS)}
+          disabled={markingRead || unreadCount === 0 || !userId}
+          onClick={handleMarkAllAsRead}
           style={{ fontSize: 12, fontWeight: 600, padding: 0 }}
         >
-          View all
+          Mark all as read
         </Button>
       </div>
     </div>

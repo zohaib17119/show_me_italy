@@ -23,6 +23,7 @@ export function ApplicationsQueuePage() {
   const [error, setError] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<number | null>(null);
   const [holdingId, setHoldingId] = useState<number | null>(null);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [mutationLoading, setMutationLoading] = useState(false);
 
   const loadApplications = useCallback(async () => {
@@ -88,6 +89,27 @@ export function ApplicationsQueuePage() {
     [loadApplications],
   );
 
+  const handleReject = useCallback(
+    async (applicationId: number) => {
+      setRejectingId(applicationId);
+      setMutationLoading(true);
+      try {
+        await applicationsApi.approveGuideApplication({
+          applicationId,
+          status: 'Rejected',
+        });
+        showToast('Application rejected');
+        await loadApplications();
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'Failed to reject application');
+      } finally {
+        setRejectingId(null);
+        setMutationLoading(false);
+      }
+    },
+    [loadApplications],
+  );
+
   const dateLabel = date ? formatDisplayDate(date) : '—';
 
   return (
@@ -128,11 +150,14 @@ export function ApplicationsQueuePage() {
           rows={rows}
           groupByTourSlot
           showGuideNotes
+          assignButtonLabel="View"
           approvingId={approvingId}
           holdingId={holdingId}
+          rejectingId={rejectingId}
           mutationLoading={mutationLoading}
           onApprove={handleApprove}
           onHold={handleHold}
+          onReject={handleReject}
         />
       )}
     </div>

@@ -4,6 +4,7 @@ import { ANNOUNCEMENT_TYPES } from '@/mocks/notifications';
 
 export interface AnnouncementInboxRow {
   id: string;
+  recipientId?: number;
   title: string;
   message: string;
   meta: string;
@@ -102,12 +103,41 @@ function buildRecipientMeta(record: NotificationRecipientRecord): string {
   return parts.join(' · ');
 }
 
+function resolveRecipientId(record: NotificationRecipientRecord): number | undefined {
+  const raw = record as Record<string, unknown>;
+  const candidates = [
+    record.notificationRecipientId,
+    raw.NotificationRecipientId,
+    record.notificationId,
+    raw.NotificationId,
+    raw.id,
+    raw.Id,
+    raw.recipientId,
+    raw.RecipientId,
+  ];
+  for (const value of candidates) {
+    const num = typeof value === 'number' ? value : Number(value);
+    if (Number.isFinite(num) && num > 0) return num;
+  }
+  return undefined;
+}
+
+function resolveIsUnread(record: NotificationRecipientRecord): boolean {
+  const raw = record as Record<string, unknown>;
+  const readFlag = record.isRead ?? raw.IsRead ?? raw.read ?? raw.Read;
+  if (readFlag === true || readFlag === 'true' || readFlag === 1 || readFlag === '1') {
+    return false;
+  }
+  return true;
+}
+
 export function mapRecipientToInboxRow(record: NotificationRecipientRecord): AnnouncementInboxRow {
   const style = resolveTypeStyle(record.notificationType ?? '');
   const timeSource = record.readDate?.trim() || record.scheduledAt?.trim() || '';
 
   return {
     id: record.notificationId ?? crypto.randomUUID(),
+    recipientId: resolveRecipientId(record),
     title: record.title?.trim() || 'Notification',
     message: record.message?.trim() ?? '',
     meta: buildRecipientMeta(record),
@@ -115,7 +145,7 @@ export function mapRecipientToInboxRow(record: NotificationRecipientRecord): Ann
     notificationType: record.notificationType ?? '',
     icon: style.icon,
     iconBg: style.iconBg,
-    unread: record.isRead === false,
+    unread: resolveIsUnread(record),
   };
 }
 

@@ -17,6 +17,7 @@ import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import {
   addDaysToDateKey,
   formatLocalDateKey,
+  getWeekRange,
   todayLocalDateKey,
 } from '@/api/utils/date';
 import { ROUTES } from '@/constants/routes';
@@ -94,6 +95,27 @@ function buildMonthGrid(year: number, month: number): CalendarDay[] {
   return days;
 }
 
+function buildWeekGrid(selectedDate: string): CalendarDay[] {
+  const today = todayLocalDateKey();
+  const { start } = getWeekRange(selectedDate);
+  const mondayKey = start.slice(0, 10);
+  const days: CalendarDay[] = [];
+
+  for (let i = 0; i < 7; i += 1) {
+    const date = addDaysToDateKey(mondayKey, i);
+    const day = Number(date.slice(8, 10));
+    days.push({ date, day, isToday: date === today });
+  }
+
+  return days;
+}
+
+function buildDayGrid(selectedDate: string): CalendarDay[] {
+  const today = todayLocalDateKey();
+  const day = Number(selectedDate.slice(8, 10));
+  return [{ date: selectedDate, day, isToday: selectedDate === today }];
+}
+
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
@@ -165,6 +187,19 @@ export function CalendarPage() {
   );
 
   const monthGridDates = useMemo(() => monthDays.map((cell) => cell.date), [monthDays]);
+
+  const visibleDays = useMemo(() => {
+    if (viewMode === 'month') return monthDays;
+    if (viewMode === 'week') return buildWeekGrid(selectedDate);
+    return buildDayGrid(selectedDate);
+  }, [viewMode, monthDays, selectedDate]);
+
+  const gridClassName =
+    viewMode === 'month'
+      ? styles.calMonth
+      : viewMode === 'week'
+        ? styles.calWeek
+        : styles.calDayView;
 
   const tourFilter = useMemo(
     () =>
@@ -338,22 +373,24 @@ export function CalendarPage() {
         >
           <div className="calMonthScroll">
             <div className="calMonthScrollInner">
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(7, 1fr)',
-                  marginBottom: 4,
-                }}
-              >
-                {WEEKDAYS.map((day) => (
-                  <div key={day} className={styles.calDayHd}>
-                    {day}
-                  </div>
-                ))}
-              </div>
+              {viewMode !== 'day' && (
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(7, 1fr)',
+                    marginBottom: 4,
+                  }}
+                >
+                  {WEEKDAYS.map((day) => (
+                    <div key={day} className={styles.calDayHd}>
+                      {day}
+                    </div>
+                  ))}
+                </div>
+              )}
 
-              <div className={styles.calMonth}>
-                {monthDays.map((cell) => (
+              <div className={gridClassName}>
+                {visibleDays.map((cell) => (
                   <CalDayCard
                     key={cell.date}
                     day={cell.day}

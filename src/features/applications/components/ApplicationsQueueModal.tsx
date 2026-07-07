@@ -30,6 +30,7 @@ export function ApplicationsQueueModal({
   const [error, setError] = useState<string | null>(null);
   const [approvingId, setApprovingId] = useState<number | null>(null);
   const [holdingId, setHoldingId] = useState<number | null>(null);
+  const [rejectingId, setRejectingId] = useState<number | null>(null);
   const [mutationLoading, setMutationLoading] = useState(false);
 
   const loadApplications = useCallback(async () => {
@@ -61,6 +62,7 @@ export function ApplicationsQueueModal({
       setError(null);
       setApprovingId(null);
       setHoldingId(null);
+      setRejectingId(null);
       setMutationLoading(false);
     }
   }, [open, dateKey, loadApplications]);
@@ -107,6 +109,27 @@ export function ApplicationsQueueModal({
     [refreshAfterMutation],
   );
 
+  const handleReject = useCallback(
+    async (applicationId: number) => {
+      setRejectingId(applicationId);
+      setMutationLoading(true);
+      try {
+        await applicationsApi.approveGuideApplication({
+          applicationId,
+          status: 'Rejected',
+        });
+        showToast('Application rejected');
+        await refreshAfterMutation();
+      } catch (err) {
+        showToast(err instanceof Error ? err.message : 'Failed to reject application');
+      } finally {
+        setRejectingId(null);
+        setMutationLoading(false);
+      }
+    },
+    [refreshAfterMutation],
+  );
+
   return (
     <Modal
       open={open}
@@ -137,11 +160,14 @@ export function ApplicationsQueueModal({
           key={dateKey ?? 'queue'}
           rows={rows}
           groupByTourSlot
+          assignButtonLabel="View"
           approvingId={approvingId}
           holdingId={holdingId}
+          rejectingId={rejectingId}
           mutationLoading={mutationLoading}
           onApprove={handleApprove}
           onHold={handleHold}
+          onReject={handleReject}
         />
       )}
     </Modal>

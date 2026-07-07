@@ -5,11 +5,13 @@ import { FormLabel } from './FormLabel';
 export interface FormTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
   label?: string;
   hint?: string;
+  error?: string;
 }
 
 export function FormTextarea({
   label,
   hint,
+  error,
   id,
   className,
   ...props
@@ -20,7 +22,14 @@ export function FormTextarea({
   const textarea = (
     <textarea
       id={textareaId}
-      className={[styles.formTextarea, className].filter(Boolean).join(' ')}
+      className={[
+        styles.formTextarea,
+        error ? styles.formInputError : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-invalid={error ? true : undefined}
       {...props}
     />
   );
@@ -31,7 +40,8 @@ export function FormTextarea({
     <div className={styles.formField}>
       <FormLabel htmlFor={textareaId}>{label as ReactNode}</FormLabel>
       {textarea}
-      {hint && <span className={styles.formHint}>{hint}</span>}
+      {error && <span className={styles.formError}>{error}</span>}
+      {!error && hint && <span className={styles.formHint}>{hint}</span>}
     </div>
   );
 }

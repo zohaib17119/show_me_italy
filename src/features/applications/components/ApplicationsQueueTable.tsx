@@ -12,7 +12,7 @@ import {
   StatusBadge,
   TablePagination,
 } from '@/components/ui';
-import { ROUTES } from '@/constants/routes';
+// import { ROUTES } from '@/constants/routes';
 import type { Application } from '@/mocks/applications';
 import {
   buildGroupedQueueRows,
@@ -31,9 +31,12 @@ export interface ApplicationsQueueTableProps {
   groupByTourSlot?: boolean;
   approvingId?: number | null;
   holdingId?: number | null;
+  rejectingId?: number | null;
   mutationLoading?: boolean;
+  assignButtonLabel?: string;
   onApprove: (applicationId: number) => void | Promise<void>;
   onHold?: (applicationId: number) => void | Promise<void>;
+  onReject?: (applicationId: number) => void | Promise<void>;
 }
 
 export function ApplicationsQueueTable({
@@ -45,9 +48,12 @@ export function ApplicationsQueueTable({
   groupByTourSlot = false,
   approvingId = null,
   holdingId = null,
+  rejectingId = null,
   mutationLoading = false,
+  assignButtonLabel = 'Assign',
   onApprove,
   onHold,
+  onReject,
 }: ApplicationsQueueTableProps) {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
@@ -174,32 +180,51 @@ export function ApplicationsQueueTable({
                 size="xs"
                 disabled={
                   mutationLoading &&
-                  (approvingId === row.applicationId || holdingId === row.applicationId)
+                  (approvingId === row.applicationId ||
+                    holdingId === row.applicationId ||
+                    rejectingId === row.applicationId)
                 }
                 onClick={() => void onApprove(row.applicationId)}
               >
                 Approve
               </AppButton>
-              <AppButton
-                variant="secondary"
-                size="xs"
-                onClick={() => navigate(ROUTES.GUIDE_SLOTS)}
-              >
-                Assign
-              </AppButton>
+              {onReject && (
+                <AppButton
+                  variant="danger"
+                  size="xs"
+                  disabled={
+                    mutationLoading &&
+                    (rejectingId === row.applicationId ||
+                      approvingId === row.applicationId ||
+                      holdingId === row.applicationId)
+                  }
+                  onClick={() => void onReject(row.applicationId)}
+                >
+                  Reject
+                </AppButton>
+              )}
               {onHold && (
                 <AppButton
                   variant="secondary"
                   size="xs"
                   disabled={
                     mutationLoading &&
-                    (holdingId === row.applicationId || approvingId === row.applicationId)
+                    (holdingId === row.applicationId ||
+                      approvingId === row.applicationId ||
+                      rejectingId === row.applicationId)
                   }
                   onClick={() => void onHold(row.applicationId)}
                 >
                   Hold
                 </AppButton>
               )}
+              {/* <AppButton
+                variant="secondary"
+                size="xs"
+                onClick={() => navigate(ROUTES.GUIDE_SLOTS)}
+              >
+                {assignButtonLabel}
+              </AppButton> */}
             </div>
           ),
       },
@@ -207,7 +232,7 @@ export function ApplicationsQueueTable({
 
       return cols;
     },
-    [approvingId, columnCount, holdingId, mutationLoading, navigate, onApprove, onHold, showGuideNotes, showPayRate],
+    [approvingId, assignButtonLabel, columnCount, holdingId, mutationLoading, navigate, onApprove, onHold, onReject, rejectingId, showGuideNotes, showPayRate],
   );
 
   return (

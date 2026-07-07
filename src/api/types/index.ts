@@ -115,7 +115,7 @@ export interface CreateNotificationPayload {
   message: string;
   audience: string;
   channels: string;
-  scheduledAt: string;
+  scheduledAt?: string;
   status: string;
   createdBy: string;
   createdAt: string;
@@ -127,6 +127,7 @@ export interface AnnouncementNotification extends CreateNotificationPayload {
 }
 
 export interface NotificationRecipientRecord {
+  notificationRecipientId?: number;
   notificationId?: string;
   guideId?: string;
   title?: string;
@@ -182,7 +183,6 @@ export interface GuideUpdateProfilePayload {
   userId: string;
   favorite: boolean;
   adminNotes: string;
-  cancellationPercentage: number;
   rating: number;
 }
 

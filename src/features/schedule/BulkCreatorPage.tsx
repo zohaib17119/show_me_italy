@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { MinusOutlined } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { buildTourSlotPayload } from '@/api/mappers/tourMapper';
 import { formatLocalDateKey } from '@/api/utils/date';
@@ -13,18 +12,25 @@ import {
   FormGrid,
   FormInput,
   FormSelect,
-  IconButton,
+  FormTextarea,
   ImportPreviewRow,
   LangChip,
   SectionLabel,
   SectionTitle,
   Stepper,
+  formGridSpanFull,
   showToast,
 } from '@/components/ui';
+import type { FormSelectOption } from '@/components/ui/forms/FormSelect';
 import { ROUTES } from '@/constants/routes';
 import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
 import { createTourSlot } from '@/features/tour/tourSlice';
 import { fetchTourTypes, selectActiveTourTypes } from '@/features/tourType/tourTypeSlice';
+import {
+  hasFieldErrors,
+  validateBulkTourSlots,
+  type TourSlotFieldErrors,
+} from './utils/tourSlotValidation';
 import styles from './schedule.module.css';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -37,43 +43,98 @@ const STEPPER_STEPS = [
   { label: 'Review', status: 'wait' as const },
 ];
 
+const STATUS_OPTIONS: FormSelectOption[] = [
+  { value: 'Open', label: 'Open' },
+  { value: 'Closed', label: 'Closed' },
+  { value: 'Cancelled', label: 'Cancelled' },
+];
+
 export function BulkCreatorPage() {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const tourTypes = useAppSelector(selectActiveTourTypes);
   const languages = useAppSelector(selectActiveLanguages);
 
-  const [fromDate, setFromDate] = useState('2026-07-15');
-  const [toDate, setToDate] = useState('2026-07-22');
-  const [startTime, setStartTime] = useState('09:00');
-  const [endTime, setEndTime] = useState('11:30');
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
   const [languageId, setLanguageId] = useState(0);
   const [tourTypeId, setTourTypeId] = useState(0);
-  const [guidesNeeded, setGuidesNeeded] = useState(2);
-  const [payRate, setPayRate] = useState(70);
+  const [guestCount, setGuestCount] = useState(0);
+  const [payRate, setPayRate] = useState(0);
+  const [meetingPoint, setMeetingPoint] = useState('');
+  const [adminNotes, setAdminNotes] = useState('');
+  const [status, setStatus] = useState('Open');
   const [submitting, setSubmitting] = useState(false);
   const [selectedDays, setSelectedDays] = useState<Set<string>>(
     () => new Set(['Mon', 'Tue', 'Wed', 'Thu', 'Fri']),
   );
+  const [fieldErrors, setFieldErrors] = useState<TourSlotFieldErrors>({});
+
+  const clearFieldError = (field: keyof TourSlotFieldErrors) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   useEffect(() => {
     void dispatch(fetchTourTypes());
     void dispatch(fetchLanguages());
   }, [dispatch]);
 
-  useEffect(() => {
-    if (tourTypes.length > 0 && tourTypeId === 0) {
-      setTourTypeId(tourTypes[0].tourTypeId ?? 0);
+  const tourTypeOptions = useMemo(
+    () =>
+      tourTypes.map((t) => ({
+        value: String(t.tourTypeId),
+        label: t.name ?? `Tour #${t.tourTypeId}`,
+      })),
+    [tourTypes],
+  );
+
+  const languageOptions = useMemo(
+    () =>
+      languages.map((l) => ({
+        value: String(l.languageId),
+        label: l.name ?? l.code ?? '',
+      })),
+    [languages],
+  );
+
+  const selectedTourTypeName =
+    tourTypes.find((t) => t.tourTypeId === tourTypeId)?.name ?? 'Tour';
+
+  const handleTourTypeChange = (id: number) => {
+    clearFieldError('tourTypeId');
+    setTourTypeId(id);
+    const type = tourTypes.find((t) => t.tourTypeId === id);
+    setMeetingPoint(type?.meetingPointAddress?.trim() ?? '');
+    setPayRate(type?.basePrice ?? 0);
+    if (type?.meetingPointAddress?.trim()) {
+      clearFieldError('meetingPoint');
     }
-    if (languages.length > 0 && languageId === 0) {
-      setLanguageId(languages[0].languageId ?? 0);
-    }
-  }, [tourTypes, languages, tourTypeId, languageId]);
+  };
 
   const previewSlots = useMemo(() => {
-    const slots: { id: string; dateLabel: string; date: string; startTime: string; endTime: string; language: string; guidesNeeded: number }[] = [];
+    if (!fromDate || !toDate || !startTime || !endTime) return [];
+
+    const slots: {
+      id: string;
+      dateLabel: string;
+      date: string;
+      startTime: string;
+      endTime: string;
+      language: string;
+    }[] = [];
     const start = new Date(fromDate);
     const end = new Date(toDate);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
+      return [];
+    }
+
     const dayMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const lang = languages.find((l) => l.languageId === languageId);
 
@@ -83,18 +144,23 @@ export function BulkCreatorPage() {
       const date = formatLocalDateKey(d.getFullYear(), d.getMonth(), d.getDate());
       slots.push({
         id: date,
-        dateLabel: d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }),
+        dateLabel: d.toLocaleDateString('en-GB', {
+          weekday: 'short',
+          day: 'numeric',
+          month: 'short',
+        }),
         date,
         startTime,
         endTime,
         language: lang?.code?.slice(0, 2).toUpperCase() ?? 'EN',
-        guidesNeeded,
       });
     }
     return slots;
-  }, [fromDate, toDate, selectedDays, startTime, endTime, languageId, languages, guidesNeeded]);
+  }, [fromDate, toDate, selectedDays, startTime, endTime, languageId, languages]);
 
   const toggleDay = (day: string) => {
+    clearFieldError('selectedDays');
+    clearFieldError('previewSlots');
     setSelectedDays((prev) => {
       const next = new Set(prev);
       if (next.has(day)) next.delete(day);
@@ -104,10 +170,20 @@ export function BulkCreatorPage() {
   };
 
   const handleCreateAll = async () => {
-    if (!tourTypeId || !languageId || previewSlots.length === 0) {
-      showToast('Configure tour type, language, and date range');
-      return;
-    }
+    const errors = validateBulkTourSlots({
+      tourTypeId,
+      languageId,
+      fromDate,
+      toDate,
+      startTime,
+      endTime,
+      meetingPoint,
+      guestCount,
+      selectedDaysCount: selectedDays.size,
+      previewSlotCount: previewSlots.length,
+    });
+    setFieldErrors(errors);
+    if (hasFieldErrors(errors)) return;
 
     setSubmitting(true);
     let created = 0;
@@ -119,12 +195,12 @@ export function BulkCreatorPage() {
           startTime: slot.startTime,
           endTime: slot.endTime,
           languageId,
-          guidesNeeded,
-          guestCount: 20,
+          guidesNeeded: 1,
+          guestCount,
           payRatePerHour: payRate,
-          meetingPoint: tourTypes.find((t) => t.tourTypeId === tourTypeId)?.meetingPointAddress ?? '',
-          adminNotes: 'Bulk created slot',
-          status: 'Open',
+          meetingPoint,
+          adminNotes,
+          status,
         });
         await dispatch(createTourSlot(payload)).unwrap();
         created += 1;
@@ -137,11 +213,6 @@ export function BulkCreatorPage() {
       setSubmitting(false);
     }
   };
-
-  const languageOptions = languages.map((l) => ({
-    value: String(l.languageId),
-    label: l.name ?? l.code ?? '',
-  }));
 
   return (
     <div>
@@ -162,8 +233,28 @@ export function BulkCreatorPage() {
               <Stepper steps={STEPPER_STEPS} />
 
               <FormGrid className={styles.bulkFormGrid}>
-                <FormInput label="From Date" type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} />
-                <FormInput label="To Date" type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} />
+                <FormInput
+                  label="From Date"
+                  type="date"
+                  value={fromDate}
+                  error={fieldErrors.fromDate}
+                  onChange={(e) => {
+                    clearFieldError('fromDate');
+                    clearFieldError('previewSlots');
+                    setFromDate(e.target.value);
+                  }}
+                />
+                <FormInput
+                  label="To Date"
+                  type="date"
+                  value={toDate}
+                  error={fieldErrors.toDate}
+                  onChange={(e) => {
+                    clearFieldError('toDate');
+                    clearFieldError('previewSlots');
+                    setToDate(e.target.value);
+                  }}
+                />
               </FormGrid>
 
               <SectionLabel style={{ marginBottom: 8 }}>Days of Week</SectionLabel>
@@ -178,35 +269,90 @@ export function BulkCreatorPage() {
                   </FilterChip>
                 ))}
               </div>
+              {fieldErrors.selectedDays && (
+                <div style={{ fontSize: 10, color: 'var(--red)', fontWeight: 600, marginBottom: 12 }}>
+                  {fieldErrors.selectedDays}
+                </div>
+              )}
 
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: 8,
-                }}
-              >
-                <SectionLabel style={{ margin: 0 }}>Time Slots</SectionLabel>
-              </div>
-
-              <div className={styles.timeSlotRow}>
-                <FormInput type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-                <FormInput type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+              <FormGrid className={styles.bulkFormGridMt}>
+                <div className={formGridSpanFull}>
+                  <FormSelect
+                    label="Tour Type"
+                    options={tourTypeOptions}
+                    value={tourTypeId ? String(tourTypeId) : ''}
+                    placeholder="Select tour type"
+                    error={fieldErrors.tourTypeId}
+                    onChange={(e) => handleTourTypeChange(Number(e.target.value))}
+                  />
+                </div>
                 <FormSelect
+                  label="Language"
                   options={languageOptions}
-                  value={String(languageId)}
-                  onChange={(e) => setLanguageId(Number(e.target.value))}
+                  value={languageId ? String(languageId) : ''}
+                  placeholder="Select language"
+                  error={fieldErrors.languageId}
+                  onChange={(e) => {
+                    clearFieldError('languageId');
+                    setLanguageId(Number(e.target.value));
+                  }}
                 />
-                <IconButton icon={<MinusOutlined />} variant="danger" aria-label="Remove slot" />
+                <FormSelect
+                  label="Status"
+                  options={STATUS_OPTIONS}
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                />
+              </FormGrid>
+
+              <SectionLabel style={{ marginBottom: 8, marginTop: 4 }}>Time Slots</SectionLabel>
+              <div className={styles.timeSlotRow}>
+                <FormInput
+                  label="Start Time"
+                  type="time"
+                  value={startTime}
+                  error={fieldErrors.startTime}
+                  onChange={(e) => {
+                    clearFieldError('startTime');
+                    clearFieldError('previewSlots');
+                    setStartTime(e.target.value);
+                  }}
+                />
+                <FormInput
+                  label="End Time"
+                  type="time"
+                  value={endTime}
+                  error={fieldErrors.endTime}
+                  onChange={(e) => {
+                    clearFieldError('endTime');
+                    clearFieldError('previewSlots');
+                    setEndTime(e.target.value);
+                  }}
+                />
               </div>
 
               <FormGrid className={styles.bulkFormGridMt}>
+                <div className={formGridSpanFull}>
+                  <FormInput
+                    label="Meeting Point"
+                    value={meetingPoint}
+                    disabled
+                    error={fieldErrors.meetingPoint}
+                    onChange={(e) => {
+                      clearFieldError('meetingPoint');
+                      setMeetingPoint(e.target.value);
+                    }}
+                  />
+                </div>
                 <FormInput
-                  label="Guides Needed"
+                  label="Group Size"
                   type="number"
-                  value={guidesNeeded}
-                  onChange={(e) => setGuidesNeeded(Number(e.target.value))}
+                  value={guestCount}
+                  error={fieldErrors.guestCount}
+                  onChange={(e) => {
+                    clearFieldError('guestCount');
+                    setGuestCount(Number(e.target.value));
+                  }}
                 />
                 <FormInput
                   label="Pay Rate (€)"
@@ -214,6 +360,14 @@ export function BulkCreatorPage() {
                   value={payRate}
                   onChange={(e) => setPayRate(Number(e.target.value))}
                 />
+                <div className={formGridSpanFull}>
+                  <FormTextarea
+                    label="Admin Notes"
+                    value={adminNotes}
+                    onChange={(e) => setAdminNotes(e.target.value)}
+                    rows={3}
+                  />
+                </div>
               </FormGrid>
             </AppCard>
           </div>
@@ -230,18 +384,20 @@ export function BulkCreatorPage() {
 
         <AppCard>
           <SectionTitle style={{ marginBottom: 12 }}>Preview</SectionTitle>
+          {fieldErrors.previewSlots && (
+            <div style={{ fontSize: 10, color: 'var(--red)', fontWeight: 600, marginBottom: 12 }}>
+              {fieldErrors.previewSlots}
+            </div>
+          )}
           <div className={styles.previewList}>
             {previewSlots.slice(0, 8).map((row) => (
               <ImportPreviewRow
                 key={row.id}
                 title={row.dateLabel}
-                sub={`${row.startTime}–${row.endTime}`}
+                sub={`${selectedTourTypeName} · ${row.startTime}–${row.endTime}`}
                 tag={
                   <>
                     <LangChip code={row.language as 'EN'} />
-                    <span style={{ fontSize: 10, color: 'var(--text-muted)', marginLeft: 6 }}>
-                      {row.guidesNeeded} guides
-                    </span>
                     <span style={{ fontSize: 9, fontWeight: 700, marginLeft: 6, color: 'var(--g700)' }}>
                       Ready
                     </span>

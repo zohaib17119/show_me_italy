@@ -68,12 +68,34 @@
   overflow: hidden;
 }
 
+.calWeek {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.calDayView {
+  display: grid;
+  grid-template-columns: 1fr;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.calDayView .calCell {
+  min-height: 180px;
+  border-right: none;
+  border-bottom: none;
+}
+
 .calCell {
   min-height: 108px;
   padding: 8px;
   border-right: 1px solid var(--border-color);
   border-bottom: 1px solid var(--border-color);
-  background: var(--card-bg);
+  background: var(--content-bg);
 }
 
 .calDayCard {
@@ -131,6 +153,16 @@
 
 .calDayCardFilled .calStatValueWarn {
   color: #fcd34d;
+}
+
+.calDayCardFilled .calStatLabelPending,
+.calDayCardFilled .calStatValuePending {
+  color: #fde68a;
+}
+
+.calDayCardFilled .calStatIconPending {
+  background: rgba(252, 211, 77, 0.22);
+  color: #fde68a;
 }
 
 .calDayCardFilled .calStatIcon {
@@ -208,6 +240,14 @@
   color: var(--text-muted);
 }
 
+.calStatIconPending {
+  background: color-mix(in srgb, var(--orange) 22%, transparent);
+  color: var(--orange);
+  width: 18px;
+  height: 18px;
+  font-size: 11px;
+}
+
 .calStatLabel {
   flex: 1;
   color: var(--text-secondary);
@@ -215,6 +255,12 @@
   font-size: 9px;
   text-transform: none;
   letter-spacing: 0;
+}
+
+.calStatLabelPending {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--orange);
 }
 
 .calStatValue {
@@ -250,6 +296,12 @@
 
 .calStatValueMuted {
   color: var(--text-muted);
+}
+
+.calStatValuePending {
+  font-size: 14px;
+  font-weight: 800;
+  color: var(--orange);
 }
 
 .calCell:nth-child(7n) {

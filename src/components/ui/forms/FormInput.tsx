@@ -5,12 +5,14 @@ import { FormLabel } from './FormLabel';
 export interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
   hint?: string;
+  error?: string;
   type?: 'text' | 'date' | 'time' | 'number' | 'email' | 'password';
 }
 
 export function FormInput({
   label,
   hint,
+  error,
   id,
   className,
   ...props
@@ -20,7 +22,14 @@ export function FormInput({
   const field = (
     <input
       id={inputId}
-      className={[styles.formInput, className].filter(Boolean).join(' ')}
+      className={[
+        styles.formInput,
+        error ? styles.formInputError : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-invalid={error ? true : undefined}
       {...props}
     />
   );
@@ -31,7 +40,8 @@ export function FormInput({
     <div className={styles.formField}>
       <FormLabel htmlFor={inputId}>{label as ReactNode}</FormLabel>
       {field}
-      {hint && <span className={styles.formHint}>{hint}</span>}
+      {error && <span className={styles.formError}>{error}</span>}
+      {!error && hint && <span className={styles.formHint}>{hint}</span>}
     </div>
   );
 }

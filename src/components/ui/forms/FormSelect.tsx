@@ -11,6 +11,7 @@ export interface FormSelectOption {
 export interface FormSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
   label?: string;
   hint?: string;
+  error?: string;
   options: FormSelectOption[];
   placeholder?: string;
 }
@@ -18,6 +19,7 @@ export interface FormSelectProps extends SelectHTMLAttributes<HTMLSelectElement>
 export function FormSelect({
   label,
   hint,
+  error,
   options,
   placeholder,
   id,
@@ -29,7 +31,14 @@ export function FormSelect({
   const select = (
     <select
       id={selectId}
-      className={[styles.formSelect, className].filter(Boolean).join(' ')}
+      className={[
+        styles.formSelect,
+        error ? styles.formInputError : '',
+        className,
+      ]
+        .filter(Boolean)
+        .join(' ')}
+      aria-invalid={error ? true : undefined}
       {...props}
     >
       {placeholder && (
@@ -51,7 +60,8 @@ export function FormSelect({
     <div className={styles.formField}>
       <FormLabel htmlFor={selectId}>{label as ReactNode}</FormLabel>
       {select}
-      {hint && <span className={styles.formHint}>{hint}</span>}
+      {error && <span className={styles.formError}>{error}</span>}
+      {!error && hint && <span className={styles.formHint}>{hint}</span>}
     </div>
   );
 }

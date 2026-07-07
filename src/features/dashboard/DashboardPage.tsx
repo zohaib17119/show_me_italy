@@ -15,11 +15,11 @@ import { KpiRow } from './components/KpiRow';
 import { UnfilledBanner } from './components/UnfilledBanner';
 import { TodaySchedule } from './components/TodaySchedule';
 import { QuickActions } from './components/QuickActions';
-import { GuidesOnline } from './components/GuidesOnline';
+// import { GuidesOnline } from './components/GuidesOnline';
 import { RevenueCard } from './components/RevenueCard';
 import { LanguageDistribution } from './components/LanguageDistribution';
 import { WeekMini } from './components/WeekMini';
-import { ActivityFeed } from './components/ActivityFeed';
+// import { ActivityFeed } from './components/ActivityFeed';
 import { CashflowChart } from './widgets/CashflowChart';
 import { LanguageDonut } from './widgets/LanguageDonut';
 import { RecentActivityTable } from './widgets/RecentActivityTable';
@@ -46,7 +46,6 @@ export function DashboardPage() {
         approvals: dashboard.quickActions?.pendingGuideApprovals ?? 0,
         applications: dashboard.stats?.pendingApplications ?? 0,
         payouts: dashboard.stats?.pendingPayouts ?? 0,
-        notifications: dashboard.activity?.activities?.length ?? 0,
       }),
     );
   }, [dispatch, dashboard]);
@@ -83,11 +82,11 @@ export function DashboardPage() {
           <QuickActions />
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-          <GuidesOnline />
+          {/* <GuidesOnline /> */}
           <RevenueCard />
           <LanguageDistribution />
           <WeekMini />
-          <ActivityFeed />
+          {/* <ActivityFeed /> */}
         </div>
       </div>
 

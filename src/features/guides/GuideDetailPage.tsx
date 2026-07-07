@@ -186,7 +186,7 @@ export function GuideDetailPage() {
                 </>
               ) : (
                 <>
-                  <AppButton variant="danger" size="xs">
+                  {/* <AppButton variant="danger" size="xs">
                     Deactivate
                   </AppButton>
                   <AppButton variant="secondary" size="xs">
@@ -194,7 +194,7 @@ export function GuideDetailPage() {
                   </AppButton>
                   <AppButton size="xs" onClick={() => showToast('✓ Note added')}>
                     Add Note
-                  </AppButton>
+                  </AppButton> */}
                 </>
               )}
             </div>

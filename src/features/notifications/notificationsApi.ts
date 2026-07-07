@@ -7,6 +7,12 @@ import type {
 } from '@/api/types';
 import { unwrapData } from '@/api/types';
 
+export interface MarkRecipientAsReadPayload {
+  guideId: string;
+  notificationRecipientId: number;
+  markAll: boolean;
+}
+
 export const notificationsApi = {
   getAll: async (): Promise<AnnouncementNotification[]> => {
     const { data } = await axiosInstance.get('/v1/Notification/notification-all', {});
@@ -18,6 +24,10 @@ export const notificationsApi = {
       params: { GuideId: guideId },
     });
     return unwrapData<NotificationRecipientRecord[]>(data) ?? [];
+  },
+
+  markRecipientAsRead: async (payload: MarkRecipientAsReadPayload): Promise<void> => {
+    await axiosInstance.post('/api/NotificationRecipient/mark-as-read', payload);
   },
 
   create: async (payload: CreateNotificationPayload): Promise<unknown> => {

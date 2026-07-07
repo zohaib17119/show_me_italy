@@ -18,6 +18,11 @@ import {
 import { fetchTourTypes, selectActiveTourTypes } from '@/features/tourType/tourTypeSlice';
 import type { LangCode } from '@/types';
 import { TourSlotFormView } from './components/TourSlotFormView';
+import {
+  hasFieldErrors,
+  validateSingleTourSlot,
+  type TourSlotFieldErrors,
+} from './utils/tourSlotValidation';
 
 export function CreateTourPage() {
   const navigate = useNavigate();
@@ -28,37 +33,31 @@ export function CreateTourPage() {
 
   const [tourTypeId, setTourTypeId] = useState<number>(0);
   const [languageId, setLanguageId] = useState<number>(0);
-  const [slotDate, setSlotDate] = useState('2026-07-15');
-  const [startTime, setStartTime] = useState('10:00');
-  const [endTime, setEndTime] = useState('12:30');
-  const [guestCount, setGuestCount] = useState(20);
-  const [payRatePerHour, setPayRatePerHour] = useState(70);
-  const [meetingPoint, setMeetingPoint] = useState(
-    'Basilica Santi Cosma e Damiano, Via dei Fori Imperiali 1, Rome',
-  );
-  const [adminNotes, setAdminNotes] = useState(
-    'Please arrive 15 minutes early. Bring your official guide badge.',
-  );
+  const [slotDate, setSlotDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [guestCount, setGuestCount] = useState(0);
+  const [payRatePerHour, setPayRatePerHour] = useState(0);
+  const [meetingPoint, setMeetingPoint] = useState('');
+  const [adminNotes, setAdminNotes] = useState('');
   const [status, setStatus] = useState('Open');
   const [openApplications, setOpenApplications] = useState(true);
   const [sendNotification, setSendNotification] = useState(true);
+  const [fieldErrors, setFieldErrors] = useState<TourSlotFieldErrors>({});
+
+  const clearFieldError = (field: keyof TourSlotFieldErrors) => {
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  };
 
   useEffect(() => {
     void dispatch(fetchTourTypes());
     void dispatch(fetchLanguages());
   }, [dispatch]);
-
-  useEffect(() => {
-    if (tourTypes.length > 0 && tourTypeId === 0) {
-      setTourTypeId(tourTypes[0].tourTypeId ?? 0);
-    }
-  }, [tourTypes, tourTypeId]);
-
-  useEffect(() => {
-    if (languages.length > 0 && languageId === 0) {
-      setLanguageId(languages[0].languageId ?? 0);
-    }
-  }, [languages, languageId]);
 
   const tourTypeOptions = useMemo(
     () =>
@@ -82,11 +81,29 @@ export function CreateTourPage() {
   const selectedLanguage = languages.find((l) => l.languageId === languageId);
   const langCode = (selectedLanguage?.code?.slice(0, 2).toUpperCase() ?? 'EN') as LangCode;
 
-  const handlePublish = async () => {
-    if (!tourTypeId || !languageId) {
-      showToast('Select tour type and language');
-      return;
+  const handleTourTypeChange = (id: number) => {
+    clearFieldError('tourTypeId');
+    setTourTypeId(id);
+    const type = tourTypes.find((t) => t.tourTypeId === id);
+    setMeetingPoint(type?.meetingPointAddress?.trim() ?? '');
+    setPayRatePerHour(type?.basePrice ?? 0);
+    if (type?.meetingPointAddress?.trim()) {
+      clearFieldError('meetingPoint');
     }
+  };
+
+  const handlePublish = async () => {
+    const errors = validateSingleTourSlot({
+      tourTypeId,
+      languageId,
+      slotDate,
+      startTime,
+      endTime,
+      meetingPoint,
+      guestCount,
+    });
+    setFieldErrors(errors);
+    if (hasFieldErrors(errors)) return;
 
     const payload = buildTourSlotPayload({
       tourTypeId,
@@ -165,14 +182,34 @@ export function CreateTourPage() {
           selectedTourTypeName={selectedTourType?.name ?? 'Tour'}
           langCode={langCode}
           showGuidesNeeded={false}
-          onTourTypeIdChange={setTourTypeId}
-          onLanguageIdChange={setLanguageId}
-          onSlotDateChange={setSlotDate}
-          onStartTimeChange={setStartTime}
-          onEndTimeChange={setEndTime}
-          onGuestCountChange={setGuestCount}
+          meetingPointReadOnly
+          errors={fieldErrors}
+          onTourTypeIdChange={handleTourTypeChange}
+          onLanguageIdChange={(value) => {
+            clearFieldError('languageId');
+            setLanguageId(value);
+          }}
+          onSlotDateChange={(value) => {
+            clearFieldError('slotDate');
+            setSlotDate(value);
+          }}
+          onStartTimeChange={(value) => {
+            clearFieldError('startTime');
+            setStartTime(value);
+          }}
+          onEndTimeChange={(value) => {
+            clearFieldError('endTime');
+            setEndTime(value);
+          }}
+          onGuestCountChange={(value) => {
+            clearFieldError('guestCount');
+            setGuestCount(value);
+          }}
           onPayRatePerHourChange={setPayRatePerHour}
-          onMeetingPointChange={setMeetingPoint}
+          onMeetingPointChange={(value) => {
+            clearFieldError('meetingPoint');
+            setMeetingPoint(value);
+          }}
           onAdminNotesChange={setAdminNotes}
           onStatusChange={setStatus}
           onOpenApplicationsChange={setOpenApplications}

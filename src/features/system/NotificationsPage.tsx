@@ -64,7 +64,7 @@ function buildCreatePayload(input: {
   createdBy: string;
 }): CreateNotificationPayload {
   const now = new Date().toISOString();
-  const scheduledAt = dateToIso(input.scheduledDate);
+  const scheduledAt = dateToIso(input.scheduledDate.trim());
 
   const audience = input.allGuides
     ? 'All Guides'
@@ -77,7 +77,7 @@ function buildCreatePayload(input: {
     message: input.message.trim(),
     audience,
     channels: buildChannels(input.inAppEnabled, input.emailEnabled),
-    scheduledAt,
+    ...(scheduledAt ? { scheduledAt } : {}),
     status: '',
     createdBy: input.createdBy,
     createdAt: now,
@@ -279,7 +279,7 @@ export function NotificationsPage() {
         </AppCard>
 
         <div>
-          <SectionTitle style={{ marginBottom: 10 }}>Admin Inbox</SectionTitle>
+          <SectionTitle style={{ marginBottom: 10 }}>Recent Notification</SectionTitle>
           {inboxStatus === 'loading' && (
             <div style={{ display: 'flex', justifyContent: 'center', padding: 24 }}>
               <Spin />

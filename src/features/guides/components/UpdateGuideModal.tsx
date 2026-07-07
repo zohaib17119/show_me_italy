@@ -20,7 +20,6 @@ export function UpdateGuideModal({
 }: UpdateGuideModalProps) {
   const [favorite, setFavorite] = useState(false);
   const [adminNotes, setAdminNotes] = useState('');
-  const [cancellationPercentage, setCancellationPercentage] = useState('0');
   const [rating, setRating] = useState('0');
   const [submitting, setSubmitting] = useState(false);
 
@@ -28,7 +27,6 @@ export function UpdateGuideModal({
     if (!open || !guide) return;
     setFavorite(guide.favorite ?? false);
     setAdminNotes(guide.adminNotes ?? '');
-    setCancellationPercentage(String(guide.cancellationPercentage ?? 0));
     setRating(String(guide.rating ?? 0));
   }, [open, guide]);
 
@@ -45,7 +43,6 @@ export function UpdateGuideModal({
         userId: guide.id,
         favorite,
         adminNotes,
-        cancellationPercentage: Number(cancellationPercentage),
         rating: Number(rating),
       });
       showToast('Guide updated');
@@ -94,14 +91,6 @@ export function UpdateGuideModal({
             value={adminNotes}
             onChange={(e) => setAdminNotes(e.target.value)}
             rows={3}
-          />
-
-          <FormInput
-            label="Cancellation %"
-            type="number"
-            min={0}
-            value={cancellationPercentage}
-            onChange={(e) => setCancellationPercentage(e.target.value)}
           />
 
           <FormInput

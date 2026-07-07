@@ -545,10 +545,24 @@
   min-width: 0;
 }
 
+.notificationTitleRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.notificationTitleAction {
+  flex-shrink: 0;
+  margin-left: 4px;
+}
+
 .notificationTitle {
   font-size: 12px;
   font-weight: 600;
   color: var(--text-primary);
+  min-width: 0;
+  flex: 1;
 }
 
 .notificationSub {
@@ -567,6 +581,12 @@
   color: var(--text-muted);
   margin-top: 4px;
   line-height: 1.35;
+}
+
+.notificationAction {
+  margin-top: 6px;
+  display: flex;
+  justify-content: flex-end;
 }
 
 .notificationTime {

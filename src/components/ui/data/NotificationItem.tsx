@@ -8,6 +8,7 @@ export interface NotificationItemProps {
   meta?: string;
   time?: string;
   unread?: boolean;
+  titleAction?: ReactNode;
   onClick?: () => void;
   className?: string;
 }
@@ -19,6 +20,7 @@ export function NotificationItem({
   meta,
   time,
   unread = false,
+  titleAction,
   onClick,
   className,
 }: NotificationItemProps) {
@@ -47,7 +49,12 @@ export function NotificationItem({
     >
       <div className={styles.notificationIcon}>{icon}</div>
       <div className={styles.notificationBody}>
-        <div className={styles.notificationTitle}>{title}</div>
+        <div className={styles.notificationTitleRow}>
+          <div className={styles.notificationTitle}>{title}</div>
+          {titleAction && (
+            <div className={styles.notificationTitleAction}>{titleAction}</div>
+          )}
+        </div>
         {sub && <div className={styles.notificationSub}>{sub}</div>}
         {meta && <div className={styles.notificationMeta}>{meta}</div>}
       </div>

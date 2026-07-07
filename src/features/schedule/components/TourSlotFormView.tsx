@@ -13,6 +13,7 @@ import {
 } from '@/components/ui';
 import { languageColors } from '@/theme/tokens';
 import type { LangCode } from '@/types';
+import type { TourSlotFieldErrors } from '../utils/tourSlotValidation';
 import styles from '../schedule.module.css';
 
 const STATUS_OPTIONS: FormSelectOption[] = [
@@ -31,6 +32,8 @@ export interface TourSlotFormViewProps {
   showOptions?: boolean;
   showExtraFields?: boolean;
   showGuidesNeeded?: boolean;
+  meetingPointReadOnly?: boolean;
+  errors?: TourSlotFieldErrors;
   onTourTypeIdChange?: (value: number) => void;
   onLanguageIdChange?: (value: number) => void;
   onSlotDateChange?: (value: string) => void;
@@ -56,6 +59,8 @@ export function TourSlotFormView({
   showOptions = true,
   showExtraFields = false,
   showGuidesNeeded = true,
+  meetingPointReadOnly = false,
+  errors,
   onTourTypeIdChange,
   onLanguageIdChange,
   onSlotDateChange,
@@ -80,8 +85,10 @@ export function TourSlotFormView({
             <FormSelect
               label="Tour Type"
               options={tourTypeOptions}
-              value={String(values.tourTypeId)}
+              value={values.tourTypeId ? String(values.tourTypeId) : ''}
+              placeholder="Select tour type"
               disabled={disabled}
+              error={errors?.tourTypeId}
               onChange={(e) => onTourTypeIdChange?.(Number(e.target.value))}
             />
           </div>
@@ -90,13 +97,16 @@ export function TourSlotFormView({
             type="date"
             value={values.slotDate}
             disabled={disabled}
+            error={errors?.slotDate}
             onChange={(e) => onSlotDateChange?.(e.target.value)}
           />
           <FormSelect
             label="Language"
             options={languageOptions}
-            value={String(values.languageId)}
+            value={values.languageId ? String(values.languageId) : ''}
+            placeholder="Select language"
             disabled={disabled}
+            error={errors?.languageId}
             onChange={(e) => onLanguageIdChange?.(Number(e.target.value))}
           />
           <FormInput
@@ -104,6 +114,7 @@ export function TourSlotFormView({
             type="time"
             value={values.startTime}
             disabled={disabled}
+            error={errors?.startTime}
             onChange={(e) => onStartTimeChange?.(e.target.value)}
           />
           <FormInput
@@ -111,6 +122,7 @@ export function TourSlotFormView({
             type="time"
             value={values.endTime}
             disabled={disabled}
+            error={errors?.endTime}
             onChange={(e) => onEndTimeChange?.(e.target.value)}
           />
           {showGuidesNeeded && (
@@ -127,6 +139,7 @@ export function TourSlotFormView({
             type="number"
             value={values.guestCount}
             disabled={disabled}
+            error={errors?.guestCount}
             onChange={(e) => onGuestCountChange?.(Number(e.target.value))}
           />
           <FormInput
@@ -140,7 +153,8 @@ export function TourSlotFormView({
             <FormInput
               label="Meeting Point"
               value={values.meetingPoint}
-              disabled={disabled}
+              disabled={disabled || meetingPointReadOnly}
+              error={errors?.meetingPoint}
               onChange={(e) => onMeetingPointChange?.(e.target.value)}
             />
           </div>

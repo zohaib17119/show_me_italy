@@ -25,6 +25,7 @@ import {
 } from '@/features/agent/agentSlice';
 import type { Guide } from '@/mocks/guides';
 import { RejectAgentModal } from './components/RejectAgentModal';
+import { PreviewCertificateModal } from './components/PreviewCertificateModal';
 
 function registeredLabel(adminNote: string): string {
   const match = adminNote.match(/Registered (.+)/);
@@ -42,6 +43,7 @@ export function ApprovalsPage() {
   useFetchErrorToast(status, error);
 
   const [rejectTarget, setRejectTarget] = useState<{ id: string; name: string } | null>(null);
+  const [certificatePreview, setCertificatePreview] = useState<Guide | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
@@ -115,17 +117,13 @@ export function ApprovalsPage() {
         render: (_, record) => (
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 12 }}>{record.license}</span>
-            {record.certificateUpload ? (
+            {record.certificateUpload?.trim() && (
               <AppButton
                 variant="secondary"
                 size="xs"
-                onClick={() => window.open(record.certificateUpload, '_blank', 'noopener')}
+                onClick={() => setCertificatePreview(record)}
               >
-                View Doc
-              </AppButton>
-            ) : (
-              <AppButton variant="secondary" size="xs" disabled>
-                No Doc
+                View Certificate
               </AppButton>
             )}
           </div>
@@ -204,6 +202,13 @@ export function ApprovalsPage() {
         loading={actionLoading}
         onCancel={() => setRejectTarget(null)}
         onConfirm={(reason) => void handleReject(reason)}
+      />
+
+      <PreviewCertificateModal
+        open={certificatePreview != null}
+        certificateUrl={certificatePreview?.certificateUpload ?? null}
+        guideName={certificatePreview?.name}
+        onClose={() => setCertificatePreview(null)}
       />
     </div>
   );

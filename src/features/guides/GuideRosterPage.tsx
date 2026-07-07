@@ -18,7 +18,6 @@ import {
   SearchInput,
   StatusBadge,
   TablePagination,
-  showToast,
 } from '@/components/ui';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import { ROUTES } from '@/constants/routes';
@@ -31,6 +30,7 @@ import {
 import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
 import type { Guide, GuideStatus } from '@/mocks/guides';
 import type { TourStatus } from '@/types';
+import { PreviewCertificateModal } from './components/PreviewCertificateModal';
 import { UpdateGuideModal } from './components/UpdateGuideModal';
 
 function formatRating(rating: number | null): string {
@@ -59,6 +59,7 @@ export function GuideRosterPage() {
   const [pageSize, setPageSize] = useState(25);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [editGuide, setEditGuide] = useState<Guide | null>(null);
+  const [certificatePreview, setCertificatePreview] = useState<Guide | null>(null);
 
   const apiFilter = useMemo((): AllAgentsAdminFilter => {
     const filter: AllAgentsAdminFilter = {};
@@ -183,10 +184,19 @@ export function GuideRosterPage() {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
-        <div style={{ display: 'flex', gap: 5 }}>
+        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
           <AppButton variant="secondary" size="xs" onClick={() => setEditGuide(record)}>
             Edit
           </AppButton>
+          {record.certificateUpload?.trim() && (
+            <AppButton
+              variant="secondary"
+              size="xs"
+              onClick={() => setCertificatePreview(record)}
+            >
+              View Certificate
+            </AppButton>
+          )}
           <AppButton
             variant="secondary"
             size="xs"
@@ -219,10 +229,10 @@ export function GuideRosterPage() {
         subtitle={`${guides.length} total · ${activeCount} active · ${inactiveCount} inactive`}
         extra={
           <>
-            <AppButton variant="secondary" size="xs" onClick={() => showToast('Export started')}>
+            {/* <AppButton variant="secondary" size="xs" onClick={() => showToast('Export started')}>
               Export CSV
             </AppButton>
-            <AppButton size="xs">+ Invite Guide</AppButton>
+            <AppButton size="xs">+ Invite Guide</AppButton> */}
           </>
         }
       />
@@ -303,6 +313,13 @@ export function GuideRosterPage() {
         guide={editGuide}
         onClose={() => setEditGuide(null)}
         onUpdated={loadGuides}
+      />
+
+      <PreviewCertificateModal
+        open={certificatePreview != null}
+        certificateUrl={certificatePreview?.certificateUpload ?? null}
+        guideName={certificatePreview?.name}
+        onClose={() => setCertificatePreview(null)}
       />
     </div>
   );
