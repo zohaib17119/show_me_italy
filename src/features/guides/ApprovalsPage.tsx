@@ -88,7 +88,12 @@ export function ApprovalsPage() {
         title: 'Guide',
         key: 'guide',
         render: (_, record) => (
-          <GuideCell initials={record.initials} name={record.name} sub={record.email} />
+          <GuideCell
+            initials={record.initials}
+            name={record.name}
+            sub={record.email}
+            profilePicture={record.profilePicture}
+          />
         ),
       },
       {

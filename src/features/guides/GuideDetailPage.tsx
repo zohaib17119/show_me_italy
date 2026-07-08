@@ -10,6 +10,7 @@ import {
   AppCard,
   BreadcrumbNav,
   DataTable,
+  GuideAvatar,
   LangChip,
   SectionLabel,
   SectionTitle,
@@ -21,6 +22,7 @@ import { ROUTES } from '@/constants/routes';
 import {
   approveAgent,
   clearSelectedAgent,
+  setAgentActiveStatus,
   fetchAgentById,
   rejectAgent,
   selectAgentDetailStatus,
@@ -29,6 +31,8 @@ import {
 } from '@/features/agent/agentSlice';
 import type { GuideStatus } from '@/mocks/guides';
 import type { TourStatus } from '@/types';
+import { DeactivateGuideModal } from './components/DeactivateGuideModal';
+import { PreviewCertificateModal } from './components/PreviewCertificateModal';
 import { RejectAgentModal } from './components/RejectAgentModal';
 import styles from './guides.module.css';
 
@@ -52,6 +56,8 @@ export function GuideDetailPage() {
   const applications = useAppSelector(selectSelectedAgentApplications);
 
   const [rejectOpen, setRejectOpen] = useState(false);
+  const [deactivateOpen, setDeactivateOpen] = useState(false);
+  const [certificatePreviewOpen, setCertificatePreviewOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
@@ -92,6 +98,32 @@ export function GuideDetailPage() {
     }
   };
 
+  const handleToggleActiveStatus = async () => {
+    if (!guide) return;
+    const activating = guide.isActive === false;
+    setActionLoading(true);
+    try {
+      await dispatch(
+        setAgentActiveStatus({ userId: guide.id, isActive: activating }),
+      ).unwrap();
+      showToast(`${guide.name} ${activating ? 'activated' : 'deactivated'}`);
+      setDeactivateOpen(false);
+      if (activating) {
+        void dispatch(fetchAgentById(guide.id));
+      } else {
+        navigate(ROUTES.GUIDES);
+      }
+    } catch (err) {
+      showToast(
+        err instanceof Error
+          ? err.message
+          : `Failed to ${activating ? 'activate' : 'deactivate'} guide`,
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (detailStatus === 'loading' && !guide) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>
@@ -116,6 +148,7 @@ export function GuideDetailPage() {
   }
 
   const isPending = guide.status === 'pending';
+  const isInactive = guide.isActive === false;
 
   const historyColumns: ColumnsType<GuideApplicationRow> = [
     {
@@ -152,7 +185,12 @@ export function GuideDetailPage() {
       />
 
       <div style={{ display: 'flex', gap: 12, alignItems: 'flex-start', minWidth: 0 }}>
-        <div className={styles.guideHeaderAvatar}>{guide.initials}</div>
+        <GuideAvatar
+          initials={guide.initials}
+          profilePicture={guide.profilePicture}
+          size="lg"
+          alt={guide.name}
+        />
         <div style={{ flex: 1, minWidth: 0 }}>
           <div className="page-header">
             <div style={{ minWidth: 0 }}>
@@ -243,15 +281,19 @@ export function GuideDetailPage() {
                 <span className={guide.isActive ? styles.certYes : styles.certPending}>
                   {guide.isActive ? '✓ Verified' : 'Unverified'}
                 </span>
-                {guide.certificateUpload && (
+                {guide.certificateUpload?.trim() ? (
                   <div style={{ marginTop: 6 }}>
                     <AppButton
                       variant="secondary"
-                      size="xs"
-                      onClick={() => window.open(guide.certificateUpload, '_blank', 'noopener')}
+                      size="sm"
+                      onClick={() => setCertificatePreviewOpen(true)}
                     >
                       View Certificate
                     </AppButton>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 6, fontSize: 12, color: 'var(--text-muted)' }}>
+                    Certificate not uploaded
                   </div>
                 )}
               </div>
@@ -332,8 +374,14 @@ export function GuideDetailPage() {
                 >
                   Edit Languages
                 </AppButton>
-                <AppButton variant="warn" size="xs" style={{ width: '100%' }}>
-                  Deactivate Guide
+                <AppButton
+                  variant={isInactive ? 'primary' : 'warn'}
+                  size="xs"
+                  style={{ width: '100%' }}
+                  disabled={actionLoading}
+                  onClick={() => setDeactivateOpen(true)}
+                >
+                  {isInactive ? 'Activate Guide' : 'Deactivate Guide'}
                 </AppButton>
               </div>
             </AppCard>
@@ -347,6 +395,22 @@ export function GuideDetailPage() {
         loading={actionLoading}
         onCancel={() => setRejectOpen(false)}
         onConfirm={(reason) => void handleReject(reason)}
+      />
+
+      <DeactivateGuideModal
+        open={deactivateOpen}
+        guideName={guide.name}
+        mode={isInactive ? 'activate' : 'deactivate'}
+        loading={actionLoading}
+        onCancel={() => setDeactivateOpen(false)}
+        onConfirm={() => void handleToggleActiveStatus()}
+      />
+
+      <PreviewCertificateModal
+        open={certificatePreviewOpen}
+        certificateUrl={guide.certificateUpload?.trim() || null}
+        guideName={guide.name}
+        onClose={() => setCertificatePreviewOpen(false)}
       />
     </div>
   );

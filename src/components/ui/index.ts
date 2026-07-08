@@ -72,6 +72,9 @@ export type { StepperProps, StepperStep, StepStatus } from './data/Stepper';
 export { GuideCell } from './data/GuideCell';
 export type { GuideCellProps } from './data/GuideCell';
 
+export { GuideAvatar } from './data/GuideAvatar';
+export type { GuideAvatarProps } from './data/GuideAvatar';
+
 export { PreviewCard } from './data/PreviewCard';
 export type { PreviewCardProps } from './data/PreviewCard';
 
@@ -82,6 +85,9 @@ export { SettingsRow } from './data/SettingsRow';
 export type { SettingsRowProps } from './data/SettingsRow';
 
 export { SettingsRowMenu } from './data/SettingsRowMenu';
+
+export { TableRowMenu } from './data/TableRowMenu';
+export type { TableRowMenuItem } from './data/TableRowMenu';
 
 export { ListErrorState } from './data/ListErrorState';
 export type { ListErrorStateProps } from './data/ListErrorState';

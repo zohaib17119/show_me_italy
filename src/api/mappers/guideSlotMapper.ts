@@ -19,6 +19,7 @@ export interface GuideSlotRow {
   guidesNeeded: number;
   totalApplicants: number;
   applicantsLabel: string;
+  adminNotes: string;
 }
 
 function formatSlotDate(iso?: string): string {
@@ -78,6 +79,7 @@ export function mapGuideSlot(record: GuideSlotRecord, index: number): GuideSlotR
     guidesNeeded,
     totalApplicants,
     applicantsLabel: `${guidesNeeded}/${totalApplicants}`,
+    adminNotes: record.adminNotes?.trim() ?? '',
   };
 }
 

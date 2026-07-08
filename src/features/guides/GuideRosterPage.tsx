@@ -18,6 +18,7 @@ import {
   SearchInput,
   StatusBadge,
   TablePagination,
+  TableRowMenu,
 } from '@/components/ui';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import { ROUTES } from '@/constants/routes';
@@ -121,6 +122,7 @@ export function GuideRosterPage() {
           name={record.name}
           favorite={record.favorite}
           sub={record.email}
+          profilePicture={record.profilePicture}
         />
       ),
     },
@@ -181,34 +183,38 @@ export function GuideRosterPage() {
         record.cancellationPercentage != null ? `${record.cancellationPercentage}%` : '—',
     },
     {
-      title: 'Actions',
-      key: 'actions',
-      render: (_, record) => (
-        <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-          <AppButton variant="secondary" size="xs" onClick={() => setEditGuide(record)}>
-            Edit
-          </AppButton>
-          {record.certificateUpload?.trim() && (
-            <AppButton
-              variant="secondary"
-              size="xs"
-              onClick={() => setCertificatePreview(record)}
-            >
-              View Certificate
-            </AppButton>
-          )}
+      title: 'Certificate',
+      key: 'certificate',
+      render: (_, record) =>
+        record.certificateUpload?.trim() ? (
           <AppButton
             variant="secondary"
             size="xs"
-            onClick={() =>
-              record.status === 'pending'
-                ? navigate(ROUTES.APPROVALS)
-                : navigate(`/guides/${record.id}`)
-            }
+            onClick={() => setCertificatePreview(record)}
           >
-            {record.status === 'pending' ? 'Review' : 'View'}
+            View Certificate
           </AppButton>
-        </div>
+        ) : (
+          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Not uploaded</span>
+        ),
+    },
+    {
+      title: 'Actions',
+      key: 'actions',
+      render: (_, record) => (
+        <TableRowMenu
+          items={[
+            { key: 'edit', label: 'Edit', onClick: () => setEditGuide(record) },
+            {
+              key: 'view',
+              label: record.status === 'pending' ? 'Review' : 'View',
+              onClick: () =>
+                record.status === 'pending'
+                  ? navigate(ROUTES.APPROVALS)
+                  : navigate(`/guides/${record.id}`),
+            },
+          ]}
+        />
       ),
     },
   ];

@@ -47,6 +47,11 @@ export const applicationsApi = {
     return normalizeListResponse<GuideSlotRecord>(data);
   },
 
+  getPendingGuideSlots: async (): Promise<GuideSlotRecord[]> => {
+    const { data } = await axiosInstance.get('/api/AgentApplications/pending-guide-slots');
+    return normalizeListResponse<GuideSlotRecord>(data);
+  },
+
   getGuideSlotApplicants: async (
     tourSlotId: number,
   ): Promise<GuideSlotApplicantsResponse> => {

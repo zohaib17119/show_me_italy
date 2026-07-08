@@ -49,6 +49,16 @@ function languageTokenToCode(token: string): LangCode | null {
 }
 
 function parseLanguages(record: AgentRecord): Guide['languages'] {
+  const userLangs =
+    record.userlanguages ??
+    (record as { userLanguages?: AgentRecord['userlanguages'] }).userLanguages;
+
+  if (Array.isArray(userLangs) && userLangs.length > 0) {
+    return userLangs
+      .map((lang) => lang.code?.trim().toUpperCase())
+      .filter((code): code is LangCode => Boolean(code));
+  }
+
   const raw =
     record.languagesYouSpeak ??
     (record as { languages?: string[] | string }).languages ??
@@ -92,7 +102,7 @@ export function mapAgentToGuide(record: AgentRecord, options?: { pending?: boole
     status,
     certified: Boolean(record.tourGuideLicenseOrCertificationNo ?? record.certificateUpload),
     isActive: record.isActive === true,
-    tours: Number((record as { tours?: number }).tours ?? (record as { totalTours?: number }).totalTours ?? 0),
+    tours: Number(record.totalTour ?? (record as { tours?: number }).tours ?? (record as { totalTours?: number }).totalTours ?? 0),
     rating: typeof record.rating === 'number' ? record.rating : null,
     cancellationPercentage:
       typeof record.cancellationPercentage === 'number'
@@ -103,7 +113,11 @@ export function mapAgentToGuide(record: AgentRecord, options?: { pending?: boole
     license: record.tourGuideLicenseOrCertificationNo ?? '—',
     phone: record.phoneNumber ?? '—',
     activeSince: (record as { activeSince?: string }).activeSince ?? '—',
-    earnings: { totalPaid: 0, pending: 0, totalTours: 0 },
+    earnings: {
+      totalPaid: Number(record.totalEarning ?? 0),
+      pending: 0,
+      totalTours: Number(record.totalTour ?? (record as { totalTours?: number }).totalTours ?? 0),
+    },
     tourHistory: [],
     adminNote: pending
       ? `Registered ${new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}`
@@ -111,6 +125,7 @@ export function mapAgentToGuide(record: AgentRecord, options?: { pending?: boole
         ? `Note: ${record.reasonOfRejection}`
         : '',
     certificateUpload: record.certificateUpload,
+    profilePicture: record.profilePicture?.trim() || undefined,
   };
 }
 

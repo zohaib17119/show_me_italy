@@ -3,6 +3,7 @@ export const ROUTES = {
   DASHBOARD: '/',
   CALENDAR: '/schedule/calendar',
   CREATE_TOUR: '/schedule/create',
+  EDIT_TOUR: '/schedule/edit/:id',
   TOUR_DETAIL: '/schedule/tours/:id',
   BULK: '/schedule/bulk',
   IMPORT: '/schedule/import',
@@ -24,6 +25,10 @@ export type RoutePath = (typeof ROUTES)[keyof typeof ROUTES];
 
 export function getTourDetailPath(id: number | string): string {
   return `/schedule/tours/${id}`;
+}
+
+export function getEditTourPath(id: number | string): string {
+  return `/schedule/edit/${id}`;
 }
 
 export function getAssignmentPath(tourSlotId: number | string): string {

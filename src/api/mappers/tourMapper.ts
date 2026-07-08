@@ -126,3 +126,23 @@ export function buildTourSlotPayload(form: {
     conflictFlag: false,
   };
 }
+
+export function mergeTourSlotForUpdate(
+  original: TourSlot,
+  form: TourSlotFormValues,
+): TourSlot {
+  return {
+    ...original,
+    tourTypeId: form.tourTypeId,
+    languageId: form.languageId,
+    slotDate: toApiDateTime(form.slotDate),
+    startTime: form.startTime.length <= 5 ? `${form.startTime}:00` : form.startTime,
+    endTime: form.endTime.length <= 5 ? `${form.endTime}:00` : form.endTime,
+    guidesNeeded: form.guidesNeeded,
+    guestCount: form.guestCount,
+    payRatePerHour: form.payRatePerHour,
+    meetingPoint: form.meetingPoint,
+    adminNotes: form.adminNotes,
+    status: form.status,
+  };
+}

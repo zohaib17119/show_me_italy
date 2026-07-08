@@ -39,6 +39,8 @@ export interface TourSlot {
   isImported?: boolean;
   externalRef?: string | null;
   conflictFlag?: boolean;
+  tickets?: string | null;
+  isCancel?: boolean;
   createdByAdminId?: number | null;
   createdAt?: string;
   updatedAt?: string;
@@ -144,15 +146,28 @@ export interface NotificationRecipientRecord {
   channels?: string | null;
 }
 
+export interface AgentUserLanguage {
+  id?: number;
+  languageId?: number;
+  code?: string;
+  name?: string;
+  colorHex?: string;
+  rateModifier?: number;
+  isActive?: boolean;
+  createdAt?: string;
+}
+
 export interface AgentRecord {
   id?: string;
   userId?: string;
   fullName?: string;
   email?: string;
   phoneNumber?: string;
+  profilePicture?: string | null;
   tourGuideLicenseOrCertificationNo?: string;
   languagesYouSpeak?: string | string[];
   languagesYouSpeakCode?: string;
+  userlanguages?: AgentUserLanguage[];
   isVerified?: boolean;
   isActive?: boolean;
   status?: string;
@@ -162,6 +177,8 @@ export interface AgentRecord {
   adminNotes?: string;
   rating?: number;
   cancellationPercentage?: number;
+  totalTour?: number;
+  totalEarning?: number;
   [key: string]: unknown;
 }
 
@@ -200,6 +217,7 @@ export interface GuideSlotRecord {
   code?: string;
   totalApplicants?: number;
   guidesNeeded?: number;
+  adminNotes?: string;
   [key: string]: unknown;
 }
 

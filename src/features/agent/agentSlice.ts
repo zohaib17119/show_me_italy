@@ -112,6 +112,24 @@ export const rejectAgent = createAsyncThunk(
   },
 );
 
+export const setAgentActiveStatus = createAsyncThunk(
+  'agent/setActiveStatus',
+  async (
+    payload: { userId: string; isActive: boolean },
+    { rejectWithValue },
+  ) => {
+    try {
+      await agentApi.approveRejectAgent({
+        userId: payload.userId,
+        isActive: payload.isActive,
+      });
+      return payload;
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
 const agentSlice = createSlice({
   name: 'agent',
   initialState,
@@ -182,6 +200,19 @@ const agentSlice = createSlice({
       .addCase(rejectAgent.rejected, (state, action) => {
         state.mutationStatus = 'failed';
         state.error = (action.payload as string) ?? 'Failed to reject guide';
+      })
+      .addCase(setAgentActiveStatus.pending, (state) => {
+        state.mutationStatus = 'loading';
+      })
+      .addCase(setAgentActiveStatus.fulfilled, (state, action) => {
+        state.mutationStatus = 'succeeded';
+        if (state.selectedAgent?.id === action.payload.userId) {
+          state.selectedAgent.isActive = action.payload.isActive;
+        }
+      })
+      .addCase(setAgentActiveStatus.rejected, (state, action) => {
+        state.mutationStatus = 'failed';
+        state.error = (action.payload as string) ?? 'Failed to update guide status';
       });
   },
 });

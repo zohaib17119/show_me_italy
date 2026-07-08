@@ -1,8 +1,7 @@
-import { Layout, Input, Badge, Avatar, Dropdown, Button, Spin } from 'antd';
+import { Layout, Badge, Avatar, Dropdown, Button, Spin } from 'antd';
 import {
-  SearchOutlined,
   BellOutlined,
-  AppstoreOutlined,
+  // AppstoreOutlined,
   MenuOutlined,
   LogoutOutlined,
   UserOutlined,
@@ -193,7 +192,7 @@ export function Topbar() {
         />
       )}
       <div className="admin-header-breadcrumb">{breadcrumbHtml}</div>
-      <Input
+      {/* <Input
         className="admin-header-search"
         prefix={<SearchOutlined style={{ color: 'var(--text-muted)' }} />}
         placeholder="Search guides, tours…"
@@ -203,12 +202,12 @@ export function Topbar() {
           background: '#F7FAF8',
         }}
         size="middle"
-      />
-      <Button
+      /> */}
+      {/* <Button
         type="text"
         icon={<AppstoreOutlined />}
         style={{ width: 34, height: 34 }}
-      />
+      /> */}
       <Dropdown dropdownRender={() => notificationDropdown} trigger={['click']} placement="bottomRight">
         <Badge count={unreadCount} size="small" offset={[-2, 2]} overflowCount={99}>
           <Button

@@ -1,3 +1,4 @@
+import { GuideAvatar } from './GuideAvatar';
 import styles from './ui.module.css';
 
 export interface GuideCellProps {
@@ -5,13 +6,21 @@ export interface GuideCellProps {
   name: string;
   sub?: string;
   favorite?: boolean;
+  profilePicture?: string | null;
   className?: string;
 }
 
-export function GuideCell({ initials, name, sub, favorite, className }: GuideCellProps) {
+export function GuideCell({
+  initials,
+  name,
+  sub,
+  favorite,
+  profilePicture,
+  className,
+}: GuideCellProps) {
   return (
     <div className={[styles.guideCell, className].filter(Boolean).join(' ')}>
-      <div className={styles.guideAvatar}>{initials}</div>
+      <GuideAvatar initials={initials} profilePicture={profilePicture} size="sm" alt={name} />
       <div className={styles.guideBody}>
         <div className={styles.guideName}>
           {name}

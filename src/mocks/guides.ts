@@ -38,6 +38,7 @@ export interface Guide {
   adminNotes?: string;
   favorite?: boolean;
   certificateUpload?: string;
+  profilePicture?: string | null;
 }
 
 export const MOCK_GUIDES: Guide[] = [

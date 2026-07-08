@@ -92,7 +92,7 @@ export const fetchGuideSlots = createAsyncThunk(
   'applications/fetchGuideSlots',
   async (_, { rejectWithValue }) => {
     try {
-      const records = await applicationsApi.getGuideSlots();
+      const records = await applicationsApi.getPendingGuideSlots();
       return mapGuideSlots(records);
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));

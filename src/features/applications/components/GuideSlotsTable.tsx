@@ -9,11 +9,12 @@ import {
   LangChip,
   SearchInput,
   TablePagination,
+  TableRowMenu,
 } from '@/components/ui';
-import { getAssignmentPath } from '@/constants/routes';
+import { getAssignmentPath, getEditTourPath } from '@/constants/routes';
 
 const PAGE_SIZE = 10;
-const ACTIONS_COL_WIDTH = { default: 300, calendarModal: 180 } as const;
+const ACTIONS_COL_WIDTH = { default: 80, calendarModal: 180 } as const;
 
 export interface GuideSlotsTableProps {
   rows: GuideSlotRow[];
@@ -86,6 +87,17 @@ export function GuideSlotsTable({
     base.push({ title: 'Guide Name', dataIndex: 'guideName', key: 'guideName' });
 
     base.push({
+      title: 'Admin Notes',
+      key: 'adminNotes',
+      render: (_, row) =>
+        row.adminNotes?.trim() ? (
+          <span>{row.adminNotes}</span>
+        ) : (
+          <span style={{ color: 'var(--text-muted)' }}>—</span>
+        ),
+    });
+
+    base.push({
       title: 'Actions',
       key: 'actions',
       fixed: 'right',
@@ -93,41 +105,54 @@ export function GuideSlotsTable({
       render: (_, row) => {
         const goToAssignment = () =>
           navigate(getAssignmentPath(row.tourSlotId), { state: row });
-        const showChangeAssignment = !isCalendarModal && row.hasAssignedGuide;
 
-        if (!row.hasAssignedGuide) {
+        if (isCalendarModal) {
+          if (!row.hasAssignedGuide) {
+            return (
+              <AppButton variant="primary" size="xs" onClick={goToAssignment}>
+                Assign
+              </AppButton>
+            );
+          }
+
           return (
-            <AppButton variant="primary" size="xs" onClick={goToAssignment}>
-              Assign
-            </AppButton>
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'nowrap', alignItems: 'center' }}>
+              {!row.hasTicket ? (
+                <AppButton
+                  variant="warn"
+                  size="xs"
+                  onClick={() => onUploadTicket?.(row)}
+                >
+                  Upload Ticket
+                </AppButton>
+              ) : (
+                <AppButton
+                  variant="primary"
+                  size="xs"
+                  onClick={() => onPreviewTicket?.(row)}
+                >
+                  Preview Ticket
+                </AppButton>
+              )}
+            </div>
           );
         }
 
         return (
-          <div style={{ display: 'flex', gap: 5, flexWrap: 'nowrap', alignItems: 'center' }}>
-            {!row.hasTicket ? (
-              <AppButton
-                variant="warn"
-                size="xs"
-                onClick={() => onUploadTicket?.(row)}
-              >
-                Upload Ticket
-              </AppButton>
-            ) : (
-              <AppButton
-                variant="primary"
-                size="xs"
-                onClick={() => onPreviewTicket?.(row)}
-              >
-                Preview Ticket
-              </AppButton>
-            )}
-            {showChangeAssignment && (
-              <AppButton variant="secondary" size="xs" onClick={goToAssignment}>
-                Change Assignment
-              </AppButton>
-            )}
-          </div>
+          <TableRowMenu
+            items={[
+              {
+                key: 'assign',
+                label: row.hasAssignedGuide ? 'Change Assignment' : 'Assign',
+                onClick: goToAssignment,
+              },
+              {
+                key: 'edit',
+                label: 'Edit',
+                onClick: () => navigate(getEditTourPath(row.tourSlotId)),
+              },
+            ]}
+          />
         );
       },
     });
@@ -156,7 +181,7 @@ export function GuideSlotsTable({
         dataSource={pageData}
         loading={loading}
         pagination={false}
-        scroll={{ x: isCalendarModal ? 900 : 960 }}
+        scroll={{ x: isCalendarModal ? 900 : 1100 }}
         footer={() => (
           <TablePagination
             page={page}
