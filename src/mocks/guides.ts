@@ -39,6 +39,7 @@ export interface Guide {
   favorite?: boolean;
   certificateUpload?: string;
   profilePicture?: string | null;
+  pendingCounts?: number;
 }
 
 export const MOCK_GUIDES: Guide[] = [

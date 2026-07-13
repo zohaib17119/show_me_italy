@@ -115,9 +115,12 @@ export const fetchSlotApplicants = createAsyncThunk(
 
 export const fetchAvailableGuides = createAsyncThunk(
   'applications/fetchAvailableGuides',
-  async (_, { rejectWithValue }) => {
+  async (
+    params: { tourSlotId: number; isAll: boolean },
+    { rejectWithValue },
+  ) => {
     try {
-      const records = await applicationsApi.getAvailableGuides();
+      const records = await applicationsApi.getAvailableGuides(params);
       return mapAvailableGuides(records);
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
@@ -128,25 +131,25 @@ export const fetchAvailableGuides = createAsyncThunk(
 export interface AssignGuideManuallyPayload {
   guideId: string;
   tourSlotId: number;
+  isAll: boolean;
 }
 
 export const assignGuideManually = createAsyncThunk(
   'applications/assignGuideManually',
   async (payload: AssignGuideManuallyPayload, { dispatch, rejectWithValue }) => {
     try {
-      const now = new Date().toISOString();
-      await applicationsApi.assignGuideApplication({
-        applicationId: 0,
+      await applicationsApi.applyTour({
         guideId: payload.guideId,
         tourSlotId: payload.tourSlotId,
         status: 'Approved',
-        payRateSnapshot: 0,
-        slotAssignmentId: 0,
-        appliedAt: now,
-        updatedAt: now,
       });
       await dispatch(fetchSlotApplicants(payload.tourSlotId));
-      await dispatch(fetchAvailableGuides());
+      await dispatch(
+        fetchAvailableGuides({
+          tourSlotId: payload.tourSlotId,
+          isAll: payload.isAll,
+        }),
+      );
       return payload;
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));

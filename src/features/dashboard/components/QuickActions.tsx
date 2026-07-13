@@ -8,8 +8,27 @@ import styles from '../dashboard.module.css';
 export function QuickActions() {
   const navigate = useNavigate();
   const dashboard = useAppSelector(selectDashboardData);
+  const stats = dashboard?.stats;
+  const header = dashboard?.header;
   const quick = dashboard?.quickActions;
-  const payout = dashboard?.payout;
+  // Hidden until payouts work resumes:
+  // const payout = dashboard?.payout;
+
+  const pendingApplications =
+    stats?.pendingApplications ??
+    quick?.pendingApplications ??
+    header?.pendingApplications ??
+    0;
+
+  // Hidden until payouts work resumes:
+  // const pendingPayouts =
+  //   stats?.pendingPayouts ??
+  //   quick?.pendingPayouts ??
+  //   payout?.pendingCount ??
+  //   header?.pendingPayoutRequests ??
+  //   0;
+
+  const pendingGuideApprovals = quick?.pendingGuideApprovals ?? 0;
 
   const actions = useMemo(
     () => [
@@ -24,25 +43,26 @@ export function QuickActions() {
         icon: '📋',
         bg: '#fef3c7',
         label: 'Review Applications',
-        sub: `${quick?.pendingApplications ?? 0} awaiting`,
+        sub: `${pendingApplications} awaiting`,
         route: ROUTES.APPLICATIONS,
       },
-      {
-        icon: '💸',
-        bg: '#e0f5e9',
-        label: 'Process Payouts',
-        sub: `${quick?.pendingPayouts ?? 0} pending · €${(payout?.pendingAmount ?? 0).toLocaleString()}`,
-        route: ROUTES.PAYOUTS,
-      },
+      // Hidden until payouts work resumes:
+      // {
+      //   icon: '💸',
+      //   bg: '#e0f5e9',
+      //   label: 'Process Payouts',
+      //   sub: `${pendingPayouts} pending · €${(payout?.pendingAmount ?? 0).toLocaleString()}`,
+      //   route: ROUTES.PAYOUTS,
+      // },
       {
         icon: '👤',
         bg: '#eaf3fb',
         label: 'Guide Approvals',
-        sub: `${quick?.pendingGuideApprovals ?? 0} new registrations`,
+        sub: `${pendingGuideApprovals} new registrations`,
         route: ROUTES.APPROVALS,
       },
     ],
-    [quick, payout],
+    [pendingApplications, pendingGuideApprovals],
   );
 
   return (

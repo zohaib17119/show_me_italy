@@ -1,7 +1,11 @@
-import type { TourSlot, Language, TourType } from '@/api/types';
+import type { BulkTourSlotCreatePayload, TourSlot, Language, TourType } from '@/api/types';
 import { toApiDateTime } from '@/api/utils/date';
 import { ticksToTimeString } from '@/api/utils/timeSpan';
 import type { LangCode } from '@/types';
+
+function normalizeTimeForApi(time: string): string {
+  return time.length <= 5 ? `${time}:00` : time;
+}
 
 export interface CalendarEvent {
   id: string;
@@ -62,6 +66,7 @@ export interface TourSlotFormValues {
   status: string;
   openApplications: boolean;
   sendNotification: boolean;
+  tickets?: string | null;
   guidesFilled?: number;
   openingsCount?: number;
   externalRef?: string;
@@ -87,6 +92,7 @@ export function mapTourSlotToFormValues(slot: TourSlot): TourSlotFormValues {
     status,
     openApplications: status.toLowerCase() === 'open',
     sendNotification: false,
+    tickets: slot.tickets ?? null,
     guidesFilled: slot.guidesFilled,
     openingsCount: slot.openingsCount,
     externalRef: slot.externalRef ?? undefined,
@@ -109,12 +115,13 @@ export function buildTourSlotPayload(form: {
   meetingPoint: string;
   adminNotes: string;
   status: string;
+  tickets?: string | null;
 }): TourSlot {
   return {
     tourTypeId: form.tourTypeId,
     slotDate: toApiDateTime(form.slotDate),
-    startTime: form.startTime.length <= 5 ? `${form.startTime}:00` : form.startTime,
-    endTime: form.endTime.length <= 5 ? `${form.endTime}:00` : form.endTime,
+    startTime: normalizeTimeForApi(form.startTime),
+    endTime: normalizeTimeForApi(form.endTime),
     languageId: form.languageId,
     guidesNeeded: form.guidesNeeded,
     guestCount: form.guestCount,
@@ -122,6 +129,39 @@ export function buildTourSlotPayload(form: {
     meetingPoint: form.meetingPoint,
     adminNotes: form.adminNotes,
     status: form.status,
+    tickets: form.tickets?.trim() ? form.tickets : null,
+    isImported: false,
+    conflictFlag: false,
+  };
+}
+
+export function buildBulkTourSlotPayload(form: {
+  tourTypeId: number;
+  dates: string[];
+  languageIds: number[];
+  startTime: string;
+  endTime: string;
+  guidesNeeded: number;
+  guestCount: number;
+  payRatePerHour: number;
+  meetingPoint: string;
+  adminNotes: string;
+  status: string;
+  tickets?: string | null;
+}): BulkTourSlotCreatePayload {
+  return {
+    tourTypeId: form.tourTypeId,
+    slotDate: form.dates.map((date) => toApiDateTime(date)),
+    languageIds: form.languageIds,
+    startTime: normalizeTimeForApi(form.startTime),
+    endTime: normalizeTimeForApi(form.endTime),
+    guidesNeeded: form.guidesNeeded,
+    guestCount: form.guestCount,
+    payRatePerHour: form.payRatePerHour,
+    meetingPoint: form.meetingPoint,
+    adminNotes: form.adminNotes,
+    status: form.status,
+    tickets: form.tickets?.trim() ? form.tickets : null,
     isImported: false,
     conflictFlag: false,
   };
@@ -136,13 +176,39 @@ export function mergeTourSlotForUpdate(
     tourTypeId: form.tourTypeId,
     languageId: form.languageId,
     slotDate: toApiDateTime(form.slotDate),
-    startTime: form.startTime.length <= 5 ? `${form.startTime}:00` : form.startTime,
-    endTime: form.endTime.length <= 5 ? `${form.endTime}:00` : form.endTime,
+    startTime: normalizeTimeForApi(form.startTime),
+    endTime: normalizeTimeForApi(form.endTime),
     guidesNeeded: form.guidesNeeded,
     guestCount: form.guestCount,
     payRatePerHour: form.payRatePerHour,
     meetingPoint: form.meetingPoint,
     adminNotes: form.adminNotes,
     status: form.status,
+    tickets: form.tickets?.trim() ? form.tickets : null,
+  };
+}
+
+export interface UpdateAssignSlotPayload {
+  tourSlotId: number;
+  payRatePerHour: number;
+  slotDate: string;
+  startTime: string;
+  endTime: string;
+}
+
+export function buildUpdateAssignSlotPayload(form: {
+  tourSlotId: number;
+  payRatePerHour: number;
+  slotDate: string;
+  startTime: string;
+  endTime: string;
+}): UpdateAssignSlotPayload {
+  const dateKey = form.slotDate.slice(0, 10);
+  return {
+    tourSlotId: form.tourSlotId,
+    payRatePerHour: form.payRatePerHour,
+    slotDate: toApiDateTime(dateKey),
+    startTime: normalizeTimeForApi(form.startTime),
+    endTime: normalizeTimeForApi(form.endTime),
   };
 }

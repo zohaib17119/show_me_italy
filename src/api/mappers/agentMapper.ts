@@ -126,6 +126,7 @@ export function mapAgentToGuide(record: AgentRecord, options?: { pending?: boole
         : '',
     certificateUpload: record.certificateUpload,
     profilePicture: record.profilePicture?.trim() || undefined,
+    pendingCounts: Number(record.pendingCounts ?? 0),
   };
 }
 
@@ -139,8 +140,13 @@ export function mapAgentsToGuides(
 
 export interface GuideApplicationRow {
   id: string;
+  applicationId: number;
   appliedAt: string;
   tourSlot: string;
+  tourTypeName: string;
+  slotDate: string;
+  startTime: string;
+  language: string;
   payRate: string;
   status: TourStatus;
 }
@@ -158,6 +164,18 @@ function formatAppliedAt(iso?: string): string {
   });
 }
 
+function formatSlotDate(iso?: string): string {
+  if (!iso?.trim()) return '—';
+  const dateKey = iso.slice(0, 10);
+  const [y, m, d] = dateKey.split('-').map(Number);
+  if (!y || !m || !d) return iso;
+  return new Date(y, m - 1, d).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  });
+}
+
 function mapApplicationStatus(status?: string): TourStatus {
   const raw = (status ?? 'pending').toLowerCase();
   if (raw.includes('approve')) return 'approved';
@@ -171,11 +189,20 @@ export function mapGuideApplicationsToHistory(
   records: GuideApplicationRecord[] | undefined,
 ): GuideApplicationRow[] {
   if (!Array.isArray(records)) return [];
-  return records.map((record, index) => ({
-    id: String(record.applicationId ?? index),
-    appliedAt: formatAppliedAt(record.appliedAt),
-    tourSlot: `Tour #${record.tourSlotId ?? '—'}`,
-    payRate: record.payRateSnapshot != null ? `€${record.payRateSnapshot}` : '—',
-    status: mapApplicationStatus(record.status),
-  }));
+  return records.map((record, index) => {
+    const applicationId = Number(record.applicationId ?? 0);
+    const tourTypeName = record.tourTypeName?.trim() || '';
+    return {
+      id: String(record.applicationId ?? index),
+      applicationId,
+      appliedAt: formatAppliedAt(record.appliedAt),
+      tourSlot: tourTypeName || `Tour #${record.tourSlotId ?? '—'}`,
+      tourTypeName: tourTypeName || `Tour #${record.tourSlotId ?? '—'}`,
+      slotDate: formatSlotDate(record.slotDate),
+      startTime: record.startTime?.trim() || '—',
+      language: (record.code?.trim().slice(0, 2).toUpperCase() || '—'),
+      payRate: record.payRateSnapshot != null ? `€${record.payRateSnapshot}` : '—',
+      status: mapApplicationStatus(record.status),
+    };
+  });
 }

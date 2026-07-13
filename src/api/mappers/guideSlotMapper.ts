@@ -5,6 +5,7 @@ export interface GuideSlotRow {
   id: string;
   tourSlotId: number;
   tourName: string;
+  tourCode: string;
   dateLabel: string;
   startTime: string;
   endTime: string;
@@ -65,6 +66,7 @@ export function mapGuideSlot(record: GuideSlotRecord, index: number): GuideSlotR
     id: String(tourSlotId),
     tourSlotId,
     tourName: record.typeName ?? '—',
+    tourCode: record.tourcode?.trim() || '—',
     dateLabel: formatSlotDate(record.slotDate),
     startTime,
     endTime,

@@ -46,6 +46,23 @@ export interface TourSlot {
   updatedAt?: string;
 }
 
+export interface BulkTourSlotCreatePayload {
+  tourTypeId: number;
+  slotDate: string[];
+  languageIds: number[];
+  startTime: string;
+  endTime: string;
+  guidesNeeded: number;
+  guestCount: number;
+  payRatePerHour: number;
+  meetingPoint: string;
+  adminNotes: string;
+  status: string;
+  tickets?: string | null;
+  isImported: false;
+  conflictFlag: false;
+}
+
 export interface TourSlotFilter {
   startDate?: string | null;
   endDate?: string | null;
@@ -71,6 +88,16 @@ export interface ApplicationCalendarDayRecord {
   applicationCount?: number;
 }
 
+export interface TourTypeImagePayload {
+  id: number;
+  tourTypeImage?: string;
+}
+
+export interface TourTypeImageRecord {
+  id?: number;
+  tourTypeImage?: string | null;
+}
+
 export interface TourType {
   tourTypeId?: number;
   name?: string | null;
@@ -81,6 +108,7 @@ export interface TourType {
   basePrice?: number;
   durationMinutes?: number;
   isActive?: boolean;
+  tourTypeImage?: TourTypeImageRecord[] | TourTypeImagePayload[] | string[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -179,6 +207,7 @@ export interface AgentRecord {
   cancellationPercentage?: number;
   totalTour?: number;
   totalEarning?: number;
+  pendingCounts?: number;
   [key: string]: unknown;
 }
 
@@ -215,6 +244,7 @@ export interface GuideSlotRecord {
   totalPAX?: number;
   tickets?: string;
   code?: string;
+  tourcode?: string;
   totalApplicants?: number;
   guidesNeeded?: number;
   adminNotes?: string;
@@ -222,13 +252,30 @@ export interface GuideSlotRecord {
 }
 
 export interface SlotSummaryRecord {
+  tourSlotId?: number;
+  tourTypeId?: number;
+  languageID?: number;
+  meetingPoint?: string | null;
+  adminNotes?: string | null;
+  tourCode?: string | null;
+  languageName?: string | null;
+  languageCode?: string | null;
+  tourTypeName?: string | null;
+  slotDate?: string | null;
+  startTime?: string | null;
+  endTime?: string | null;
+  guidesNeeded?: number;
+  guidesFilled?: number;
+  openingsCount?: number;
+  guestCount?: number;
+  payRatePerHour?: number | null;
+  status?: string | null;
+  tickets?: string | null;
+  /** Legacy fallbacks */
   tour?: string;
   date?: string;
   language?: string;
-  guidesFilled?: number;
-  guidesNeeded?: number;
   payRate?: number;
-  status?: string;
   [key: string]: unknown;
 }
 
@@ -303,6 +350,50 @@ export interface AgentApplication {
   [key: string]: unknown;
 }
 
+export interface NestedGuideApplicationRecord {
+  tourSlotID?: number;
+  fullName?: string;
+  adminNotes?: string;
+  typeName?: string;
+  slotDate?: string;
+  startTime?: string;
+  endTime?: string;
+  code?: string;
+  status?: string;
+  payRateSnapshot?: number;
+  appliedAt?: string;
+  applicationID?: number;
+  [key: string]: unknown;
+}
+
+export interface PendingTourSlotRecord {
+  tourSlotId?: number;
+  tourTypeId?: number;
+  tourTypeName?: string | null;
+  typeName?: string | null;
+  tourCode?: string | null;
+  tourcode?: string | null;
+  meetingPoint?: string | null;
+  adminNotes?: string | null;
+  languageId?: number;
+  languageName?: string | null;
+  languageCode?: string | null;
+  code?: string | null;
+  slotDate?: string;
+  startTime?: string;
+  endTime?: string;
+  guidesNeeded?: number;
+  guidesFilled?: number;
+  openingsCount?: number;
+  guestCount?: number;
+  payRatePerHour?: number;
+  status?: string | null;
+  isImported?: boolean;
+  createdAt?: string;
+  guideApplicationResponse?: NestedGuideApplicationRecord[];
+  [key: string]: unknown;
+}
+
 export interface GuideApplicationRecord {
   applicationId?: number;
   guideId?: string;
@@ -313,12 +404,17 @@ export interface GuideApplicationRecord {
   appliedAt?: string;
   withdrawnAt?: string | null;
   updatedAt?: string;
+  slotDate?: string;
+  startTime?: string;
+  tourTypeName?: string;
+  code?: string;
   [key: string]: unknown;
 }
 
 export interface AgentProfileResponse {
   userResponse: AgentRecord;
   guideApplication?: GuideApplicationRecord[];
+  pendingGuideApplication?: GuideApplicationRecord[];
 }
 
 export interface WalletTransaction {

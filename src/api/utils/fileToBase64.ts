@@ -105,3 +105,86 @@ export function resolveTicketPreviewKind(source: string): TicketPreviewKind {
 
   return 'pdf';
 }
+
+const IMAGE_MIME_BY_EXT: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp',
+};
+
+const ALLOWED_IMAGE_MIMES = new Set(Object.values(IMAGE_MIME_BY_EXT));
+
+export function resolveImageMime(file: File): string | null {
+  const mime = file.type.trim().toLowerCase();
+  if (mime && ALLOWED_IMAGE_MIMES.has(mime)) return mime;
+
+  const ext = fileExtension(file.name);
+  return IMAGE_MIME_BY_EXT[ext] ?? null;
+}
+
+export function isAllowedImageFile(file: File): boolean {
+  return resolveImageMime(file) != null;
+}
+
+function extractBase64FromDataUrl(dataUrl: string): string {
+  const commaIndex = dataUrl.indexOf(',');
+  if (commaIndex === -1) return dataUrl;
+  return dataUrl.slice(commaIndex + 1);
+}
+
+export function readImageFileAsBase64(file: File): Promise<{
+  base64: string;
+  previewUrl: string;
+}> {
+  return new Promise((resolve, reject) => {
+    const mime = resolveImageMime(file);
+    if (!mime) {
+      reject(new Error('Please select a PNG, JPEG, or WebP image'));
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = reader.result;
+      if (typeof result !== 'string') {
+        reject(new Error('Failed to read file'));
+        return;
+      }
+      const previewUrl = normalizeDataUrl(result, mime);
+      resolve({
+        base64: extractBase64FromDataUrl(previewUrl),
+        previewUrl,
+      });
+    };
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+export function toTourTypeImagePreview(source: string, index: number): {
+  id: string;
+  base64: string;
+  previewUrl: string;
+} {
+  const trimmed = source.trim();
+  if (trimmed.startsWith('data:')) {
+    return {
+      id: `existing-${index}-${trimmed.slice(0, 24)}`,
+      base64: extractBase64FromDataUrl(trimmed),
+      previewUrl: trimmed,
+    };
+  }
+  if (/^https?:\/\//i.test(trimmed)) {
+    return {
+      id: `existing-${index}-${trimmed}`,
+      base64: trimmed,
+      previewUrl: trimmed,
+    };
+  }
+  return {
+    id: `existing-${index}`,
+    base64: trimmed,
+    previewUrl: `data:image/jpeg;base64,${trimmed}`,
+  };
+}

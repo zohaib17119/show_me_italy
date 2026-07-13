@@ -16,7 +16,6 @@ import {
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import {
   addDaysToDateKey,
-  formatLocalDateKey,
   getWeekRange,
   todayLocalDateKey,
 } from '@/api/utils/date';
@@ -42,58 +41,12 @@ import {
   tourSlotFilterKey,
   type CalendarViewMode,
 } from './calendarFilter';
+import { buildMonthGrid, type MonthGridDay } from './utils/buildMonthGrid';
 import styles from './schedule.module.css';
 
-interface CalendarDay {
-  date: string;
-  day: number;
-  otherMonth?: boolean;
-  isToday?: boolean;
-}
+type CalendarDay = MonthGridDay;
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-const GRID_CELLS = 35;
-
-function buildMonthGrid(year: number, month: number): CalendarDay[] {
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const today = todayLocalDateKey();
-
-  let startOffset = new Date(year, month, 1).getDay() - 1;
-  if (startOffset < 0) startOffset = 6;
-  if (startOffset + daysInMonth > GRID_CELLS) {
-    startOffset = Math.max(0, GRID_CELLS - daysInMonth);
-  }
-
-  const days: CalendarDay[] = [];
-  const prevMonthLast = new Date(year, month, 0).getDate();
-
-  for (let i = startOffset - 1; i >= 0; i -= 1) {
-    const day = prevMonthLast - i;
-    days.push({
-      date: formatLocalDateKey(year, month - 1, day),
-      day,
-      otherMonth: true,
-    });
-  }
-
-  for (let d = 1; d <= daysInMonth; d += 1) {
-    const date = formatLocalDateKey(year, month, d);
-    days.push({ date, day: d, isToday: date === today });
-  }
-
-  let nextMonthDay = 1;
-  while (days.length < GRID_CELLS) {
-    days.push({
-      date: formatLocalDateKey(year, month + 1, nextMonthDay),
-      day: nextMonthDay,
-      otherMonth: true,
-    });
-    nextMonthDay += 1;
-  }
-
-  return days;
-}
 
 function buildWeekGrid(selectedDate: string): CalendarDay[] {
   const today = todayLocalDateKey();
@@ -138,7 +91,8 @@ export function CalendarPage() {
   const [selectedDate, setSelectedDate] = useState(todayLocalDateKey);
   const [enabledLangs, setEnabledLangs] = useState<Set<LangCode>>(() => new Set());
   const [enabledTourTypeIds, setEnabledTourTypeIds] = useState<Set<number>>(() => new Set());
-  const [filtersReady, setFiltersReady] = useState(false);
+  const [langsInitialized, setLangsInitialized] = useState(false);
+  const [tourTypesInitialized, setTourTypesInitialized] = useState(false);
   const [modalDate, setModalDate] = useState<string | null>(null);
 
   useFetchErrorToast(status, error);
@@ -149,28 +103,26 @@ export function CalendarPage() {
   }, [dispatch]);
 
   useEffect(() => {
-    if (languages.length > 0 && enabledLangs.size === 0) {
-      setEnabledLangs(
-        new Set(
-          languages
-            .map((l) => l.code?.slice(0, 2).toUpperCase() as LangCode)
-            .filter(Boolean),
-        ),
-      );
-    }
-  }, [languages, enabledLangs.size]);
+    if (langsInitialized || languages.length === 0) return;
+    setEnabledLangs(
+      new Set(
+        languages
+          .map((l) => l.code?.slice(0, 2).toUpperCase() as LangCode)
+          .filter(Boolean),
+      ),
+    );
+    setLangsInitialized(true);
+  }, [languages, langsInitialized]);
 
   useEffect(() => {
-    if (tourTypes.length > 0 && enabledTourTypeIds.size === 0) {
-      setEnabledTourTypeIds(
-        new Set(tourTypes.map((t) => t.tourTypeId).filter((id): id is number => id != null)),
-      );
-    }
-  }, [tourTypes, enabledTourTypeIds.size]);
+    if (tourTypesInitialized || tourTypes.length === 0) return;
+    setEnabledTourTypeIds(
+      new Set(tourTypes.map((t) => t.tourTypeId).filter((id): id is number => id != null)),
+    );
+    setTourTypesInitialized(true);
+  }, [tourTypes, tourTypesInitialized]);
 
-  useEffect(() => {
-    setFiltersReady(enabledLangs.size > 0 && enabledTourTypeIds.size > 0);
-  }, [enabledLangs.size, enabledTourTypeIds.size]);
+  const filtersReady = langsInitialized && tourTypesInitialized;
 
   const enabledLangKey = useMemo(
     () => [...enabledLangs].sort().join(','),
@@ -178,6 +130,21 @@ export function CalendarPage() {
   );
   const enabledTourTypeKey = useMemo(
     () => [...enabledTourTypeIds].sort((a, b) => a - b).join(','),
+    [enabledTourTypeIds],
+  );
+
+  const modalLanguageID = useMemo(() => {
+    const ids = languages
+      .filter((lang) => {
+        const code = lang.code?.slice(0, 2).toUpperCase() as LangCode;
+        return code && enabledLangs.has(code) && lang.languageId != null;
+      })
+      .map((lang) => lang.languageId as number);
+    return ids.length > 0 ? ids.join(',') : '';
+  }, [languages, enabledLangs]);
+
+  const modalTourTypeIds = useMemo(
+    () => (enabledTourTypeIds.size > 0 ? [...enabledTourTypeIds].sort((a, b) => a - b).join(',') : ''),
     [enabledTourTypeIds],
   );
 
@@ -463,6 +430,8 @@ export function CalendarPage() {
       <GuideSlotsModal
         open={modalDate != null}
         dateKey={modalDate}
+        languageID={modalLanguageID}
+        tourTypeIds={modalTourTypeIds}
         onClose={() => setModalDate(null)}
       />
     </div>

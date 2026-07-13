@@ -470,12 +470,36 @@
 }
 
 .guideName {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
   font-size: 12px;
   font-weight: 700;
   color: var(--text-primary);
+  min-width: 0;
+}
+
+.guideNameText {
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.guidePendingBadge {
+  flex-shrink: 0;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--orange);
+  color: white;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  cursor: default;
 }
 
 .guideFavoriteStar {

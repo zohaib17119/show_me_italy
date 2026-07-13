@@ -149,22 +149,23 @@ export const router = createBrowserRouter([
           })),
         ),
       },
-      {
-        path: 'payments/payouts',
-        element: lazyPage(() =>
-          import('@/features/payments/PayoutsPage').then((m) => ({
-            default: m.PayoutsPage,
-          })),
-        ),
-      },
-      {
-        path: 'payments/payouts/:id',
-        element: lazyPage(() =>
-          import('@/features/payments/PayoutDetailPage').then((m) => ({
-            default: m.PayoutDetailPage,
-          })),
-        ),
-      },
+      // Hidden until payouts work resumes:
+      // {
+      //   path: 'payments/payouts',
+      //   element: lazyPage(() =>
+      //     import('@/features/payments/PayoutsPage').then((m) => ({
+      //       default: m.PayoutsPage,
+      //     })),
+      //   ),
+      // },
+      // {
+      //   path: 'payments/payouts/:id',
+      //   element: lazyPage(() =>
+      //     import('@/features/payments/PayoutDetailPage').then((m) => ({
+      //       default: m.PayoutDetailPage,
+      //     })),
+      //   ),
+      // },
       {
         path: 'payments/reports',
         element: lazyPage(() =>

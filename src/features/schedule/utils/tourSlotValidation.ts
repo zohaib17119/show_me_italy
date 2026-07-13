@@ -12,7 +12,7 @@ export interface SingleTourSlotValidationInput {
 
 export interface BulkTourSlotValidationInput {
   tourTypeId: number;
-  languageId: number;
+  languageIds: number[];
   fromDate: string;
   toDate: string;
   startTime: string;
@@ -26,16 +26,13 @@ export interface BulkTourSlotValidationInput {
 function validateCommonTourFields(
   values: Pick<
     SingleTourSlotValidationInput,
-    'tourTypeId' | 'languageId' | 'startTime' | 'endTime' | 'meetingPoint' | 'guestCount'
+    'tourTypeId' | 'startTime' | 'endTime' | 'meetingPoint' | 'guestCount'
   >,
 ): TourSlotFieldErrors {
   const errors: TourSlotFieldErrors = {};
 
   if (!values.tourTypeId) {
     errors.tourTypeId = 'Tour type is required';
-  }
-  if (!values.languageId) {
-    errors.languageId = 'Language is required';
   }
   if (!values.startTime.trim()) {
     errors.startTime = 'Start time is required';
@@ -58,6 +55,9 @@ export function validateSingleTourSlot(
 ): TourSlotFieldErrors {
   const errors = validateCommonTourFields(values);
 
+  if (!values.languageId) {
+    errors.languageId = 'Language is required';
+  }
   if (!values.slotDate.trim()) {
     errors.slotDate = 'Date is required';
   }
@@ -69,6 +69,10 @@ export function validateBulkTourSlots(
   values: BulkTourSlotValidationInput,
 ): TourSlotFieldErrors {
   const errors = validateCommonTourFields(values);
+
+  if (!values.languageIds.length) {
+    errors.languageId = 'Select at least one language';
+  }
 
   if (!values.fromDate.trim()) {
     errors.fromDate = 'From date is required';
@@ -99,7 +103,8 @@ export function validateBulkTourSlots(
     !errors.toDate &&
     !errors.startTime &&
     !errors.endTime &&
-    !errors.selectedDays
+    !errors.selectedDays &&
+    !errors.languageId
   ) {
     errors.previewSlots = 'No slots match your date range and selected days';
   }

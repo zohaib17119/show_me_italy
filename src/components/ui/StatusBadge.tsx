@@ -13,6 +13,8 @@ const statusConfig: Record<TourStatus, { label: string; className: string }> = {
   approved: { label: 'Approved', className: styles.approved },
   denied: { label: 'Revision', className: styles.danger },
   hold: { label: 'Hold', className: styles.pending },
+  open: { label: 'Open', className: styles.success },
+  closed: { label: 'Closed', className: styles.danger },
 };
 
 interface StatusBadgeProps {
@@ -20,9 +22,9 @@ interface StatusBadgeProps {
 }
 
 export function StatusBadge({ status }: StatusBadgeProps) {
-  const cfg = statusConfig[status];
+  const cfg = statusConfig[status] ?? statusConfig.pending;
   return (
-    <Tag className={[styles.badge, cfg.className].join(' ')}>
+    <Tag className={[styles.badge, cfg.className].join(' ')} bordered={false}>
       {cfg.label}
     </Tag>
   );

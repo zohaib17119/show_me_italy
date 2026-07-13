@@ -41,6 +41,7 @@ export function CreateTourPage() {
   const [meetingPoint, setMeetingPoint] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
   const [status, setStatus] = useState('Open');
+  const [tickets, setTickets] = useState<string | null>(null);
   const [openApplications, setOpenApplications] = useState(true);
   const [sendNotification, setSendNotification] = useState(true);
   const [fieldErrors, setFieldErrors] = useState<TourSlotFieldErrors>({});
@@ -117,6 +118,7 @@ export function CreateTourPage() {
       meetingPoint,
       adminNotes,
       status,
+      tickets,
     });
 
     try {
@@ -142,6 +144,7 @@ export function CreateTourPage() {
     meetingPoint,
     adminNotes,
     status,
+    tickets,
     openApplications,
     sendNotification,
   };
@@ -212,6 +215,7 @@ export function CreateTourPage() {
           }}
           onAdminNotesChange={setAdminNotes}
           onStatusChange={setStatus}
+          onTicketsChange={setTickets}
           onOpenApplicationsChange={setOpenApplications}
           onSendNotificationChange={setSendNotification}
         />

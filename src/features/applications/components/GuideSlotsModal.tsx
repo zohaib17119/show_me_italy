@@ -13,6 +13,8 @@ import { UploadTicketModal } from './UploadTicketModal';
 interface GuideSlotsModalProps {
   open: boolean;
   dateKey: string | null;
+  languageID?: string;
+  tourTypeIds?: string;
   onClose: () => void;
 }
 
@@ -27,7 +29,13 @@ function formatModalTitle(dateKey: string): string {
   return `Guide Slots — ${label}`;
 }
 
-export function GuideSlotsModal({ open, dateKey, onClose }: GuideSlotsModalProps) {
+export function GuideSlotsModal({
+  open,
+  dateKey,
+  languageID = '',
+  tourTypeIds = '',
+  onClose,
+}: GuideSlotsModalProps) {
   const [rows, setRows] = useState<GuideSlotRow[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'succeeded' | 'failed'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +47,12 @@ export function GuideSlotsModal({ open, dateKey, onClose }: GuideSlotsModalProps
     setStatus('loading');
     setError(null);
     try {
-      const records = await applicationsApi.getGuideSlots(dateKey);
+      const records = await applicationsApi.getGuideSlots({
+        date: dateKey,
+        languageID,
+        tourTypeIds,
+        status: '',
+      });
       setRows(mapGuideSlots(records));
       setStatus('succeeded');
     } catch (err) {
@@ -47,7 +60,7 @@ export function GuideSlotsModal({ open, dateKey, onClose }: GuideSlotsModalProps
       setError(getApiErrorMessage(err));
       setRows([]);
     }
-  }, [dateKey]);
+  }, [dateKey, languageID, tourTypeIds]);
 
   useEffect(() => {
     if (open && dateKey) {

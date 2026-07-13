@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { Spin } from 'antd';
+import { Checkbox, Spin } from 'antd';
 import type { ColumnType, ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -15,13 +15,14 @@ import {
   GuideCell,
   LangChip,
   ListErrorState,
-  // SearchInput,
   showToast,
   StatusBadge,
 } from '@/components/ui';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import { getRouteMeta } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
+import type { AssignmentSlotNavState } from '@/features/applications/components/ApplicationsDaySlotsDrawer';
+import { UpdateAssignSlotModal } from '@/features/applications/components/UpdateAssignSlotModal';
 import {
   assignGuideManually,
   fetchAvailableGuides,
@@ -37,6 +38,12 @@ import {
   selectSlotSummary,
   updateSlotApplicantStatus,
 } from '@/features/applications/applicationsSlice';
+
+type SlotNavState = GuideSlotRow | AssignmentSlotNavState | null | undefined;
+
+function isAssignmentNavState(state: SlotNavState): state is AssignmentSlotNavState {
+  return Boolean(state && 'payRateLabel' in state);
+}
 
 function SummaryRow({
   label,
@@ -73,7 +80,7 @@ export function AssignmentPage() {
   const dispatch = useAppDispatch();
   const meta = getRouteMeta(ROUTES.ASSIGNMENT);
 
-  const slotFromState = location.state as GuideSlotRow | null | undefined;
+  const slotFromState = location.state as SlotNavState;
   const tourSlotIdParam = searchParams.get('tourSlotId');
   const tourSlotId = tourSlotIdParam ? Number(tourSlotIdParam) : NaN;
   const hasValidTourSlotId = !Number.isNaN(tourSlotId) && tourSlotId > 0;
@@ -90,7 +97,21 @@ export function AssignmentPage() {
 
   const [actingId, setActingId] = useState<string | null>(null);
   const [actingGuideId, setActingGuideId] = useState<string | null>(null);
-  // const [overrideSearch, setOverrideSearch] = useState('');
+  const [showAllGuides, setShowAllGuides] = useState(false);
+  const [updateOpen, setUpdateOpen] = useState(false);
+  const [slotOverrides, setSlotOverrides] = useState<{
+    payRatePerHour: number | null;
+    payRateLabel: string | null;
+    startTime: string | null;
+    endTime: string | null;
+    timeRange: string | null;
+  }>({
+    payRatePerHour: null,
+    payRateLabel: null,
+    startTime: null,
+    endTime: null,
+    timeRange: null,
+  });
 
   const loadApplicants = useCallback(() => {
     if (!hasValidTourSlotId) return;
@@ -98,8 +119,14 @@ export function AssignmentPage() {
   }, [dispatch, hasValidTourSlotId, tourSlotId]);
 
   const loadAvailableGuides = useCallback(() => {
-    void dispatch(fetchAvailableGuides());
-  }, [dispatch]);
+    if (!hasValidTourSlotId) return;
+    void dispatch(
+      fetchAvailableGuides({
+        tourSlotId,
+        isAll: showAllGuides,
+      }),
+    );
+  }, [dispatch, hasValidTourSlotId, showAllGuides, tourSlotId]);
 
   useFetchErrorToast(status, error);
   useFetchErrorToast(availableGuidesStatus, availableGuidesError);
@@ -107,26 +134,81 @@ export function AssignmentPage() {
   useEffect(() => {
     if (!hasValidTourSlotId) return;
     loadApplicants();
+  }, [hasValidTourSlotId, loadApplicants]);
+
+  useEffect(() => {
+    if (!hasValidTourSlotId) return;
     loadAvailableGuides();
-  }, [hasValidTourSlotId, loadApplicants, loadAvailableGuides]);
+  }, [hasValidTourSlotId, loadAvailableGuides]);
+
+  useEffect(() => {
+    setSlotOverrides({
+      payRatePerHour: null,
+      payRateLabel: null,
+      startTime: null,
+      endTime: null,
+      timeRange: null,
+    });
+    setUpdateOpen(false);
+  }, [tourSlotId]);
+
+  const navStartTime =
+    slotFromState && 'startTime' in slotFromState ? slotFromState.startTime : '';
+  const navEndTime = slotFromState && 'endTime' in slotFromState ? slotFromState.endTime : '';
+  const navTimeRange =
+    slotFromState && 'timeRange' in slotFromState ? slotFromState.timeRange : '';
+  const navPayRate = isAssignmentNavState(slotFromState) ? slotFromState.payRatePerHour : null;
+  const navPayLabel = isAssignmentNavState(slotFromState) ? slotFromState.payRateLabel : null;
+  const navDateKey = isAssignmentNavState(slotFromState) ? slotFromState.dateKey : '';
+
+  const displayStartTime =
+    slotOverrides.startTime ?? (slotSummary?.startTime || navStartTime || '');
+  const displayEndTime =
+    slotOverrides.endTime ?? (slotSummary?.endTime || navEndTime || '');
+  const displayTimeRange =
+    slotOverrides.timeRange ??
+    (displayStartTime && displayEndTime
+      ? `${displayStartTime}–${displayEndTime}`
+      : navTimeRange || '—');
+  const displayPayRateValue =
+    slotOverrides.payRatePerHour ?? slotSummary?.payRateValue ?? navPayRate;
+  const displayPayRateLabel =
+    slotOverrides.payRateLabel ?? slotSummary?.payRateLabel ?? navPayLabel ?? '—';
+  const updateDateKey = slotSummary?.dateKey || navDateKey;
+
+  const isSlotClosed = slotSummary?.status === 'closed';
 
   const subtitle = useMemo(() => {
     if (slotSummary) {
-      const timePart = slotFromState?.timeRange ? ` · ${slotFromState.timeRange}` : '';
-      return `${slotSummary.tourName} · ${slotSummary.dateLabel}${timePart} · ${slotSummary.languageLabel}`;
+      const timePart =
+        displayTimeRange && displayTimeRange !== '—' ? ` · ${displayTimeRange}` : '';
+      const langPart =
+        slotSummary.languageCode && slotSummary.languageCode !== '—'
+          ? slotSummary.languageCode
+          : slotSummary.languageLabel;
+      return `${slotSummary.tourName} · ${slotSummary.dateLabel}${timePart} · ${langPart}`;
     }
     if (slotFromState) {
-      return `${slotFromState.tourName} · ${slotFromState.dateLabel} · ${slotFromState.timeRange} · ${slotFromState.language}`;
+      const name = 'tourName' in slotFromState ? slotFromState.tourName : 'Tour';
+      const date = 'dateLabel' in slotFromState ? slotFromState.dateLabel : '';
+      const lang = 'language' in slotFromState ? String(slotFromState.language) : '';
+      return `${name} · ${date} · ${displayTimeRange} · ${lang}`;
     }
     if (hasValidTourSlotId) {
       return `Tour slot #${tourSlotId}`;
     }
     return meta.subtitle;
-  }, [hasValidTourSlotId, meta.subtitle, slotFromState, slotSummary, tourSlotId]);
+  }, [
+    displayTimeRange,
+    hasValidTourSlotId,
+    meta.subtitle,
+    slotFromState,
+    slotSummary,
+    tourSlotId,
+  ]);
 
   const filteredAvailableGuides = useMemo(() => {
-    // const query = overrideSearch.trim().toLowerCase();
-    const query = "";
+    const query = '';
     if (query === '') return availableGuides;
     return availableGuides.filter(
       (guide) =>
@@ -135,7 +217,6 @@ export function AssignmentPage() {
         guide.phoneNumber.toLowerCase().includes(query) ||
         guide.languagesLabel.toLowerCase().includes(query),
     );
-  // }, [availableGuides, overrideSearch]);
   }, [availableGuides]);
 
   const handleStatusUpdate = useCallback(
@@ -172,7 +253,11 @@ export function AssignmentPage() {
       setActingGuideId(row.guideId);
       try {
         await dispatch(
-          assignGuideManually({ guideId: row.guideId, tourSlotId }),
+          assignGuideManually({
+            guideId: row.guideId,
+            tourSlotId,
+            isAll: showAllGuides,
+          }),
         ).unwrap();
         showToast('Guide assigned');
       } catch (err) {
@@ -181,7 +266,7 @@ export function AssignmentPage() {
         setActingGuideId(null);
       }
     },
-    [dispatch, tourSlotId],
+    [dispatch, showAllGuides, tourSlotId],
   );
 
   const columns: ColumnsType<SlotApplicantRow> = useMemo(
@@ -193,9 +278,7 @@ export function AssignmentPage() {
           key: 'guide',
           width: 180,
           render: (_, row) => (
-            <GuideCell initials={row.guideInitials} name={row.guideName} 
-            // sub={row.languagesLabel} 
-            sub={""} />
+            <GuideCell initials={row.guideInitials} name={row.guideName} sub="" />
           ),
         },
         { title: 'Email', dataIndex: 'email', key: 'email', width: 180 },
@@ -359,16 +442,16 @@ export function AssignmentPage() {
               <AppButton
                 variant="primary"
                 size="xs"
-                disabled={isBusy}
+                disabled={isBusy || isSlotClosed}
                 onClick={() => void handleManualAssign(row)}
               >
-                Assign
+                Assign Slot
               </AppButton>
             );
           },
         },
       ]),
-    [actingGuideId, handleManualAssign, manualAssignStatus],
+    [actingGuideId, handleManualAssign, isSlotClosed, manualAssignStatus],
   );
 
   if (!hasValidTourSlotId) {
@@ -412,7 +495,15 @@ export function AssignmentPage() {
           <AppCard
             title="Applicants"
             extra={
-              <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 11, color: 'var(--text-muted)' }}>
+              <span
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  fontSize: 11,
+                  color: 'var(--text-muted)',
+                }}
+              >
                 {applicantsRefetching && <Spin size="small" />}
                 {applicants.length} applicant{applicants.length === 1 ? '' : 's'}
               </span>
@@ -439,13 +530,7 @@ export function AssignmentPage() {
             )}
           </AppCard>
 
-          <AppCard title="Manual Override">
-            {/* <SearchInput
-              placeholder="Search by name, email, or language…"
-              value={overrideSearch}
-              onChange={(e) => setOverrideSearch(e.target.value)}
-              wrapperStyle={{ marginBottom: 10 }}
-            /> */}
+          <AppCard title="Manual Slot Assignment">
             <div
               style={{
                 marginBottom: 12,
@@ -458,6 +543,15 @@ export function AssignmentPage() {
               }}
             >
               Override assigns without application — guide will be notified.
+            </div>
+
+            <div style={{ marginBottom: 12 }}>
+              <Checkbox
+                checked={showAllGuides}
+                onChange={(e) => setShowAllGuides(e.target.checked)}
+              >
+                Show all guides
+              </Checkbox>
             </div>
 
             {availableGuidesStatus === 'failed' && (
@@ -483,21 +577,45 @@ export function AssignmentPage() {
           </AppCard>
         </div>
 
-        <AppCard title="Slot Summary">
+        <AppCard
+          title="Slot Summary"
+          extra={
+            <AppButton size="xs" variant="secondary" onClick={() => setUpdateOpen(true)}>
+              Update
+            </AppButton>
+          }
+        >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 12 }}>
             <SummaryRow
               label="Tour"
-              value={slotSummary?.tourName ?? slotFromState?.tourName ?? '—'}
+              value={
+                slotSummary?.tourName ??
+                (slotFromState && 'tourName' in slotFromState ? slotFromState.tourName : '—')
+              }
             />
+            <SummaryRow label="Tour Code" value={slotSummary?.tourCode ?? '—'} />
             <SummaryRow
               label="Date"
-              value={slotSummary?.dateLabel ?? slotFromState?.dateLabel ?? '—'}
+              value={
+                slotSummary?.dateLabel ??
+                (slotFromState && 'dateLabel' in slotFromState
+                  ? slotFromState.dateLabel
+                  : '—')
+              }
             />
             <SummaryRow
               label="Language"
-              value={slotSummary?.languageLabel ?? slotFromState?.language ?? '—'}
+              value={
+                (slotSummary?.languageCode && slotSummary.languageCode !== '—'
+                  ? String(slotSummary.languageCode)
+                  : null) ??
+                slotSummary?.languageLabel ??
+                (slotFromState && 'language' in slotFromState
+                  ? String(slotFromState.language)
+                  : '—')
+              }
             />
-            <SummaryRow label="Time" value={slotFromState?.timeRange ?? '—'} />
+            <SummaryRow label="Time" value={displayTimeRange} />
             <SummaryRow
               label="Filled"
               value={slotSummary?.filledLabel ?? '—'}
@@ -507,15 +625,20 @@ export function AssignmentPage() {
             />
             <SummaryRow
               label="Pay Rate"
-              value={slotSummary?.payRateLabel ?? '—'}
+              value={displayPayRateLabel}
               valueStyle={
-                slotSummary?.payRateLabel && slotSummary.payRateLabel !== '—'
+                displayPayRateLabel && displayPayRateLabel !== '—'
                   ? { color: 'var(--g600)', fontWeight: 700 }
                   : undefined
               }
             />
+            {slotSummary?.guestCount != null && (
+              <SummaryRow label="Guests" value={String(slotSummary.guestCount)} />
+            )}
             <div style={{ height: 1, background: 'var(--border-color)' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div
+              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+            >
               <span style={{ color: 'var(--text-muted)' }}>Status</span>
               {slotSummary ? (
                 <StatusBadge status={slotSummary.status} />
@@ -526,6 +649,30 @@ export function AssignmentPage() {
           </div>
         </AppCard>
       </div>
+
+      <UpdateAssignSlotModal
+        open={updateOpen}
+        tourSlotId={tourSlotId}
+        dateKey={updateDateKey}
+        payRatePerHour={displayPayRateValue}
+        startTime={displayStartTime}
+        endTime={displayEndTime}
+        onClose={() => setUpdateOpen(false)}
+        onSuccess={(values) => {
+          const timeRange =
+            values.startTime && values.endTime
+              ? `${values.startTime}–${values.endTime}`
+              : values.startTime || values.endTime || '—';
+          setSlotOverrides({
+            payRatePerHour: values.payRatePerHour,
+            payRateLabel: `€${values.payRatePerHour.toFixed(2)}`,
+            startTime: values.startTime,
+            endTime: values.endTime,
+            timeRange,
+          });
+          loadApplicants();
+        }}
+      />
     </div>
   );
 }

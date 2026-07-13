@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { buildTourSlotPayload } from '@/api/mappers/tourMapper';
+import { buildBulkTourSlotPayload } from '@/api/mappers/tourMapper';
 import { formatLocalDateKey } from '@/api/utils/date';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
@@ -11,6 +11,7 @@ import {
   FilterChip,
   FormGrid,
   FormInput,
+  FormMultiSelect,
   FormSelect,
   FormTextarea,
   ImportPreviewRow,
@@ -24,13 +25,15 @@ import {
 import type { FormSelectOption } from '@/components/ui/forms/FormSelect';
 import { ROUTES } from '@/constants/routes';
 import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
-import { createTourSlot } from '@/features/tour/tourSlice';
+import { createBulkTourSlots } from '@/features/tour/tourSlice';
 import { fetchTourTypes, selectActiveTourTypes } from '@/features/tourType/tourTypeSlice';
+import type { LangCode } from '@/types';
 import {
   hasFieldErrors,
   validateBulkTourSlots,
   type TourSlotFieldErrors,
 } from './utils/tourSlotValidation';
+import { TourTicketField } from './components/TourTicketField';
 import styles from './schedule.module.css';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -59,13 +62,14 @@ export function BulkCreatorPage() {
   const [toDate, setToDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
-  const [languageId, setLanguageId] = useState(0);
+  const [languageIds, setLanguageIds] = useState<number[]>([]);
   const [tourTypeId, setTourTypeId] = useState(0);
   const [guestCount, setGuestCount] = useState(0);
   const [payRate, setPayRate] = useState(0);
   const [meetingPoint, setMeetingPoint] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
   const [status, setStatus] = useState('Open');
+  const [tickets, setTickets] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [selectedDays, setSelectedDays] = useState<Set<string>>(
     () => new Set(['Mon', 'Tue', 'Wed', 'Thu', 'Fri']),
@@ -118,17 +122,10 @@ export function BulkCreatorPage() {
     }
   };
 
-  const previewSlots = useMemo(() => {
-    if (!fromDate || !toDate || !startTime || !endTime) return [];
+  const selectedDates = useMemo(() => {
+    if (!fromDate || !toDate) return [] as string[];
 
-    const slots: {
-      id: string;
-      dateLabel: string;
-      date: string;
-      startTime: string;
-      endTime: string;
-      language: string;
-    }[] = [];
+    const dates: string[] = [];
     const start = new Date(fromDate);
     const end = new Date(toDate);
     if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || start > end) {
@@ -136,27 +133,53 @@ export function BulkCreatorPage() {
     }
 
     const dayMap = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const lang = languages.find((l) => l.languageId === languageId);
 
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const dayName = dayMap[d.getDay()];
       if (!selectedDays.has(dayName)) continue;
-      const date = formatLocalDateKey(d.getFullYear(), d.getMonth(), d.getDate());
-      slots.push({
-        id: date,
-        dateLabel: d.toLocaleDateString('en-GB', {
-          weekday: 'short',
-          day: 'numeric',
-          month: 'short',
-        }),
-        date,
-        startTime,
-        endTime,
-        language: lang?.code?.slice(0, 2).toUpperCase() ?? 'EN',
-      });
+      dates.push(formatLocalDateKey(d.getFullYear(), d.getMonth(), d.getDate()));
     }
+    return dates;
+  }, [fromDate, toDate, selectedDays]);
+
+  const previewSlots = useMemo(() => {
+    if (!startTime || !endTime || selectedDates.length === 0 || languageIds.length === 0) {
+      return [];
+    }
+
+    const slots: {
+      id: string;
+      dateLabel: string;
+      date: string;
+      startTime: string;
+      endTime: string;
+      language: LangCode;
+    }[] = [];
+
+    for (const date of selectedDates) {
+      const [y, m, d] = date.split('-').map(Number);
+      const dateObj = new Date(y, m - 1, d);
+      const dateLabel = dateObj.toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      });
+
+      for (const languageId of languageIds) {
+        const lang = languages.find((l) => l.languageId === languageId);
+        slots.push({
+          id: `${date}-${languageId}`,
+          dateLabel,
+          date,
+          startTime,
+          endTime,
+          language: (lang?.code?.slice(0, 2).toUpperCase() ?? 'EN') as LangCode,
+        });
+      }
+    }
+
     return slots;
-  }, [fromDate, toDate, selectedDays, startTime, endTime, languageId, languages]);
+  }, [selectedDates, startTime, endTime, languageIds, languages]);
 
   const toggleDay = (day: string) => {
     clearFieldError('selectedDays');
@@ -172,7 +195,7 @@ export function BulkCreatorPage() {
   const handleCreateAll = async () => {
     const errors = validateBulkTourSlots({
       tourTypeId,
-      languageId,
+      languageIds,
       fromDate,
       toDate,
       startTime,
@@ -185,30 +208,28 @@ export function BulkCreatorPage() {
     setFieldErrors(errors);
     if (hasFieldErrors(errors)) return;
 
+    const totalSlots = previewSlots.length;
     setSubmitting(true);
-    let created = 0;
     try {
-      for (const slot of previewSlots) {
-        const payload = buildTourSlotPayload({
-          tourTypeId,
-          slotDate: slot.date,
-          startTime: slot.startTime,
-          endTime: slot.endTime,
-          languageId,
-          guidesNeeded: 1,
-          guestCount,
-          payRatePerHour: payRate,
-          meetingPoint,
-          adminNotes,
-          status,
-        });
-        await dispatch(createTourSlot(payload)).unwrap();
-        created += 1;
-      }
-      showToast(`✓ ${created} slots created!`);
+      const payload = buildBulkTourSlotPayload({
+        tourTypeId,
+        dates: selectedDates,
+        languageIds,
+        startTime,
+        endTime,
+        guidesNeeded: 1,
+        guestCount,
+        payRatePerHour: payRate,
+        meetingPoint,
+        adminNotes,
+        status,
+        tickets,
+      });
+      await dispatch(createBulkTourSlots(payload)).unwrap();
+      showToast(`✓ ${totalSlots} slots created!`);
       navigate(ROUTES.CALENDAR);
     } catch (err) {
-      showToast(err instanceof Error ? err.message : `Created ${created} before error`);
+      showToast(err instanceof Error ? err.message : 'Failed to create tour slots');
     } finally {
       setSubmitting(false);
     }
@@ -286,15 +307,16 @@ export function BulkCreatorPage() {
                     onChange={(e) => handleTourTypeChange(Number(e.target.value))}
                   />
                 </div>
-                <FormSelect
-                  label="Language"
+                <FormMultiSelect
+                  label="Languages"
                   options={languageOptions}
-                  value={languageId ? String(languageId) : ''}
-                  placeholder="Select language"
+                  value={languageIds.map(String)}
+                  placeholder="Select languages"
                   error={fieldErrors.languageId}
-                  onChange={(e) => {
+                  onChange={(values) => {
                     clearFieldError('languageId');
-                    setLanguageId(Number(e.target.value));
+                    clearFieldError('previewSlots');
+                    setLanguageIds(values.map(Number).filter((id) => Number.isFinite(id) && id > 0));
                   }}
                 />
                 <FormSelect
@@ -368,6 +390,9 @@ export function BulkCreatorPage() {
                     rows={3}
                   />
                 </div>
+                <div className={formGridSpanFull}>
+                  <TourTicketField value={tickets} onChange={setTickets} />
+                </div>
               </FormGrid>
             </AppCard>
           </div>
@@ -397,7 +422,7 @@ export function BulkCreatorPage() {
                 sub={`${selectedTourTypeName} · ${row.startTime}–${row.endTime}`}
                 tag={
                   <>
-                    <LangChip code={row.language as 'EN'} />
+                    <LangChip code={row.language} />
                     <span style={{ fontSize: 9, fontWeight: 700, marginLeft: 6, color: 'var(--g700)' }}>
                       Ready
                     </span>

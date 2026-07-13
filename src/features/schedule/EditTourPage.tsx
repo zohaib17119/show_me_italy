@@ -56,6 +56,7 @@ export function EditTourPage() {
   const [meetingPoint, setMeetingPoint] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
   const [status, setStatus] = useState('Open');
+  const [tickets, setTickets] = useState<string | null>(null);
   const [openApplications, setOpenApplications] = useState(true);
   const [sendNotification, setSendNotification] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<TourSlotFieldErrors>({});
@@ -102,6 +103,7 @@ export function EditTourPage() {
     setMeetingPoint(values.meetingPoint);
     setAdminNotes(values.adminNotes);
     setStatus(values.status);
+    setTickets(values.tickets ?? null);
     setOpenApplications(values.openApplications);
     setSendNotification(values.sendNotification);
     setFormInitialized(true);
@@ -167,6 +169,7 @@ export function EditTourPage() {
       meetingPoint,
       adminNotes,
       status,
+      tickets,
       openApplications,
       sendNotification,
     };
@@ -239,6 +242,7 @@ export function EditTourPage() {
     meetingPoint,
     adminNotes,
     status,
+    tickets,
     openApplications,
     sendNotification,
   };
@@ -310,6 +314,7 @@ export function EditTourPage() {
           }}
           onAdminNotesChange={setAdminNotes}
           onStatusChange={setStatus}
+          onTicketsChange={setTickets}
           onOpenApplicationsChange={setOpenApplications}
           onSendNotificationChange={setSendNotification}
         />

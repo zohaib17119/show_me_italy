@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LeftOutlined, RightOutlined } from '@ant-design/icons';
-import { useNavigate } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
@@ -11,78 +10,27 @@ import {
 } from '@/components/ui';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import { getRouteMeta } from '@/constants/navigation';
-import { ROUTES, getApplicationsQueuePath } from '@/constants/routes';
-import {
-  formatLocalDateKey,
-  todayLocalDateKey,
-} from '@/api/utils/date';
+import { ROUTES } from '@/constants/routes';
 import {
   fetchPendingApplicationCounts,
   selectApplicationCalendarByDate,
   selectApplicationCalendarError,
   selectApplicationCalendarStatus,
 } from '@/features/applications/applicationsSlice';
+import { ApplicationsDaySlotsDrawer } from '@/features/applications/components/ApplicationsDaySlotsDrawer';
 import { CalDayCard } from '@/features/schedule/components/CalDayCard';
+import { buildMonthGrid } from '@/features/schedule/utils/buildMonthGrid';
 import styles from '@/features/schedule/schedule.module.css';
 
-interface CalendarDay {
-  date: string;
-  day: number;
-  otherMonth?: boolean;
-  isToday?: boolean;
-}
-
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-const GRID_CELLS = 35;
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
   'July', 'August', 'September', 'October', 'November', 'December',
 ];
 
-function buildMonthGrid(year: number, month: number): CalendarDay[] {
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const today = todayLocalDateKey();
-
-  let startOffset = new Date(year, month, 1).getDay() - 1;
-  if (startOffset < 0) startOffset = 6;
-  if (startOffset + daysInMonth > GRID_CELLS) {
-    startOffset = Math.max(0, GRID_CELLS - daysInMonth);
-  }
-
-  const days: CalendarDay[] = [];
-  const prevMonthLast = new Date(year, month, 0).getDate();
-
-  for (let i = startOffset - 1; i >= 0; i -= 1) {
-    const day = prevMonthLast - i;
-    days.push({
-      date: formatLocalDateKey(year, month - 1, day),
-      day,
-      otherMonth: true,
-    });
-  }
-
-  for (let d = 1; d <= daysInMonth; d += 1) {
-    const date = formatLocalDateKey(year, month, d);
-    days.push({ date, day: d, isToday: date === today });
-  }
-
-  let nextMonthDay = 1;
-  while (days.length < GRID_CELLS) {
-    days.push({
-      date: formatLocalDateKey(year, month + 1, nextMonthDay),
-      day: nextMonthDay,
-      otherMonth: true,
-    });
-    nextMonthDay += 1;
-  }
-
-  return days;
-}
-
 export function ApplicationsCalendarPage() {
   const dispatch = useAppDispatch();
-  const navigate = useNavigate();
   const meta = getRouteMeta(ROUTES.APPLICATIONS);
   const summariesByDate = useAppSelector(selectApplicationCalendarByDate);
   const status = useAppSelector(selectApplicationCalendarStatus);
@@ -92,6 +40,7 @@ export function ApplicationsCalendarPage() {
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
   });
+  const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   useFetchErrorToast(status, error);
 
@@ -169,7 +118,7 @@ export function ApplicationsCalendarPage() {
                     isToday={cell.isToday}
                     otherMonth={cell.otherMonth}
                     applicationSummary={summariesByDate[cell.date]}
-                    onClick={() => navigate(getApplicationsQueuePath(cell.date))}
+                    onClick={() => setSelectedDate(cell.date)}
                   />
                 ))}
               </div>
@@ -177,6 +126,13 @@ export function ApplicationsCalendarPage() {
           </div>
         </AppCard>
       )}
+
+      <ApplicationsDaySlotsDrawer
+        open={selectedDate != null}
+        dateKey={selectedDate}
+        onClose={() => setSelectedDate(null)}
+        onMutated={() => void dispatch(fetchPendingApplicationCounts())}
+      />
     </div>
   );
 }

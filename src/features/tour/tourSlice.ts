@@ -1,5 +1,5 @@
 import { createAsyncThunk, createSlice } from '@reduxjs/toolkit';
-import type { TourSlot, TourSlotFilter } from '@/api/types';
+import type { BulkTourSlotCreatePayload, TourSlot, TourSlotFilter } from '@/api/types';
 import {
   indexSummariesByDate,
   type CalendarDaySummary,
@@ -79,6 +79,19 @@ export const createTourSlot = createAsyncThunk(
   async (payload: TourSlot, { rejectWithValue, dispatch }) => {
     try {
       const created = await tourApi.create(payload);
+      await dispatch(fetchTours());
+      return created;
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
+export const createBulkTourSlots = createAsyncThunk(
+  'tour/bulkCreate',
+  async (payload: BulkTourSlotCreatePayload, { rejectWithValue, dispatch }) => {
+    try {
+      const created = await tourApi.bulkCreate(payload);
       await dispatch(fetchTours());
       return created;
     } catch (error) {
@@ -171,6 +184,16 @@ const tourSlice = createSlice({
       .addCase(createTourSlot.rejected, (state, action) => {
         state.mutationStatus = 'failed';
         state.error = (action.payload as string) ?? 'Failed to create tour';
+      })
+      .addCase(createBulkTourSlots.pending, (state) => {
+        state.mutationStatus = 'loading';
+      })
+      .addCase(createBulkTourSlots.fulfilled, (state) => {
+        state.mutationStatus = 'succeeded';
+      })
+      .addCase(createBulkTourSlots.rejected, (state, action) => {
+        state.mutationStatus = 'failed';
+        state.error = (action.payload as string) ?? 'Failed to create tour slots';
       })
       .addCase(updateTourSlot.pending, (state) => {
         state.mutationStatus = 'loading';

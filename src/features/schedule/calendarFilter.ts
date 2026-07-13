@@ -47,42 +47,20 @@ export function buildTourSlotFilter({
     })
     .map((lang) => lang.languageId as number);
 
-  const allLanguageIds = languages
-    .filter((lang) => lang.languageId != null)
-    .map((lang) => lang.languageId as number);
-
   const languageIds =
-    activeLanguageIds.length > 0 && activeLanguageIds.length < allLanguageIds.length
-      ? activeLanguageIds.join(',')
-      : null;
+    activeLanguageIds.length > 0 ? activeLanguageIds.join(',') : null;
 
   const activeTourTypeIds = tourTypes
     .filter((tour) => tour.tourTypeId != null && enabledTourTypeIds.has(tour.tourTypeId))
     .map((tour) => tour.tourTypeId as number);
 
-  const allTourTypeIds = tourTypes
-    .filter((tour) => tour.tourTypeId != null)
-    .map((tour) => tour.tourTypeId as number);
-
-  const filter: TourSlotFilter = {
+  return {
     startDate,
     endDate,
     languageIds,
+    tourTypeIds:
+      activeTourTypeIds.length > 0 ? activeTourTypeIds.join(',') : null,
   };
-
-  if (
-    activeTourTypeIds.length === 1 &&
-    activeTourTypeIds.length < allTourTypeIds.length
-  ) {
-    filter.tourTypeId = activeTourTypeIds[0];
-  } else if (
-    activeTourTypeIds.length > 1 &&
-    activeTourTypeIds.length < allTourTypeIds.length
-  ) {
-    filter.tourTypeIds = activeTourTypeIds.join(',');
-  }
-
-  return filter;
 }
 
 export function tourSlotFilterKey(filter: TourSlotFilter): string {

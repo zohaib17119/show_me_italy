@@ -14,6 +14,7 @@ import {
 import { languageColors } from '@/theme/tokens';
 import type { LangCode } from '@/types';
 import type { TourSlotFieldErrors } from '../utils/tourSlotValidation';
+import { TourTicketField } from './TourTicketField';
 import styles from '../schedule.module.css';
 
 const STATUS_OPTIONS: FormSelectOption[] = [
@@ -45,6 +46,7 @@ export interface TourSlotFormViewProps {
   onMeetingPointChange?: (value: string) => void;
   onAdminNotesChange?: (value: string) => void;
   onStatusChange?: (value: string) => void;
+  onTicketsChange?: (value: string | null) => void;
   onOpenApplicationsChange?: (value: boolean) => void;
   onSendNotificationChange?: (value: boolean) => void;
 }
@@ -72,6 +74,7 @@ export function TourSlotFormView({
   onMeetingPointChange,
   onAdminNotesChange,
   onStatusChange,
+  onTicketsChange,
   onOpenApplicationsChange,
   onSendNotificationChange,
 }: TourSlotFormViewProps) {
@@ -173,6 +176,13 @@ export function TourSlotFormView({
             disabled={disabled}
             onChange={(e) => onStatusChange?.(e.target.value)}
           />
+          <div className={formGridSpanFull}>
+            <TourTicketField
+              value={values.tickets}
+              disabled={disabled}
+              onChange={(next) => onTicketsChange?.(next)}
+            />
+          </div>
           {showExtraFields && (
             <>
               <FormInput

@@ -17,6 +17,7 @@ interface AgentState {
   unverified: Guide[];
   selectedAgent: Guide | null;
   selectedAgentApplications: GuideApplicationRow[];
+  selectedAgentPendingApplications: GuideApplicationRow[];
   adminStatus: RequestStatus;
   unverifiedStatus: RequestStatus;
   detailStatus: RequestStatus;
@@ -31,6 +32,7 @@ const initialState: AgentState = {
   unverified: [],
   selectedAgent: null,
   selectedAgentApplications: [],
+  selectedAgentPendingApplications: [],
   adminStatus: 'idle',
   unverifiedStatus: 'idle',
   detailStatus: 'idle',
@@ -74,7 +76,10 @@ export const fetchAgentById = createAsyncThunk(
       }
       const guide = mapAgentToGuide(profile.userResponse);
       const applications = mapGuideApplicationsToHistory(profile.guideApplication);
-      return { guide, applications };
+      const pendingApplications = mapGuideApplicationsToHistory(
+        profile.pendingGuideApplication,
+      );
+      return { guide, applications, pendingApplications };
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }
@@ -137,6 +142,7 @@ const agentSlice = createSlice({
     clearSelectedAgent(state) {
       state.selectedAgent = null;
       state.selectedAgentApplications = [];
+      state.selectedAgentPendingApplications = [];
       state.detailStatus = 'idle';
     },
   },
@@ -174,11 +180,13 @@ const agentSlice = createSlice({
         state.detailStatus = 'succeeded';
         state.selectedAgent = action.payload.guide;
         state.selectedAgentApplications = action.payload.applications;
+        state.selectedAgentPendingApplications = action.payload.pendingApplications;
       })
       .addCase(fetchAgentById.rejected, (state, action) => {
         state.detailStatus = 'failed';
         state.selectedAgent = null;
         state.selectedAgentApplications = [];
+        state.selectedAgentPendingApplications = [];
         state.error = (action.payload as string) ?? 'Failed to load guide';
       })
       .addCase(approveAgent.pending, (state) => {
@@ -225,6 +233,8 @@ export const selectUnverifiedGuides = (state: RootState) => state.agent.unverifi
 export const selectSelectedAgent = (state: RootState) => state.agent.selectedAgent;
 export const selectSelectedAgentApplications = (state: RootState) =>
   state.agent.selectedAgentApplications;
+export const selectSelectedAgentPendingApplications = (state: RootState) =>
+  state.agent.selectedAgentPendingApplications;
 export const selectAdminGuideStatus = (state: RootState) => state.agent.adminStatus;
 export const selectUnverifiedGuideStatus = (state: RootState) => state.agent.unverifiedStatus;
 export const selectAdminGuideError = (state: RootState) => state.agent.adminError;

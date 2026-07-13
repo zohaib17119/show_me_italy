@@ -19,6 +19,9 @@ export type { FormInputProps } from './forms/FormInput';
 export { FormSelect } from './forms/FormSelect';
 export type { FormSelectOption, FormSelectProps } from './forms/FormSelect';
 
+export { FormMultiSelect } from './forms/FormMultiSelect';
+export type { FormMultiSelectProps } from './forms/FormMultiSelect';
+
 export { FormTextarea } from './forms/FormTextarea';
 export type { FormTextareaProps } from './forms/FormTextarea';
 

@@ -78,7 +78,8 @@ export function KpiRow() {
           </TrendPill>
         }
         accentColor="#F59E0B"
-        onClick={() => navigate(ROUTES.PAYOUTS)}
+        // Hidden until payouts work resumes:
+        // onClick={() => navigate(ROUTES.PAYOUTS)}
       />
       <StatCard
         icon="👥"

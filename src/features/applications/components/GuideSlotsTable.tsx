@@ -14,7 +14,7 @@ import {
 import { getAssignmentPath, getEditTourPath } from '@/constants/routes';
 
 const PAGE_SIZE = 10;
-const ACTIONS_COL_WIDTH = { default: 80, calendarModal: 180 } as const;
+const ACTIONS_COL_WIDTH = { default: 80, calendarModal: 80 } as const;
 
 export interface GuideSlotsTableProps {
   rows: GuideSlotRow[];
@@ -55,6 +55,18 @@ export function GuideSlotsTable({
   const columns: ColumnsType<GuideSlotRow> = useMemo(() => {
     const base: ColumnsType<GuideSlotRow> = [
       { title: 'Tour', dataIndex: 'tourName', key: 'tour' },
+    ];
+
+    if (isCalendarModal) {
+      base.push({
+        title: 'Tour Code',
+        dataIndex: 'tourCode',
+        key: 'tourCode',
+        width: 100,
+      });
+    }
+
+    base.push(
       {
         title: 'Date',
         dataIndex: 'dateLabel',
@@ -66,14 +78,13 @@ export function GuideSlotsTable({
         dataIndex: 'timeRange',
         key: 'timeRange',
       },
-      // { title: 'Entrance Time', dataIndex: 'entranceTime', key: 'entranceTime' },
       {
         title: 'Language',
         dataIndex: 'language',
         key: 'language',
         render: (lang: GuideSlotRow['language']) => <LangChip code={lang} />,
       },
-    ];
+    );
 
     if (isCalendarModal) {
       base.push({
@@ -97,6 +108,28 @@ export function GuideSlotsTable({
         ),
     });
 
+    if (isCalendarModal) {
+      base.push({
+        title: 'Ticket',
+        key: 'ticket',
+        width: 130,
+        render: (_, row) => {
+          if (!row.hasTicket) {
+            return (
+              <AppButton variant="warn" size="xs" onClick={() => onUploadTicket?.(row)}>
+                Upload Ticket
+              </AppButton>
+            );
+          }
+          return (
+            <AppButton variant="primary" size="xs" onClick={() => onPreviewTicket?.(row)}>
+              Preview Ticket
+            </AppButton>
+          );
+        },
+      });
+    }
+
     base.push({
       title: 'Actions',
       key: 'actions',
@@ -106,54 +139,29 @@ export function GuideSlotsTable({
         const goToAssignment = () =>
           navigate(getAssignmentPath(row.tourSlotId), { state: row });
 
-        if (isCalendarModal) {
-          if (!row.hasAssignedGuide) {
-            return (
-              <AppButton variant="primary" size="xs" onClick={goToAssignment}>
-                Assign
-              </AppButton>
-            );
-          }
+        const menuItems = [];
 
-          return (
-            <div style={{ display: 'flex', gap: 5, flexWrap: 'nowrap', alignItems: 'center' }}>
-              {!row.hasTicket ? (
-                <AppButton
-                  variant="warn"
-                  size="xs"
-                  onClick={() => onUploadTicket?.(row)}
-                >
-                  Upload Ticket
-                </AppButton>
-              ) : (
-                <AppButton
-                  variant="primary"
-                  size="xs"
-                  onClick={() => onPreviewTicket?.(row)}
-                >
-                  Preview Ticket
-                </AppButton>
-              )}
-            </div>
-          );
+        if (!row.hasAssignedGuide) {
+          menuItems.push({
+            key: 'assign',
+            label: 'Assign',
+            onClick: goToAssignment,
+          });
+        } else if (!isCalendarModal) {
+          menuItems.push({
+            key: 'assign',
+            label: 'Change Assignment',
+            onClick: goToAssignment,
+          });
         }
 
-        return (
-          <TableRowMenu
-            items={[
-              {
-                key: 'assign',
-                label: row.hasAssignedGuide ? 'Change Assignment' : 'Assign',
-                onClick: goToAssignment,
-              },
-              {
-                key: 'edit',
-                label: 'Edit',
-                onClick: () => navigate(getEditTourPath(row.tourSlotId)),
-              },
-            ]}
-          />
-        );
+        menuItems.push({
+          key: 'edit',
+          label: 'Edit',
+          onClick: () => navigate(getEditTourPath(row.tourSlotId)),
+        });
+
+        return <TableRowMenu items={menuItems} />;
       },
     });
 
@@ -181,7 +189,7 @@ export function GuideSlotsTable({
         dataSource={pageData}
         loading={loading}
         pagination={false}
-        scroll={{ x: isCalendarModal ? 900 : 1100 }}
+        scroll={{ x: isCalendarModal ? 1000 : 1100 }}
         footer={() => (
           <TablePagination
             page={page}

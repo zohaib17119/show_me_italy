@@ -93,8 +93,19 @@ const tourTypeSlice = createSlice({
       .addCase(createTourType.fulfilled, (state) => {
         state.mutationStatus = 'succeeded';
       })
+      .addCase(createTourType.rejected, (state, action) => {
+        state.mutationStatus = 'failed';
+        state.error = (action.payload as string) ?? 'Failed to create tour type';
+      })
+      .addCase(updateTourType.pending, (state) => {
+        state.mutationStatus = 'loading';
+      })
       .addCase(updateTourType.fulfilled, (state) => {
         state.mutationStatus = 'succeeded';
+      })
+      .addCase(updateTourType.rejected, (state, action) => {
+        state.mutationStatus = 'failed';
+        state.error = (action.payload as string) ?? 'Failed to update tour type';
       })
       .addCase(deleteTourType.fulfilled, (state) => {
         state.mutationStatus = 'succeeded';
@@ -111,3 +122,4 @@ export const selectActiveTourTypes = createSelector([selectTourTypes], (items) =
 );
 
 export const selectTourTypeStatus = (state: RootState) => state.tourType.status;
+export const selectTourTypeMutationStatus = (state: RootState) => state.tourType.mutationStatus;

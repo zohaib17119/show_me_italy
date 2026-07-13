@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom';
-import { PlusOutlined, UnorderedListOutlined, WalletOutlined } from '@ant-design/icons';
+import { PlusOutlined, UnorderedListOutlined } from '@ant-design/icons';
 import { useAppSelector } from '@/app/hooks';
 import { ROUTES } from '@/constants/routes';
 import { selectDashboardData } from '@/features/dashboard/dashboardSlice';
@@ -67,6 +67,7 @@ export function DashHero() {
             <UnorderedListOutlined style={{ color: 'white' }} />{' '}
             {header?.pendingApplications ?? 0} Pending Applications
           </button>
+          {/* Hidden until payouts work resumes:
           <button
             type="button"
             className={styles.dashHeroBtnOutline}
@@ -75,6 +76,7 @@ export function DashHero() {
             <WalletOutlined style={{ color: 'white' }} />{' '}
             {header?.pendingPayoutRequests ?? 0} Payout Requests
           </button>
+          */}
         </div>
       </div>
     </div>

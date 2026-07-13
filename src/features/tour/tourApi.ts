@@ -1,6 +1,12 @@
 import { axiosInstance } from '@/api/axiosInstance';
+import type { UpdateAssignSlotPayload } from '@/api/mappers/tourMapper';
 import { normalizeListResponse } from '@/api/utils/normalizeList';
-import type { CalendarDaySummaryRecord, TourSlot, TourSlotFilter } from '@/api/types';
+import type {
+  BulkTourSlotCreatePayload,
+  CalendarDaySummaryRecord,
+  TourSlot,
+  TourSlotFilter,
+} from '@/api/types';
 import { unwrapData } from '@/api/types';
 
 export const tourApi = {
@@ -30,6 +36,11 @@ export const tourApi = {
     return unwrapData<TourSlot>(data);
   },
 
+  bulkCreate: async (payload: BulkTourSlotCreatePayload): Promise<unknown> => {
+    const { data } = await axiosInstance.post('/v1/Tour/bulk-create', payload);
+    return unwrapData<unknown>(data);
+  },
+
   update: async (payload: TourSlot): Promise<TourSlot> => {
     const { data } = await axiosInstance.post('/v1/Tour/update', payload);
     return unwrapData<TourSlot>(data);
@@ -41,9 +52,13 @@ export const tourApi = {
 
   updateTicketTour: async (payload: { tourSlotId: number; ticket: string }): Promise<void> => {
     payload = {
-      tourSlotId : payload.tourSlotId,
-      ticket : payload.ticket,
-    }
+      tourSlotId: payload.tourSlotId,
+      ticket: payload.ticket,
+    };
     await axiosInstance.post('/v1/Tour/update-ticket-tour', payload);
+  },
+
+  updateAssignSlot: async (payload: UpdateAssignSlotPayload): Promise<void> => {
+    await axiosInstance.post('/v1/Tour/update-assign-slot', payload);
   },
 };

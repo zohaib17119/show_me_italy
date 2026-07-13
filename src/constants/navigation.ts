@@ -52,14 +52,15 @@ export const navigationGroups: NavGroupConfig[] = [
   {
     label: 'Payments',
     items: [
-      {
-        key: 'payouts',
-        label: 'Payout Requests',
-        path: ROUTES.PAYOUTS,
-        badgeKey: 'payouts',
-        badgeColor: 'orange',
-      },
-      { key: 'payout-detail', label: 'Payout Detail', path: '/payments/payouts/payout-marco-march' },
+      // Hidden until payouts work resumes:
+      // {
+      //   key: 'payouts',
+      //   label: 'Payout Requests',
+      //   path: ROUTES.PAYOUTS,
+      //   badgeKey: 'payouts',
+      //   badgeColor: 'orange',
+      // },
+      // { key: 'payout-detail', label: 'Payout Detail', path: '/payments/payouts/payout-marco-march' },
       { key: 'reports', label: 'Payment Reports', path: ROUTES.REPORTS },
     ],
   },

@@ -1,7 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Modal } from 'antd';
+import { Modal, Spin } from 'antd';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import type { Language, TourType } from '@/api/types';
+import {
+  buildTourTypeImagePayload,
+  mapTourTypeImagesFromApi,
+  type TourTypeImageItem,
+} from '@/api/mappers/tourTypeImageMapper';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
@@ -30,10 +35,12 @@ import {
   createTourType,
   deleteTourType,
   fetchTourTypes,
+  selectTourTypeMutationStatus,
   selectTourTypes,
   selectTourTypeStatus,
   updateTourType,
 } from '@/features/tourType/tourTypeSlice';
+import { TourTypeImagePicker } from './components/TourTypeImagePicker';
 
 const emptyTourForm = (): Partial<TourType> => ({
   name: '',
@@ -60,7 +67,9 @@ export function SettingsPage() {
   const tourTypes = useAppSelector(selectTourTypes);
   const languages = useAppSelector(selectLanguages);
   const tourTypeStatus = useAppSelector(selectTourTypeStatus);
+  const tourTypeMutationStatus = useAppSelector(selectTourTypeMutationStatus);
   const languageStatus = useAppSelector(selectLanguageStatus);
+  const isSavingTourType = tourTypeMutationStatus === 'loading';
 
   const [tourModalOpen, setTourModalOpen] = useState(false);
   const [langModalOpen, setLangModalOpen] = useState(false);
@@ -68,6 +77,19 @@ export function SettingsPage() {
   const [langForm, setLangForm] = useState<Partial<Language>>(emptyLangForm());
   const [editingTourId, setEditingTourId] = useState<number | null>(null);
   const [editingLangId, setEditingLangId] = useState<number | null>(null);
+  const [tourTypeImages, setTourTypeImages] = useState<TourTypeImageItem[]>([]);
+
+  const resetTourModal = () => {
+    setTourForm(emptyTourForm());
+    setTourTypeImages([]);
+    setEditingTourId(null);
+  };
+
+  const closeTourModal = () => {
+    if (isSavingTourType) return;
+    setTourModalOpen(false);
+    resetTourModal();
+  };
 
   useEffect(() => {
     void dispatch(fetchTourTypes());
@@ -75,14 +97,14 @@ export function SettingsPage() {
   }, [dispatch]);
 
   const openCreateTour = () => {
-    setEditingTourId(null);
-    setTourForm(emptyTourForm());
+    resetTourModal();
     setTourModalOpen(true);
   };
 
   const openEditTour = (tour: TourType) => {
     setEditingTourId(tour.tourTypeId ?? null);
     setTourForm({ ...tour });
+    setTourTypeImages(mapTourTypeImagesFromApi(tour.tourTypeImage));
     setTourModalOpen(true);
   };
 
@@ -99,6 +121,7 @@ export function SettingsPage() {
   };
 
   const handleSaveTourType = async () => {
+    if (isSavingTourType) return;
     if (!tourForm.name?.trim()) {
       showToast('Tour type name is required');
       return;
@@ -113,6 +136,9 @@ export function SettingsPage() {
       basePrice: Number(tourForm.basePrice ?? 0),
       durationMinutes: Number(tourForm.durationMinutes ?? 120),
       isActive: tourForm.isActive !== false,
+      ...(tourTypeImages.length > 0
+        ? { tourTypeImage: buildTourTypeImagePayload(tourTypeImages) }
+        : {}),
     };
     try {
       if (editingTourId != null) {
@@ -122,9 +148,7 @@ export function SettingsPage() {
         await dispatch(createTourType(payload)).unwrap();
         showToast('✓ Tour type saved');
       }
-      setTourModalOpen(false);
-      setTourForm(emptyTourForm());
-      setEditingTourId(null);
+      closeTourModal();
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to save tour type');
     }
@@ -366,13 +390,31 @@ export function SettingsPage() {
       <Modal
         title={editingTourId != null ? 'Edit Tour Type' : 'Add Tour Type'}
         open={tourModalOpen}
-        onCancel={() => setTourModalOpen(false)}
+        onCancel={closeTourModal}
+        maskClosable={!isSavingTourType}
+        closable={!isSavingTourType}
         footer={[
-          <AppButton key="cancel" variant="secondary" onClick={() => setTourModalOpen(false)}>
+          <AppButton
+            key="cancel"
+            variant="secondary"
+            onClick={closeTourModal}
+            disabled={isSavingTourType}
+          >
             Cancel
           </AppButton>,
-          <AppButton key="save" onClick={() => void handleSaveTourType()}>
-            Save
+          <AppButton
+            key="save"
+            onClick={() => void handleSaveTourType()}
+            disabled={isSavingTourType}
+          >
+            {isSavingTourType ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Spin size="small" />
+                Saving…
+              </span>
+            ) : (
+              'Save'
+            )}
           </AppButton>,
         ]}
         destroyOnClose
@@ -381,18 +423,21 @@ export function SettingsPage() {
           <FormInput
             label="Name"
             value={tourForm.name ?? ''}
+            disabled={isSavingTourType}
             onChange={(e) => setTourForm((f) => ({ ...f, name: e.target.value }))}
           />
           <FormInput
             label="Base Price (€)"
             type="number"
             value={tourForm.basePrice ?? 0}
+            disabled={isSavingTourType}
             onChange={(e) => setTourForm((f) => ({ ...f, basePrice: Number(e.target.value) }))}
           />
           <FormInput
             label="Duration (minutes)"
             type="number"
             value={tourForm.durationMinutes ?? 120}
+            disabled={isSavingTourType}
             onChange={(e) =>
               setTourForm((f) => ({ ...f, durationMinutes: Number(e.target.value) }))
             }
@@ -400,23 +445,32 @@ export function SettingsPage() {
           <FormInput
             label="Location"
             value={tourForm.location ?? ''}
+            disabled={isSavingTourType}
             onChange={(e) => setTourForm((f) => ({ ...f, location: e.target.value }))}
           />
           <FormInput
             label="Meeting Point Name"
             value={tourForm.meetingPointName ?? ''}
+            disabled={isSavingTourType}
             onChange={(e) => setTourForm((f) => ({ ...f, meetingPointName: e.target.value }))}
           />
           <FormInput
             label="Meeting Point Address"
             value={tourForm.meetingPointAddress ?? ''}
+            disabled={isSavingTourType}
             onChange={(e) => setTourForm((f) => ({ ...f, meetingPointAddress: e.target.value }))}
           />
           <FormTextarea
             label="Description"
             value={tourForm.description ?? ''}
+            disabled={isSavingTourType}
             onChange={(e) => setTourForm((f) => ({ ...f, description: e.target.value }))}
             rows={2}
+          />
+          <TourTypeImagePicker
+            images={tourTypeImages}
+            onChange={setTourTypeImages}
+            disabled={isSavingTourType}
           />
         </FormGrid>
       </Modal>

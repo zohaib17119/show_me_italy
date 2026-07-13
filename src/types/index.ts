@@ -11,6 +11,8 @@ export type TourStatus =
   | 'inactive'
   | 'rejected'
   | 'hold'
+  | 'open'
+  | 'closed'
 
 export interface User {
   id: string;

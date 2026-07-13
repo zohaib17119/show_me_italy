@@ -18,7 +18,6 @@ import {
   SearchInput,
   StatusBadge,
   TablePagination,
-  TableRowMenu,
 } from '@/components/ui';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import { ROUTES } from '@/constants/routes';
@@ -31,7 +30,6 @@ import {
 import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
 import type { Guide, GuideStatus } from '@/mocks/guides';
 import type { TourStatus } from '@/types';
-import { PreviewCertificateModal } from './components/PreviewCertificateModal';
 import { UpdateGuideModal } from './components/UpdateGuideModal';
 
 function formatRating(rating: number | null): string {
@@ -60,7 +58,6 @@ export function GuideRosterPage() {
   const [pageSize, setPageSize] = useState(25);
   const [selectedKeys, setSelectedKeys] = useState<string[]>([]);
   const [editGuide, setEditGuide] = useState<Guide | null>(null);
-  const [certificatePreview, setCertificatePreview] = useState<Guide | null>(null);
 
   const apiFilter = useMemo((): AllAgentsAdminFilter => {
     const filter: AllAgentsAdminFilter = {};
@@ -123,6 +120,7 @@ export function GuideRosterPage() {
           favorite={record.favorite}
           sub={record.email}
           profilePicture={record.profilePicture}
+          pendingCount={record.pendingCounts}
         />
       ),
     },
@@ -154,12 +152,6 @@ export function GuideRosterPage() {
           <span style={{ color: 'var(--orange)', fontWeight: 700, fontSize: 12 }}>⏳</span>
         ),
     },
-    // {
-    //   title: 'Tours',
-    //   dataIndex: 'tours',
-    //   key: 'tours',
-    //   render: (tours: number) => <strong>{tours}</strong>,
-    // },
     {
       title: 'Admin Notes',
       key: 'adminNotes',
@@ -183,38 +175,25 @@ export function GuideRosterPage() {
         record.cancellationPercentage != null ? `${record.cancellationPercentage}%` : '—',
     },
     {
-      title: 'Certificate',
-      key: 'certificate',
-      render: (_, record) =>
-        record.certificateUpload?.trim() ? (
-          <AppButton
-            variant="secondary"
-            size="xs"
-            onClick={() => setCertificatePreview(record)}
-          >
-            View Certificate
-          </AppButton>
-        ) : (
-          <span style={{ fontSize: 12, color: 'var(--text-muted)' }}>Not uploaded</span>
-        ),
-    },
-    {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
-        <TableRowMenu
-          items={[
-            { key: 'edit', label: 'Edit', onClick: () => setEditGuide(record) },
-            {
-              key: 'view',
-              label: record.status === 'pending' ? 'Review' : 'View',
-              onClick: () =>
-                record.status === 'pending'
-                  ? navigate(ROUTES.APPROVALS)
-                  : navigate(`/guides/${record.id}`),
-            },
-          ]}
-        />
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+          <AppButton variant="secondary" size="xs" onClick={() => setEditGuide(record)}>
+            Edit
+          </AppButton>
+          <AppButton
+            variant="primary"
+            size="xs"
+            onClick={() =>
+              record.status === 'pending'
+                ? navigate(ROUTES.APPROVALS)
+                : navigate(`/guides/${record.id}`)
+            }
+          >
+            {record.status === 'pending' ? 'Review' : 'View'}
+          </AppButton>
+        </div>
       ),
     },
   ];
@@ -233,14 +212,7 @@ export function GuideRosterPage() {
       <PageHeader
         title="Guide Roster"
         subtitle={`${guides.length} total · ${activeCount} active · ${inactiveCount} inactive`}
-        extra={
-          <>
-            {/* <AppButton variant="secondary" size="xs" onClick={() => showToast('Export started')}>
-              Export CSV
-            </AppButton>
-            <AppButton size="xs">+ Invite Guide</AppButton> */}
-          </>
-        }
+        extra={<></>}
       />
 
       {status === 'failed' && (
@@ -319,13 +291,6 @@ export function GuideRosterPage() {
         guide={editGuide}
         onClose={() => setEditGuide(null)}
         onUpdated={loadGuides}
-      />
-
-      <PreviewCertificateModal
-        open={certificatePreview != null}
-        certificateUrl={certificatePreview?.certificateUpload ?? null}
-        guideName={certificatePreview?.name}
-        onClose={() => setCertificatePreview(null)}
       />
     </div>
   );
