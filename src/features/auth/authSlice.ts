@@ -9,6 +9,7 @@ import {
   extractToken,
   type SignInAdminRequest,
 } from './authApi';
+import { adminRoleApi } from '@/features/system/adminRoleApi';
 import type { RootState } from '@/app/store';
 
 export const AUTH_USER_ID_KEY = 'authUserId';
@@ -18,10 +19,16 @@ interface AuthState {
   token: string | null;
   isAuthenticated: boolean;
   status: 'idle' | 'loading' | 'failed';
+  permissionsStatus: 'idle' | 'loading' | 'succeeded' | 'failed';
   error: string | null;
 }
 
-function userFromStored(email: string, name?: string, id?: string): User {
+function userFromStored(
+  email: string,
+  name?: string,
+  id?: string,
+  extras?: { roleId?: string | null; permissions?: string[] },
+): User {
   const displayName = name?.trim() || email.split('@')[0] || 'Admin';
   const initials = displayName
     .split(/\s+/)
@@ -35,6 +42,8 @@ function userFromStored(email: string, name?: string, id?: string): User {
     email,
     role: 'Administrator',
     initials: initials || 'AD',
+    roleId: extras?.roleId ?? null,
+    permissions: extras?.permissions ?? [],
   };
 }
 
@@ -51,6 +60,7 @@ const initialState: AuthState = {
   token: storedToken,
   isAuthenticated: Boolean(storedToken),
   status: 'idle',
+  permissionsStatus: 'idle',
   error: null,
 };
 
@@ -70,11 +80,43 @@ export const loginAdmin = createAsyncThunk(
         body.name ??
         (body as { userName?: string }).userName;
       const id = String(body.id ?? body.userId ?? '').trim();
+
+      // Token must be available for subsequent role/claim requests.
+      localStorage.setItem(AUTH_TOKEN_KEY, token);
+
+      let roleId: string | null = null;
+      let permissions: string[] = [];
+      if (id) {
+        const result = await adminRoleApi.fetchPermissionsForUser(id);
+        roleId = result.roleId;
+        permissions = result.permissions;
+      }
+
       return {
         token,
         refreshToken: body.refreshToken ?? null,
-        user: userFromStored(email, name, id),
+        user: userFromStored(email, name, id, { roleId, permissions }),
       };
+    } catch (error) {
+      return rejectWithValue(getApiErrorMessage(error));
+    }
+  },
+);
+
+/** Reload role claims for an already-authenticated session (e.g. page refresh). */
+export const loadSessionPermissions = createAsyncThunk(
+  'auth/loadSessionPermissions',
+  async (_, { getState, rejectWithValue }) => {
+    const state = getState() as RootState;
+    const userId =
+      state.auth.user?.id?.trim() ||
+      localStorage.getItem(AUTH_USER_ID_KEY)?.trim() ||
+      '';
+    if (!userId) {
+      return { roleId: null as string | null, permissions: [] as string[] };
+    }
+    try {
+      return await adminRoleApi.fetchPermissionsForUser(userId);
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }
@@ -90,6 +132,7 @@ const authSlice = createSlice({
       state.token = null;
       state.isAuthenticated = false;
       state.status = 'idle';
+      state.permissionsStatus = 'idle';
       state.error = null;
       localStorage.removeItem(AUTH_TOKEN_KEY);
       localStorage.removeItem(AUTH_REFRESH_TOKEN_KEY);
@@ -107,6 +150,8 @@ const authSlice = createSlice({
           localStorage.getItem('authName') ?? undefined,
           localStorage.getItem(AUTH_USER_ID_KEY) ?? undefined,
         );
+      } else {
+        state.user = null;
       }
     },
   },
@@ -118,6 +163,7 @@ const authSlice = createSlice({
       })
       .addCase(loginAdmin.fulfilled, (state, action) => {
         state.status = 'idle';
+        state.permissionsStatus = 'succeeded';
         state.token = action.payload.token;
         state.user = action.payload.user;
         state.isAuthenticated = true;
@@ -139,6 +185,24 @@ const authSlice = createSlice({
         state.isAuthenticated = false;
         state.token = null;
         state.user = null;
+        state.permissionsStatus = 'idle';
+      })
+      .addCase(loadSessionPermissions.pending, (state) => {
+        state.permissionsStatus = 'loading';
+      })
+      .addCase(loadSessionPermissions.fulfilled, (state, action) => {
+        state.permissionsStatus = 'succeeded';
+        if (state.user) {
+          state.user.roleId = action.payload.roleId;
+          state.user.permissions = action.payload.permissions;
+        }
+      })
+      .addCase(loadSessionPermissions.rejected, (state) => {
+        state.permissionsStatus = 'failed';
+        if (state.user) {
+          state.user.roleId = null;
+          state.user.permissions = [];
+        }
       });
   },
 });
@@ -148,6 +212,9 @@ export default authSlice.reducer;
 
 export const selectAuthUser = (state: RootState) => state.auth.user;
 export const selectAuthUserId = (state: RootState) => state.auth.user?.id ?? '';
+export const selectAuthPermissions = (state: RootState) =>
+  state.auth.user?.permissions ?? [];
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated;
 export const selectAuthStatus = (state: RootState) => state.auth.status;
 export const selectAuthError = (state: RootState) => state.auth.error;
+export const selectPermissionsStatus = (state: RootState) => state.auth.permissionsStatus;

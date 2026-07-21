@@ -15,10 +15,12 @@ import {
   GuideCell,
   LangChip,
   ListErrorState,
+  LockedAction,
   showToast,
   StatusBadge,
 } from '@/components/ui';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
+import { useCan } from '@/features/auth/useCan';
 import { getRouteMeta } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
 import type { AssignmentSlotNavState } from '@/features/applications/components/ApplicationsDaySlotsDrawer';
@@ -75,6 +77,10 @@ function withStickyActions<T extends object>(columns: ColumnsType<T>): ColumnsTy
 
 export function AssignmentPage() {
   const navigate = useNavigate();
+  const can = useCan();
+  const canAssign = can('Applications.Assign');
+  const canUpdateStatus = can('Applications.UpdateStatus');
+  const canEditSlot = can('Schedule.Edit');
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const dispatch = useAppDispatch();
@@ -323,78 +329,86 @@ export function AssignmentPage() {
 
             if (isApproved) {
               return (
-                <AppButton
-                  variant="danger"
-                  size="xs"
-                  disabled={isBusy}
-                  onClick={() => {
-                    if (missingApplicationId) {
-                      showToast('Application ID not available yet');
-                      return;
-                    }
-                    void handleStatusUpdate(row, 'Rejected', 'Guide unassigned');
-                  }}
-                >
-                  Unassign
-                </AppButton>
+                <LockedAction allowed={canUpdateStatus}>
+                  <AppButton
+                    variant="danger"
+                    size="xs"
+                    disabled={isBusy}
+                    onClick={() => {
+                      if (missingApplicationId) {
+                        showToast('Application ID not available yet');
+                        return;
+                      }
+                      void handleStatusUpdate(row, 'Rejected', 'Guide unassigned');
+                    }}
+                  >
+                    Unassign
+                  </AppButton>
+                </LockedAction>
               );
             }
 
             if (isRejected) {
               return (
-                <AppButton
-                  variant="primary"
-                  size="xs"
-                  disabled={isBusy}
-                  onClick={() => {
-                    if (missingApplicationId) {
-                      showToast('Application ID not available yet');
-                      return;
-                    }
-                    void handleStatusUpdate(row, 'Approved', 'Guide assigned');
-                  }}
-                >
-                  Assign
-                </AppButton>
+                <LockedAction allowed={canAssign}>
+                  <AppButton
+                    variant="primary"
+                    size="xs"
+                    disabled={isBusy}
+                    onClick={() => {
+                      if (missingApplicationId) {
+                        showToast('Application ID not available yet');
+                        return;
+                      }
+                      void handleStatusUpdate(row, 'Approved', 'Guide assigned');
+                    }}
+                  >
+                    Assign
+                  </AppButton>
+                </LockedAction>
               );
             }
 
             return (
               <div style={{ display: 'flex', gap: 5 }}>
-                <AppButton
-                  variant="primary"
-                  size="xs"
-                  disabled={isBusy}
-                  onClick={() => {
-                    if (missingApplicationId) {
-                      showToast('Application ID not available yet');
-                      return;
-                    }
-                    void handleStatusUpdate(row, 'Approved', 'Guide assigned');
-                  }}
-                >
-                  Assign
-                </AppButton>
-                <AppButton
-                  variant="danger"
-                  size="xs"
-                  disabled={isBusy}
-                  onClick={() => {
-                    if (missingApplicationId) {
-                      showToast('Application ID not available yet');
-                      return;
-                    }
-                    void handleStatusUpdate(row, 'Rejected', 'Application rejected');
-                  }}
-                >
-                  Reject
-                </AppButton>
+                <LockedAction allowed={canAssign}>
+                  <AppButton
+                    variant="primary"
+                    size="xs"
+                    disabled={isBusy}
+                    onClick={() => {
+                      if (missingApplicationId) {
+                        showToast('Application ID not available yet');
+                        return;
+                      }
+                      void handleStatusUpdate(row, 'Approved', 'Guide assigned');
+                    }}
+                  >
+                    Assign
+                  </AppButton>
+                </LockedAction>
+                <LockedAction allowed={canUpdateStatus}>
+                  <AppButton
+                    variant="danger"
+                    size="xs"
+                    disabled={isBusy}
+                    onClick={() => {
+                      if (missingApplicationId) {
+                        showToast('Application ID not available yet');
+                        return;
+                      }
+                      void handleStatusUpdate(row, 'Rejected', 'Application rejected');
+                    }}
+                  >
+                    Reject
+                  </AppButton>
+                </LockedAction>
               </div>
             );
           },
         },
       ]),
-    [actingId, applicantMutationStatus, handleStatusUpdate],
+    [actingId, applicantMutationStatus, handleStatusUpdate, canAssign, canUpdateStatus],
   );
 
   const overrideColumns: ColumnsType<AvailableGuideRow> = useMemo(
@@ -439,19 +453,21 @@ export function AssignmentPage() {
           render: (_, row) => {
             const isBusy = manualAssignStatus === 'loading' && actingGuideId === row.guideId;
             return (
-              <AppButton
-                variant="primary"
-                size="xs"
-                disabled={isBusy || isSlotClosed}
-                onClick={() => void handleManualAssign(row)}
-              >
-                Assign Slot
-              </AppButton>
+              <LockedAction allowed={canAssign}>
+                <AppButton
+                  variant="primary"
+                  size="xs"
+                  disabled={isBusy || isSlotClosed}
+                  onClick={() => void handleManualAssign(row)}
+                >
+                  Assign Slot
+                </AppButton>
+              </LockedAction>
             );
           },
         },
       ]),
-    [actingGuideId, handleManualAssign, isSlotClosed, manualAssignStatus],
+    [actingGuideId, handleManualAssign, isSlotClosed, manualAssignStatus, canAssign],
   );
 
   if (!hasValidTourSlotId) {
@@ -580,9 +596,11 @@ export function AssignmentPage() {
         <AppCard
           title="Slot Summary"
           extra={
-            <AppButton size="xs" variant="secondary" onClick={() => setUpdateOpen(true)}>
-              Update
-            </AppButton>
+            <LockedAction allowed={canEditSlot}>
+              <AppButton size="xs" variant="secondary" onClick={() => setUpdateOpen(true)}>
+                Update
+              </AppButton>
+            </LockedAction>
           }
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: 9, fontSize: 12 }}>

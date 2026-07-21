@@ -11,12 +11,14 @@ import {
   FormSelect,
   FormTextarea,
   ListErrorState,
+  LockedAction,
   NotificationItem,
   RecipientChip,
   SectionTitle,
   showToast,
 } from '@/components/ui';
 import { getRouteMeta } from '@/constants/navigation';
+import { useCan } from '@/features/auth/useCan';
 import { ROUTES } from '@/constants/routes';
 import { ANNOUNCEMENT_TYPES } from '@/mocks';
 import { selectAuthUser } from '@/features/auth/authSlice';
@@ -87,6 +89,8 @@ function buildCreatePayload(input: {
 
 export function NotificationsPage() {
   const dispatch = useAppDispatch();
+  const can = useCan();
+  const canSend = can('Notifications.Send');
   const meta = getRouteMeta(ROUTES.NOTIFICATIONS);
   const inbox = useAppSelector(selectInboxItems);
   const inboxStatus = useAppSelector(selectInboxStatus);
@@ -267,14 +271,16 @@ export function NotificationsPage() {
               onChange={(e) => setScheduledDate(e.target.value)}
             />
 
-            <AppButton
-              variant="primary"
-              style={{ width: '100%' }}
-              onClick={() => void handleSend()}
-              disabled={sending}
-            >
-              {sending ? 'Sending…' : 'Send Now →'}
-            </AppButton>
+            <LockedAction allowed={canSend}>
+              <AppButton
+                variant="primary"
+                style={{ width: '100%' }}
+                onClick={() => void handleSend()}
+                disabled={sending}
+              >
+                {sending ? 'Sending…' : 'Send Now →'}
+              </AppButton>
+            </LockedAction>
           </div>
         </AppCard>
 

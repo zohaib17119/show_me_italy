@@ -20,6 +20,8 @@ export interface User {
   email: string;
   role: string;
   initials: string;
+  roleId?: string | null;
+  permissions: string[];
 }
 
 export type BadgeKey =

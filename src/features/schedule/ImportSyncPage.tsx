@@ -8,10 +8,12 @@ import {
   BreadcrumbNav,
   DataTable,
   LangChip,
+  LockedAction,
   SectionTitle,
   ToggleRow,
   showToast,
 } from '@/components/ui';
+import { useCan } from '@/features/auth/useCan';
 import { ROUTES } from '@/constants/routes';
 import type { LangCode } from '@/types';
 import styles from './schedule.module.css';
@@ -105,6 +107,8 @@ const importColumns: ColumnsType<ImportRow> = [
 
 export function ImportSyncPage() {
   const navigate = useNavigate();
+  const can = useCan();
+  const canImport = can('Schedule.Import');
   const [autoSync, setAutoSync] = useState(true);
 
   return (
@@ -143,12 +147,14 @@ export function ImportSyncPage() {
               checked={autoSync}
               onCheckedChange={setAutoSync}
             />
-            <AppButton
-              style={{ width: '100%', marginTop: 12 }}
-              onClick={() => showToast('🔄 Syncing…')}
-            >
-              🔄 Sync Now
-            </AppButton>
+            <LockedAction allowed={canImport}>
+              <AppButton
+                style={{ width: '100%', marginTop: 12 }}
+                onClick={() => showToast('🔄 Syncing…')}
+              >
+                🔄 Sync Now
+              </AppButton>
+            </LockedAction>
             </AppCard>
           </div>
 
@@ -168,9 +174,11 @@ export function ImportSyncPage() {
                 <AppButton variant="secondary" size="xs">
                   Cancel
                 </AppButton>
-                <AppButton size="xs" onClick={() => showToast('✓ 2 slots imported.')}>
-                  Confirm Import
-                </AppButton>
+                <LockedAction allowed={canImport}>
+                  <AppButton size="xs" onClick={() => showToast('✓ 2 slots imported.')}>
+                    Confirm Import
+                  </AppButton>
+                </LockedAction>
               </div>
             </div>
             <DataTable<ImportRow>

@@ -7,9 +7,11 @@ import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
   BreadcrumbNav,
+  LockedAction,
   showToast,
 } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
+import { useCan } from '@/features/auth/useCan';
 import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
 import {
   createTourSlot,
@@ -26,6 +28,8 @@ import {
 
 export function CreateTourPage() {
   const navigate = useNavigate();
+  const can = useCan();
+  const canCreate = can('Schedule.Create');
   const dispatch = useAppDispatch();
   const tourTypes = useAppSelector(selectActiveTourTypes);
   const languages = useAppSelector(selectActiveLanguages);
@@ -166,9 +170,11 @@ export function CreateTourPage() {
             <AppButton variant="secondary" onClick={() => navigate(ROUTES.CALENDAR)}>
               Cancel
             </AppButton>
-            <AppButton onClick={() => void handlePublish()} disabled={isSubmitting}>
-              {isSubmitting ? 'Publishing…' : 'Publish Slot'}
-            </AppButton>
+            <LockedAction allowed={canCreate}>
+              <AppButton onClick={() => void handlePublish()} disabled={isSubmitting}>
+                {isSubmitting ? 'Publishing…' : 'Publish Slot'}
+              </AppButton>
+            </LockedAction>
           </>
         }
       />

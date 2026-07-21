@@ -15,10 +15,12 @@ import {
   LangChip,
   ListErrorState,
   LoadingOverlay,
+  LockedAction,
   SearchInput,
   StatusBadge,
   TablePagination,
 } from '@/components/ui';
+import { useCan } from '@/features/auth/useCan';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import { ROUTES } from '@/constants/routes';
 import {
@@ -45,6 +47,9 @@ function guideStatusToBadge(status: GuideStatus): TourStatus {
 
 export function GuideRosterPage() {
   const navigate = useNavigate();
+  const can = useCan();
+  const canEdit = can('Guides.Edit');
+  const canActivate = can('Guides.Activate');
   const dispatch = useAppDispatch();
   const guides = useAppSelector(selectAdminGuides);
   const status = useAppSelector(selectAdminGuideStatus);
@@ -179,9 +184,11 @@ export function GuideRosterPage() {
       key: 'actions',
       render: (_, record) => (
         <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-          <AppButton variant="secondary" size="xs" onClick={() => setEditGuide(record)}>
-            Edit
-          </AppButton>
+          <LockedAction allowed={canEdit}>
+            <AppButton variant="secondary" size="xs" onClick={() => setEditGuide(record)}>
+              Edit
+            </AppButton>
+          </LockedAction>
           <AppButton
             variant="primary"
             size="xs"
@@ -253,9 +260,11 @@ export function GuideRosterPage() {
           </FilterBar>
 
           <BulkActionBar selectedCount={selectedKeys.length}>
-            <AppButton variant="secondary" size="xs">
-              Activate
-            </AppButton>
+            <LockedAction allowed={canActivate}>
+              <AppButton variant="secondary" size="xs">
+                Activate
+              </AppButton>
+            </LockedAction>
             <AppButton variant="danger" size="xs">
               Remove
             </AppButton>

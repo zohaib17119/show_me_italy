@@ -8,9 +8,11 @@ import {
   DataTable,
   LangChip,
   ListErrorState,
+  LockedAction,
   showToast,
 } from '@/components/ui';
 import { applicationsApi } from '@/features/applications/applicationsApi';
+import { useCan } from '@/features/auth/useCan';
 
 export interface MoveApplicationModalProps {
   open: boolean;
@@ -33,6 +35,8 @@ export function MoveApplicationModal({
   onClose,
   onSuccess,
 }: MoveApplicationModalProps) {
+  const can = useCan();
+  const canAssign = can('Applications.Assign');
   const [rows, setRows] = useState<GuideSlotRow[]>([]);
   const [loadStatus, setLoadStatus] = useState<'idle' | 'loading' | 'succeeded' | 'failed'>(
     'idle',
@@ -151,18 +155,20 @@ export function MoveApplicationModal({
         render: (_, row) => {
           const isBusy = assigningSlotId === row.tourSlotId;
           return (
-            <AppButton
-              size="xs"
-              disabled={isBusy || assigningSlotId != null}
-              onClick={() => void handleAssign(row.tourSlotId)}
-            >
-              {isBusy ? 'Assigning…' : 'Assign'}
-            </AppButton>
+            <LockedAction allowed={canAssign}>
+              <AppButton
+                size="xs"
+                disabled={isBusy || assigningSlotId != null}
+                onClick={() => void handleAssign(row.tourSlotId)}
+              >
+                {isBusy ? 'Assigning…' : 'Assign'}
+              </AppButton>
+            </LockedAction>
           );
         },
       },
     ],
-    [assigningSlotId, handleAssign],
+    [assigningSlotId, handleAssign, canAssign],
   );
 
   return (

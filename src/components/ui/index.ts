@@ -92,6 +92,9 @@ export { SettingsRowMenu } from './data/SettingsRowMenu';
 export { TableRowMenu } from './data/TableRowMenu';
 export type { TableRowMenuItem } from './data/TableRowMenu';
 
+export { LockedAction, NOT_AUTHORIZED_MESSAGE } from './data/LockedAction';
+export type { LockedActionProps } from './data/LockedAction';
+
 export { ListErrorState } from './data/ListErrorState';
 export type { ListErrorStateProps } from './data/ListErrorState';
 

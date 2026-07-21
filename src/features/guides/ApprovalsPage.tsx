@@ -11,9 +11,11 @@ import {
   LangChip,
   ListErrorState,
   LoadingOverlay,
+  LockedAction,
   showToast,
 } from '@/components/ui';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
+import { useCan } from '@/features/auth/useCan';
 import { ROUTES } from '@/constants/routes';
 import {
   approveAgent,
@@ -35,6 +37,9 @@ function registeredLabel(adminNote: string): string {
 
 export function ApprovalsPage() {
   const navigate = useNavigate();
+  const can = useCan();
+  const canApprove = can('Guides.Approve');
+  const canReject = can('Guides.Reject');
   const dispatch = useAppDispatch();
   const pendingGuides = useAppSelector(selectUnverifiedGuides);
   const status = useAppSelector(selectUnverifiedGuideStatus);
@@ -146,26 +151,30 @@ export function ApprovalsPage() {
             >
               View Profile
             </AppButton>
-            <AppButton
-              variant="danger"
-              size="xs"
-              disabled={actionLoading}
-              onClick={() => setRejectTarget({ id: record.id, name: record.name })}
-            >
-              Reject
-            </AppButton>
-            <AppButton
-              size="xs"
-              disabled={actionLoading}
-              onClick={() => void handleApprove(record.id, record.name)}
-            >
-              Approve
-            </AppButton>
+            <LockedAction allowed={canReject}>
+              <AppButton
+                variant="danger"
+                size="xs"
+                disabled={actionLoading}
+                onClick={() => setRejectTarget({ id: record.id, name: record.name })}
+              >
+                Reject
+              </AppButton>
+            </LockedAction>
+            <LockedAction allowed={canApprove}>
+              <AppButton
+                size="xs"
+                disabled={actionLoading}
+                onClick={() => void handleApprove(record.id, record.name)}
+              >
+                Approve
+              </AppButton>
+            </LockedAction>
           </div>
         ),
       },
     ],
-    [actionLoading, navigate],
+    [actionLoading, navigate, canApprove, canReject],
   );
 
   return (

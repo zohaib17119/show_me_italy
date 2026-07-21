@@ -16,12 +16,14 @@ import {
   FormTextarea,
   ImportPreviewRow,
   LangChip,
+  LockedAction,
   SectionLabel,
   SectionTitle,
   Stepper,
   formGridSpanFull,
   showToast,
 } from '@/components/ui';
+import { useCan } from '@/features/auth/useCan';
 import type { FormSelectOption } from '@/components/ui/forms/FormSelect';
 import { ROUTES } from '@/constants/routes';
 import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
@@ -54,6 +56,8 @@ const STATUS_OPTIONS: FormSelectOption[] = [
 
 export function BulkCreatorPage() {
   const navigate = useNavigate();
+  const can = useCan();
+  const canBulk = can('Schedule.Bulk');
   const dispatch = useAppDispatch();
   const tourTypes = useAppSelector(selectActiveTourTypes);
   const languages = useAppSelector(selectActiveLanguages);
@@ -401,9 +405,11 @@ export function BulkCreatorPage() {
             <AppButton variant="secondary" onClick={() => setSelectedDays(new Set(WEEKDAYS.slice(0, 5)))}>
               Clear
             </AppButton>
-            <AppButton onClick={() => void handleCreateAll()} disabled={submitting}>
-              {submitting ? 'Creating…' : `Create All (${previewSlots.length} Slots) →`}
-            </AppButton>
+            <LockedAction allowed={canBulk}>
+              <AppButton onClick={() => void handleCreateAll()} disabled={submitting}>
+                {submitting ? 'Creating…' : `Create All (${previewSlots.length} Slots) →`}
+              </AppButton>
+            </LockedAction>
           </div>
         </div>
 

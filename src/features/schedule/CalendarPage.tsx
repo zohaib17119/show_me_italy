@@ -11,8 +11,10 @@ import {
   IconButton,
   ListErrorState,
   LoadingOverlay,
+  LockedAction,
   SectionLabel,
 } from '@/components/ui';
+import { useCan } from '@/features/auth/useCan';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import {
   addDaysToDateKey,
@@ -76,6 +78,8 @@ const MONTH_NAMES = [
 
 export function CalendarPage() {
   const navigate = useNavigate();
+  const can = useCan();
+  const canCreate = can('Schedule.Create');
   const dispatch = useAppDispatch();
   const summariesByDate = useAppSelector(selectCalendarSummariesByDate);
   const languages = useAppSelector(selectActiveLanguages);
@@ -306,7 +310,9 @@ export function CalendarPage() {
                 Day
               </FilterChip>
             </div>
-            <AppButton onClick={() => navigate(ROUTES.CREATE_TOUR)}>+ New Tour Slot</AppButton>
+            <LockedAction allowed={canCreate}>
+              <AppButton onClick={() => navigate(ROUTES.CREATE_TOUR)}>+ New Tour Slot</AppButton>
+            </LockedAction>
           </>
         }
       />

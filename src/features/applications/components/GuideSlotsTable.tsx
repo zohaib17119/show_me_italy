@@ -7,11 +7,14 @@ import {
   DataTable,
   FilterBar,
   LangChip,
+  LockedAction,
   SearchInput,
   TablePagination,
   TableRowMenu,
 } from '@/components/ui';
+import type { TableRowMenuItem } from '@/components/ui';
 import { getAssignmentPath, getEditTourPath } from '@/constants/routes';
+import { useCan } from '@/features/auth/useCan';
 
 const PAGE_SIZE = 10;
 const ACTIONS_COL_WIDTH = { default: 80, calendarModal: 80 } as const;
@@ -34,6 +37,9 @@ export function GuideSlotsTable({
   onPreviewTicket,
 }: GuideSlotsTableProps) {
   const navigate = useNavigate();
+  const can = useCan();
+  const canEdit = can('Schedule.Edit');
+  const canAssign = can('Applications.Assign');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
   const isCalendarModal = variant === 'calendarModal';
@@ -116,9 +122,11 @@ export function GuideSlotsTable({
         render: (_, row) => {
           if (!row.hasTicket) {
             return (
-              <AppButton variant="warn" size="xs" onClick={() => onUploadTicket?.(row)}>
-                Upload Ticket
-              </AppButton>
+              <LockedAction allowed={canEdit}>
+                <AppButton variant="warn" size="xs" onClick={() => onUploadTicket?.(row)}>
+                  Upload Ticket
+                </AppButton>
+              </LockedAction>
             );
           }
           return (
@@ -139,19 +147,21 @@ export function GuideSlotsTable({
         const goToAssignment = () =>
           navigate(getAssignmentPath(row.tourSlotId), { state: row });
 
-        const menuItems = [];
+        const menuItems: TableRowMenuItem[] = [];
 
         if (!row.hasAssignedGuide) {
           menuItems.push({
             key: 'assign',
             label: 'Assign',
             onClick: goToAssignment,
+            disabled: !canAssign,
           });
         } else if (!isCalendarModal) {
           menuItems.push({
             key: 'assign',
             label: 'Change Assignment',
             onClick: goToAssignment,
+            disabled: !canAssign,
           });
         }
 
@@ -159,6 +169,7 @@ export function GuideSlotsTable({
           key: 'edit',
           label: 'Edit',
           onClick: () => navigate(getEditTourPath(row.tourSlotId)),
+          disabled: !canEdit,
         });
 
         return <TableRowMenu items={menuItems} />;
@@ -166,7 +177,7 @@ export function GuideSlotsTable({
     });
 
     return base;
-  }, [isCalendarModal, navigate, onPreviewTicket, onUploadTicket]);
+  }, [isCalendarModal, navigate, onPreviewTicket, onUploadTicket, canAssign, canEdit]);
 
   return (
     <>

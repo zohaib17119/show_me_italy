@@ -22,6 +22,9 @@ import {
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { setMobileDrawerOpen, toggleSidebar } from '@/features/ui/uiSlice';
 import { selectBadgeCount } from '@/features/notifications/notificationSlice';
+import { selectAuthPermissions } from '@/features/auth/authSlice';
+import { hasPermission } from '@/features/auth/permissions';
+import { NAV_PERMISSION_BY_KEY } from '@/features/auth/routePermissions';
 import { navigationGroups, findNavKeyByPath } from '@/constants/navigation';
 import type { BadgeKey } from '@/types';
 
@@ -55,6 +58,7 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
   const navigate = useNavigate();
   const location = useLocation();
   const counts = useAppSelector((s) => s.notifications.counts);
+  const permissions = useAppSelector(selectAuthPermissions);
 
   const selectedKey = findNavKeyByPath(location.pathname);
 
@@ -62,10 +66,13 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
     const items: MenuProps['items'] = [];
 
     navigationGroups.forEach((group) => {
-      items.push({
-        type: 'group',
-        label: collapsed ? null : group.label,
-        children: group.items.map((item) => {
+      const children = group.items
+        .filter((item) => {
+          const required = NAV_PERMISSION_BY_KEY[item.key];
+          if (!required) return true;
+          return hasPermission(permissions, required);
+        })
+        .map((item) => {
           let label: React.ReactNode = item.label;
           if (item.badgeKey && !collapsed) {
             const count = selectBadgeCount(counts, item.badgeKey as BadgeKey);
@@ -98,12 +105,19 @@ function SidebarContent({ collapsed }: { collapsed: boolean }) {
             label,
             onClick: () => navigate(item.path),
           };
-        }),
+        });
+
+      if (children.length === 0) return;
+
+      items.push({
+        type: 'group',
+        label: collapsed ? null : group.label,
+        children,
       });
     });
 
     return items;
-  }, [collapsed, counts, navigate]);
+  }, [collapsed, counts, navigate, permissions]);
 
   return (
     <>

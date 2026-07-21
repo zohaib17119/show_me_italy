@@ -11,10 +11,12 @@ import {
   GuideCell,
   LangChip,
   ListErrorState,
+  LockedAction,
   StatusBadge,
   showToast,
 } from '@/components/ui';
 import { applicationsApi } from '@/features/applications/applicationsApi';
+import { useCan } from '@/features/auth/useCan';
 import type { LangCode } from '@/types';
 import { MoveApplicationModal } from './MoveApplicationModal';
 
@@ -46,6 +48,8 @@ export function SlotApplicantsDrawer({
   onClose,
   onMutated,
 }: SlotApplicantsDrawerProps) {
+  const can = useCan();
+  const canAssign = can('Applications.Assign');
   const [applicants, setApplicants] = useState<SlotApplicantRow[]>([]);
   const [summary, setSummary] = useState<SlotSummaryRow | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'succeeded' | 'failed'>('idle');
@@ -158,39 +162,43 @@ export function SlotApplicantsDrawer({
           const isBusy = approvingId === row.applicationId;
           return (
             <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-              <AppButton
-                size="xs"
-                disabled={missingId || isBusy}
-                onClick={() => {
-                  if (row.applicationId == null) {
-                    showToast('Application ID not available');
-                    return;
-                  }
-                  void handleApprove(row.applicationId);
-                }}
-              >
-                {isBusy ? 'Approving…' : 'Approve'}
-              </AppButton>
-              <AppButton
-                variant="secondary"
-                size="xs"
-                disabled={missingId || isBusy}
-                onClick={() => {
-                  if (row.applicationId == null) {
-                    showToast('Application ID not available');
-                    return;
-                  }
-                  setMoveApplicationId(row.applicationId);
-                }}
-              >
-                Move
-              </AppButton>
+              <LockedAction allowed={canAssign}>
+                <AppButton
+                  size="xs"
+                  disabled={missingId || isBusy}
+                  onClick={() => {
+                    if (row.applicationId == null) {
+                      showToast('Application ID not available');
+                      return;
+                    }
+                    void handleApprove(row.applicationId);
+                  }}
+                >
+                  {isBusy ? 'Approving…' : 'Approve'}
+                </AppButton>
+              </LockedAction>
+              <LockedAction allowed={canAssign}>
+                <AppButton
+                  variant="secondary"
+                  size="xs"
+                  disabled={missingId || isBusy}
+                  onClick={() => {
+                    if (row.applicationId == null) {
+                      showToast('Application ID not available');
+                      return;
+                    }
+                    setMoveApplicationId(row.applicationId);
+                  }}
+                >
+                  Move
+                </AppButton>
+              </LockedAction>
             </div>
           );
         },
       },
     ],
-    [approvingId, handleApprove],
+    [approvingId, handleApprove, canAssign],
   );
 
   return (

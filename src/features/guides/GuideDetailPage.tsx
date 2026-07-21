@@ -13,11 +13,13 @@ import {
   DataTable,
   GuideAvatar,
   LangChip,
+  LockedAction,
   SectionLabel,
   SectionTitle,
   StatusBadge,
   showToast,
 } from '@/components/ui';
+import { useCan } from '@/features/auth/useCan';
 import uiStyles from '@/components/ui/data/ui.module.css';
 import { ROUTES } from '@/constants/routes';
 import { applicationsApi } from '@/features/applications/applicationsApi';
@@ -53,6 +55,13 @@ function guideStatusToBadge(status: GuideStatus, isActive?: boolean): TourStatus
 export function GuideDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const can = useCan();
+  const canApprove = can('Guides.Approve');
+  const canReject = can('Guides.Reject');
+  const canActivate = can('Guides.Activate');
+  const canDeactivate = can('Guides.Deactivate');
+  const canEdit = can('Guides.Edit');
+  const canAssign = can('Applications.Assign');
   const dispatch = useAppDispatch();
   const detailStatus = useAppSelector(selectAgentDetailStatus);
   const guide = useAppSelector(selectSelectedAgent);
@@ -259,17 +268,19 @@ export function GuideDetailPage() {
       title: 'Actions',
       key: 'actions',
       render: (_, record) => (
-        <AppButton
-          size="xs"
-          disabled={
-            !record.applicationId ||
-            approvingApplicationId === record.applicationId ||
-            actionLoading
-          }
-          onClick={() => void handleApproveApplication(record.applicationId)}
-        >
-          {approvingApplicationId === record.applicationId ? 'Approving…' : 'Approve'}
-        </AppButton>
+        <LockedAction allowed={canAssign}>
+          <AppButton
+            size="xs"
+            disabled={
+              !record.applicationId ||
+              approvingApplicationId === record.applicationId ||
+              actionLoading
+            }
+            onClick={() => void handleApproveApplication(record.applicationId)}
+          >
+            {approvingApplicationId === record.applicationId ? 'Approving…' : 'Approve'}
+          </AppButton>
+        </LockedAction>
       ),
     },
   ];
@@ -310,17 +321,21 @@ export function GuideDetailPage() {
             <div className="page-header-extra">
               {isPending ? (
                 <>
-                  <AppButton
-                    variant="danger"
-                    size="xs"
-                    disabled={actionLoading}
-                    onClick={() => setRejectOpen(true)}
-                  >
-                    Reject
-                  </AppButton>
-                  <AppButton size="xs" disabled={actionLoading} onClick={() => void handleApprove()}>
-                    Approve
-                  </AppButton>
+                  <LockedAction allowed={canReject}>
+                    <AppButton
+                      variant="danger"
+                      size="xs"
+                      disabled={actionLoading}
+                      onClick={() => setRejectOpen(true)}
+                    >
+                      Reject
+                    </AppButton>
+                  </LockedAction>
+                  <LockedAction allowed={canApprove}>
+                    <AppButton size="xs" disabled={actionLoading} onClick={() => void handleApprove()}>
+                      Approve
+                    </AppButton>
+                  </LockedAction>
                 </>
               ) : null}
             </div>
@@ -469,23 +484,27 @@ export function GuideDetailPage() {
             <AppCard>
               <SectionTitle style={{ marginBottom: 10 }}>Admin Actions</SectionTitle>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <AppButton
-                  variant="secondary"
-                  size="xs"
-                  style={{ width: '100%' }}
-                  onClick={() => showToast('✓ Edit languages')}
-                >
-                  Edit Languages
-                </AppButton>
-                <AppButton
-                  variant={isInactive ? 'primary' : 'warn'}
-                  size="xs"
-                  style={{ width: '100%' }}
-                  disabled={actionLoading}
-                  onClick={() => setDeactivateOpen(true)}
-                >
-                  {isInactive ? 'Activate Guide' : 'Deactivate Guide'}
-                </AppButton>
+                <LockedAction allowed={canEdit}>
+                  <AppButton
+                    variant="secondary"
+                    size="xs"
+                    style={{ width: '100%' }}
+                    onClick={() => showToast('✓ Edit languages')}
+                  >
+                    Edit Languages
+                  </AppButton>
+                </LockedAction>
+                <LockedAction allowed={isInactive ? canActivate : canDeactivate}>
+                  <AppButton
+                    variant={isInactive ? 'primary' : 'warn'}
+                    size="xs"
+                    style={{ width: '100%' }}
+                    disabled={actionLoading}
+                    onClick={() => setDeactivateOpen(true)}
+                  >
+                    {isInactive ? 'Activate Guide' : 'Deactivate Guide'}
+                  </AppButton>
+                </LockedAction>
               </div>
             </AppCard>
           )}

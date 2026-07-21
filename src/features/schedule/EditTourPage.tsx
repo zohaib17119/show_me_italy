@@ -9,9 +9,11 @@ import {
   AppButton,
   BreadcrumbNav,
   ListErrorState,
+  LockedAction,
   showToast,
 } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
+import { useCan } from '@/features/auth/useCan';
 import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
 import {
   clearSelectedTour,
@@ -34,6 +36,8 @@ import {
 export function EditTourPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const can = useCan();
+  const canEdit = can('Schedule.Edit');
   const dispatch = useAppDispatch();
   const tour = useAppSelector(selectSelectedTour);
   const detailStatus = useAppSelector(selectTourDetailStatus);
@@ -265,9 +269,11 @@ export function EditTourPage() {
             <AppButton variant="secondary" onClick={() => navigate(ROUTES.GUIDE_SLOTS)}>
               Cancel
             </AppButton>
-            <AppButton onClick={() => void handleSave()} disabled={isSubmitting}>
-              {isSubmitting ? 'Saving…' : 'Edit Slot/Tour'}
-            </AppButton>
+            <LockedAction allowed={canEdit}>
+              <AppButton onClick={() => void handleSave()} disabled={isSubmitting}>
+                {isSubmitting ? 'Saving…' : 'Edit Slot/Tour'}
+              </AppButton>
+            </LockedAction>
           </>
         }
       />

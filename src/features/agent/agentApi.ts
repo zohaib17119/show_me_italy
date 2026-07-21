@@ -7,6 +7,9 @@ import type {
   ApproveRejectAgents,
   GuideUpdateProfilePayload,
 } from '@/api/types';
+import type { SignUpAdminPayload } from '@/api/types/adminSignUp';
+import type { UpdateAdminProfilePayload } from '@/api/types/adminProfile';
+import type { AdminUserRecord } from '@/api/types/adminUser';
 import { unwrapData } from '@/api/types';
 
 export const agentApi = {
@@ -35,5 +38,21 @@ export const agentApi = {
 
   updateGuideProfile: async (payload: GuideUpdateProfilePayload): Promise<void> => {
     await axiosInstance.post('/v1/Agent/guide-update-profile', payload);
+  },
+
+  signUpAdmin: async (payload: SignUpAdminPayload): Promise<void> => {
+    await axiosInstance.post('/v1/Agent/sign-up-admin', payload);
+  },
+
+  updateAdminProfile: async (payload: UpdateAdminProfilePayload): Promise<void> => {
+    await axiosInstance.post('/v1/Agent/update-admin-profile', payload);
+  },
+
+  getAllAdmins: async (userId?: string): Promise<AdminUserRecord[]> => {
+    const url = userId?.trim()
+      ? `/v1/Agent/get-all-admins-by-userId?userId=${encodeURIComponent(userId.trim())}`
+      : '/v1/Agent/get-all-admins-by-userId';
+    const { data } = await axiosInstance.post(url);
+    return normalizeListResponse<AdminUserRecord>(data);
   },
 };

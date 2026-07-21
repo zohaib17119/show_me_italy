@@ -8,11 +8,13 @@ import {
   FilterSelect,
   GuideCell,
   LangChip,
+  LockedAction,
   SearchInput,
   StatusBadge,
   TablePagination,
 } from '@/components/ui';
 // import { ROUTES } from '@/constants/routes';
+import { useCan } from '@/features/auth/useCan';
 import type { Application } from '@/mocks/applications';
 import {
   buildGroupedQueueRows,
@@ -56,6 +58,8 @@ export function ApplicationsQueueTable({
   onReject,
 }: ApplicationsQueueTableProps) {
   const navigate = useNavigate();
+  const can = useCan();
+  const canUpdateStatus = can('Applications.UpdateStatus');
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState('');
 
@@ -175,48 +179,54 @@ export function ApplicationsQueueTable({
         render: (_, row) =>
           isQueueGroupRow(row) ? null : (
             <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-              <AppButton
-                variant="primary"
-                size="xs"
-                disabled={
-                  mutationLoading &&
-                  (approvingId === row.applicationId ||
-                    holdingId === row.applicationId ||
-                    rejectingId === row.applicationId)
-                }
-                onClick={() => void onApprove(row.applicationId)}
-              >
-                Approve
-              </AppButton>
-              {onReject && (
+              <LockedAction allowed={canUpdateStatus}>
                 <AppButton
-                  variant="danger"
+                  variant="primary"
                   size="xs"
                   disabled={
                     mutationLoading &&
-                    (rejectingId === row.applicationId ||
-                      approvingId === row.applicationId ||
-                      holdingId === row.applicationId)
-                  }
-                  onClick={() => void onReject(row.applicationId)}
-                >
-                  Reject
-                </AppButton>
-              )}
-              {onHold && (
-                <AppButton
-                  variant="secondary"
-                  size="xs"
-                  disabled={
-                    mutationLoading &&
-                    (holdingId === row.applicationId ||
-                      approvingId === row.applicationId ||
+                    (approvingId === row.applicationId ||
+                      holdingId === row.applicationId ||
                       rejectingId === row.applicationId)
                   }
-                  onClick={() => void onHold(row.applicationId)}
+                  onClick={() => void onApprove(row.applicationId)}
                 >
-                  Hold
+                  Approve
                 </AppButton>
+              </LockedAction>
+              {onReject && (
+                <LockedAction allowed={canUpdateStatus}>
+                  <AppButton
+                    variant="danger"
+                    size="xs"
+                    disabled={
+                      mutationLoading &&
+                      (rejectingId === row.applicationId ||
+                        approvingId === row.applicationId ||
+                        holdingId === row.applicationId)
+                    }
+                    onClick={() => void onReject(row.applicationId)}
+                  >
+                    Reject
+                  </AppButton>
+                </LockedAction>
+              )}
+              {onHold && (
+                <LockedAction allowed={canUpdateStatus}>
+                  <AppButton
+                    variant="secondary"
+                    size="xs"
+                    disabled={
+                      mutationLoading &&
+                      (holdingId === row.applicationId ||
+                        approvingId === row.applicationId ||
+                        rejectingId === row.applicationId)
+                    }
+                    onClick={() => void onHold(row.applicationId)}
+                  >
+                    Hold
+                  </AppButton>
+                </LockedAction>
               )}
               {/* <AppButton
                 variant="secondary"
@@ -232,7 +242,7 @@ export function ApplicationsQueueTable({
 
       return cols;
     },
-    [approvingId, assignButtonLabel, columnCount, holdingId, mutationLoading, navigate, onApprove, onHold, onReject, rejectingId, showGuideNotes, showPayRate],
+    [approvingId, assignButtonLabel, columnCount, holdingId, mutationLoading, navigate, onApprove, onHold, onReject, rejectingId, showGuideNotes, showPayRate, canUpdateStatus],
   );
 
   return (
