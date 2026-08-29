@@ -6,9 +6,10 @@
 
 .detailGrid {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  grid-template-columns: 1fr;
   gap: 16px;
   max-width: 100%;
+  /* previous: minmax(0, 1.6fr) minmax(0, 1fr) — restore when right cards return */
 }
 
 .detailGrid > * {

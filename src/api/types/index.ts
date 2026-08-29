@@ -44,6 +44,17 @@ export interface TourSlot {
   createdByAdminId?: number | null;
   createdAt?: string;
   updatedAt?: string;
+  applicationID?: number | null;
+  guideID?: string | null;
+  fullName?: string | null;
+}
+
+export interface AdminUpdateGuideOnSelectedTourPayload {
+  status: string;
+  guideId: string;
+  tourSlotId: number;
+  isNone: boolean;
+  applicationId: number;
 }
 
 export interface BulkTourSlotCreatePayload {
@@ -172,6 +183,7 @@ export interface NotificationRecipientRecord {
   notificationStatus?: string;
   audience?: string | null;
   channels?: string | null;
+  url?: string | null;
 }
 
 export interface AgentUserLanguage {

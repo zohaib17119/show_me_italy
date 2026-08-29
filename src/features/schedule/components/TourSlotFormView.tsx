@@ -35,6 +35,10 @@ export interface TourSlotFormViewProps {
   showGuidesNeeded?: boolean;
   meetingPointReadOnly?: boolean;
   errors?: TourSlotFieldErrors;
+  assignedGuideOptions?: FormSelectOption[];
+  assignedGuideId?: string;
+  assignedGuideDisabled?: boolean;
+  onAssignedGuideChange?: (guideId: string) => void;
   onTourTypeIdChange?: (value: number) => void;
   onLanguageIdChange?: (value: number) => void;
   onSlotDateChange?: (value: string) => void;
@@ -63,6 +67,10 @@ export function TourSlotFormView({
   showGuidesNeeded = true,
   meetingPointReadOnly = false,
   errors,
+  assignedGuideOptions,
+  assignedGuideId = '',
+  assignedGuideDisabled = false,
+  onAssignedGuideChange,
   onTourTypeIdChange,
   onLanguageIdChange,
   onSlotDateChange,
@@ -112,6 +120,17 @@ export function TourSlotFormView({
             error={errors?.languageId}
             onChange={(e) => onLanguageIdChange?.(Number(e.target.value))}
           />
+          {assignedGuideOptions != null && (
+            <div className={formGridSpanFull}>
+              <FormSelect
+                label="Assigned Guide"
+                options={assignedGuideOptions}
+                value={assignedGuideId}
+                disabled={disabled || assignedGuideDisabled}
+                onChange={(e) => onAssignedGuideChange?.(e.target.value)}
+              />
+            </div>
+          )}
           <FormInput
             label="Start Time"
             type="time"

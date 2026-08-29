@@ -10,6 +10,7 @@ export interface SlotSummaryRow {
   tourTypeId: number | null;
   languageCode: LangCode | string;
   languageLabel: string;
+  guidesFilled: number;
   filledLabel: string;
   payRateLabel: string;
   payRateValue: number | null;
@@ -87,6 +88,7 @@ export function mapSlotSummary(record?: SlotSummaryRecord | null): SlotSummaryRo
     tourTypeId: record.tourTypeId ?? null,
     languageCode,
     languageLabel: record.languageName?.trim() || languageCode,
+    guidesFilled,
     filledLabel: `${guidesFilled} / ${guidesNeeded}`,
     payRateLabel: formatPayRate(payRate),
     payRateValue: payRate,

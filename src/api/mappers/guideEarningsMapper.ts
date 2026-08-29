@@ -1,4 +1,7 @@
-import type { GuideEarningsRecord } from '@/api/types/guideEarnings';
+import type {
+  GuideEarningsDetailRecord,
+  GuideEarningsRecord,
+} from '@/api/types/guideEarnings';
 
 export interface GuideEarningsRow {
   id: string;
@@ -18,6 +21,20 @@ export interface GuideEarningsRow {
   tourTypesWorked: number;
   totalHours: number;
   averageHourlyEarning: number;
+}
+
+export interface GuideEarningsDetailRow {
+  id: string;
+  guideId: string;
+  guideName: string;
+  applicationId: number | null;
+  tourSlotId: number | null;
+  slotDateLabel: string;
+  tourTypeName: string;
+  languageId: number | null;
+  earning: number;
+  durationMinutes: number;
+  hours: number;
 }
 
 function initials(name: string): string {
@@ -76,4 +93,48 @@ export function mapGuideEarningsRecords(
 ): GuideEarningsRow[] {
   if (!Array.isArray(records)) return [];
   return records.map(mapGuideEarningsRecord);
+}
+
+export function mapGuideEarningsDetailRecord(
+  record: GuideEarningsDetailRecord,
+  index: number,
+): GuideEarningsDetailRow {
+  const applicationId =
+    record.applicationID != null && Number.isFinite(record.applicationID)
+      ? record.applicationID
+      : null;
+  const tourSlotId =
+    record.tourSlotID != null && Number.isFinite(record.tourSlotID)
+      ? record.tourSlotID
+      : null;
+  const id =
+    applicationId != null
+      ? `app-${applicationId}`
+      : tourSlotId != null
+        ? `slot-${tourSlotId}`
+        : `detail-${index}`;
+
+  return {
+    id,
+    guideId: String(record.guideID ?? '').trim(),
+    guideName: record.guideName?.trim() || 'Unknown',
+    applicationId,
+    tourSlotId,
+    slotDateLabel: formatDateLabel(record.slotDate),
+    tourTypeName: record.tourTypeName?.trim() || '—',
+    languageId:
+      record.languageID != null && Number.isFinite(record.languageID)
+        ? record.languageID
+        : null,
+    earning: record.earning ?? 0,
+    durationMinutes: record.durationMinutes ?? 0,
+    hours: record.hours ?? 0,
+  };
+}
+
+export function mapGuideEarningsDetailRecords(
+  records: GuideEarningsDetailRecord[] | undefined,
+): GuideEarningsDetailRow[] {
+  if (!Array.isArray(records)) return [];
+  return records.map(mapGuideEarningsDetailRecord);
 }

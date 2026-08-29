@@ -13,6 +13,7 @@ export interface AnnouncementInboxRow {
   icon: string;
   iconBg: string;
   unread: boolean;
+  url?: string | null;
 }
 
 const TYPE_STYLES: Record<string, { icon: string; iconBg: string }> = {
@@ -146,6 +147,7 @@ export function mapRecipientToInboxRow(record: NotificationRecipientRecord): Ann
     icon: style.icon,
     iconBg: style.iconBg,
     unread: resolveIsUnread(record),
+    url: record.url?.trim() || null,
   };
 }
 

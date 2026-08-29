@@ -17,6 +17,7 @@ import { useCan } from '@/features/auth/useCan';
 export interface MoveApplicationModalProps {
   open: boolean;
   applicationId: number | null;
+  tourSlotId: number | null;
   date: string | null;
   languageID: string | null;
   tourTypeIds: string | null;
@@ -28,6 +29,7 @@ export interface MoveApplicationModalProps {
 export function MoveApplicationModal({
   open,
   applicationId,
+  tourSlotId,
   date,
   languageID,
   tourTypeIds,
@@ -58,6 +60,8 @@ export function MoveApplicationModal({
         languageID: languageID.trim(),
         tourTypeIds: tourTypeIds?.trim() ?? '',
         status: slotStatus?.trim() ?? '',
+        tourSlotId:
+          tourSlotId != null && tourSlotId > 0 ? String(tourSlotId) : undefined,
       });
       setRows(mapGuideSlots(records));
       setLoadStatus('succeeded');
@@ -66,7 +70,7 @@ export function MoveApplicationModal({
       setError(getApiErrorMessage(err));
       setRows([]);
     }
-  }, [date, languageID, tourTypeIds, slotStatus]);
+  }, [date, languageID, tourTypeIds, slotStatus, tourSlotId]);
 
   useEffect(() => {
     if (canLoad) {

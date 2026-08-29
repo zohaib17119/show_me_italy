@@ -27,3 +27,17 @@ export interface GetGuideEarningsParams {
   pagenumber: number;
   pagesize: number;
 }
+
+export interface GuideEarningsDetailRecord {
+  guideID?: string;
+  guideName?: string | null;
+  applicationID?: number;
+  tourSlotID?: number;
+  slotDate?: string | null;
+  tourTypeID?: number;
+  tourTypeName?: string | null;
+  languageID?: number;
+  earning?: number;
+  durationMinutes?: number;
+  hours?: number;
+}

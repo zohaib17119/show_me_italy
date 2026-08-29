@@ -23,6 +23,14 @@ import {
 
 const { Header } = Layout;
 
+function resolveNotificationPath(url: string): string {
+  const trimmed = url.trim();
+  if (!trimmed) return '';
+  if (/^https?:\/\//i.test(trimmed)) return '';
+  if (trimmed.startsWith('/')) return trimmed;
+  return `/${trimmed}`;
+}
+
 export function Topbar() {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
@@ -118,47 +126,60 @@ export function Topbar() {
           </div>
         )}
 
-        {recipientInbox.map((item) => (
-          <NotificationItem
-            key={item.id}
-            icon={
-              <span
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '100%',
-                  height: '100%',
-                  background: item.iconBg,
-                  borderRadius: 10,
-                  fontSize: 16,
-                }}
-              >
-                {item.icon}
-              </span>
-            }
-            title={item.title}
-            sub={item.message}
-            meta={item.meta}
-            time={item.time}
-            unread={item.unread}
-            titleAction={
-              item.recipientId != null && item.unread ? (
-                <AppButton
-                  variant="secondary"
-                  size="xs"
-                  disabled={markingRead}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleMarkAsRead(item.recipientId!);
+        {recipientInbox.map((item) => {
+          const path = item.url ? resolveNotificationPath(item.url) : '';
+          return (
+            <NotificationItem
+              key={item.id}
+              icon={
+                <span
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: '100%',
+                    height: '100%',
+                    background: item.iconBg,
+                    borderRadius: 10,
+                    fontSize: 16,
                   }}
                 >
-                  Mark as read
-                </AppButton>
-              ) : null
-            }
-          />
-        ))}
+                  {item.icon}
+                </span>
+              }
+              title={item.title}
+              sub={item.message}
+              meta={item.meta}
+              time={item.time}
+              unread={item.unread}
+              onClick={
+                path
+                  ? () => {
+                      navigate(path);
+                      if (item.unread && item.recipientId != null) {
+                        handleMarkAsRead(item.recipientId);
+                      }
+                    }
+                  : undefined
+              }
+              titleAction={
+                item.recipientId != null && item.unread ? (
+                  <AppButton
+                    variant="secondary"
+                    size="xs"
+                    disabled={markingRead}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleMarkAsRead(item.recipientId!);
+                    }}
+                  >
+                    Mark as read
+                  </AppButton>
+                ) : null
+              }
+            />
+          );
+        })}
       </div>
 
       <div

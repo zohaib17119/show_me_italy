@@ -147,30 +147,20 @@ export function GuideSlotsTable({
         const goToAssignment = () =>
           navigate(getAssignmentPath(row.tourSlotId), { state: row });
 
-        const menuItems: TableRowMenuItem[] = [];
-
-        if (!row.hasAssignedGuide) {
-          menuItems.push({
+        const menuItems: TableRowMenuItem[] = [
+          {
             key: 'assign',
             label: 'Assign',
             onClick: goToAssignment,
             disabled: !canAssign,
-          });
-        } else if (!isCalendarModal) {
-          menuItems.push({
-            key: 'assign',
-            label: 'Change Assignment',
-            onClick: goToAssignment,
-            disabled: !canAssign,
-          });
-        }
-
-        menuItems.push({
-          key: 'edit',
-          label: 'Edit',
-          onClick: () => navigate(getEditTourPath(row.tourSlotId)),
-          disabled: !canEdit,
-        });
+          },
+          {
+            key: 'edit',
+            label: 'Edit',
+            onClick: () => navigate(getEditTourPath(row.tourSlotId)),
+            disabled: !canEdit,
+          },
+        ];
 
         return <TableRowMenu items={menuItems} />;
       },

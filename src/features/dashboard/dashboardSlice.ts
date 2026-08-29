@@ -19,9 +19,13 @@ const initialState: DashboardState = {
 
 export const fetchDashboard = createAsyncThunk(
   'dashboard/fetch',
-  async (_, { rejectWithValue }) => {
+  async (_, { getState, rejectWithValue }) => {
+    const userId = (getState() as RootState).auth.user?.id?.trim() ?? '';
+    if (!userId) {
+      return rejectWithValue('User ID is required to load the dashboard');
+    }
     try {
-      return await dashboardApi.getAdminDashboard();
+      return await dashboardApi.getAdminDashboard(userId);
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }

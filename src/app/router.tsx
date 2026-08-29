@@ -175,6 +175,14 @@ export const router = createBrowserRouter([
         ),
       },
       {
+        path: 'payments/reports/:guideId',
+        element: lazyPage(() =>
+          import('@/features/payments/GuideEarningsBreakdownPage').then((m) => ({
+            default: m.GuideEarningsBreakdownPage,
+          })),
+        ),
+      },
+      {
         path: 'system/notifications',
         element: lazyPage(() =>
           import('@/features/system/NotificationsPage').then((m) => ({

@@ -304,6 +304,7 @@ export function SlotApplicantsDrawer({
       <MoveApplicationModal
         open={moveApplicationId != null}
         applicationId={moveApplicationId}
+        tourSlotId={tourSlotId}
         date={moveDate}
         languageID={moveLanguageID}
         tourTypeIds={moveTourTypeIds}

@@ -1,75 +1,53 @@
 import { Card } from 'antd';
+import { useNavigate } from 'react-router-dom';
 import { useAppSelector } from '@/app/hooks';
+import { ROUTES } from '@/constants/routes';
 import { selectDashboardData } from '@/features/dashboard/dashboardSlice';
 
 export function RevenueCard() {
+  const navigate = useNavigate();
   const dashboard = useAppSelector(selectDashboardData);
-  const payout = dashboard?.payout;
+  const totalEarnings = dashboard?.stats?.totalEarnings ?? 0;
 
   return (
-    <Card id="revenueCard" styles={{ body: { padding: '14px 16px' } }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div>
-          <div
-            style={{
-              fontSize: 10,
-              fontWeight: 700,
-              color: 'var(--text-muted)',
-              letterSpacing: '0.07em',
-              textTransform: 'uppercase',
-              marginBottom: 4,
-            }}
-          >
-            Pending Payouts
-          </div>
-          <div
-            style={{
-              fontSize: 26,
-              fontWeight: 800,
-              letterSpacing: '-0.04em',
-              color: 'var(--text-primary)',
-            }}
-          >
-            €{(payout?.pendingAmount ?? 0).toLocaleString()}
-          </div>
-          <span
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 4,
-              background: '#e0f5e9',
-              color: '#1e8449',
-              padding: '3px 8px',
-              borderRadius: 999,
-              fontSize: 10,
-              fontWeight: 700,
-              marginTop: 4,
-            }}
-          >
-            €{(payout?.paidThisMonth ?? 0).toLocaleString()} paid this month
-          </span>
-        </div>
-        <div style={{ textAlign: 'right' }}>
-          <div style={{ fontSize: 10, color: 'var(--text-muted)' }}>Queue</div>
-          <div style={{ fontSize: 15, fontWeight: 800, color: 'var(--text-secondary)' }}>
-            {payout?.pendingCount ?? 0}
-          </div>
-        </div>
-      </div>
-      <div style={{ padding: '10px 0 0' }}>
+    <Card
+      id="revenueCard"
+      hoverable
+      onClick={() => navigate(ROUTES.REPORTS)}
+      styles={{ body: { padding: '14px 16px', cursor: 'pointer' } }}
+    >
+      <div>
         <div
           style={{
-            height: 52,
-            background: 'linear-gradient(180deg, rgba(39,174,96,0.15) 0%, transparent 100%)',
-            borderRadius: 8,
-            display: 'flex',
-            alignItems: 'flex-end',
-            justifyContent: 'center',
+            fontSize: 10,
+            fontWeight: 700,
             color: 'var(--text-muted)',
-            fontSize: 11,
+            letterSpacing: '0.07em',
+            textTransform: 'uppercase',
+            marginBottom: 4,
           }}
         >
-          {payout?.pendingCount ?? 0} payouts in queue
+          Payouts this month
+        </div>
+        <div
+          style={{
+            fontSize: 26,
+            fontWeight: 800,
+            letterSpacing: '-0.04em',
+            color: 'var(--text-primary)',
+          }}
+        >
+          €{totalEarnings.toLocaleString()}
+        </div>
+        <div
+          style={{
+            marginTop: 8,
+            fontSize: 11,
+            fontWeight: 600,
+            color: 'var(--g600)',
+          }}
+        >
+          View reports →
         </div>
       </div>
     </Card>

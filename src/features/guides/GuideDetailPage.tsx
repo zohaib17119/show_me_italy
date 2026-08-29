@@ -58,9 +58,10 @@ export function GuideDetailPage() {
   const can = useCan();
   const canApprove = can('Guides.Approve');
   const canReject = can('Guides.Reject');
-  const canActivate = can('Guides.Activate');
-  const canDeactivate = can('Guides.Deactivate');
-  const canEdit = can('Guides.Edit');
+  // Used when Admin Actions card is restored:
+  // const canActivate = can('Guides.Activate');
+  // const canDeactivate = can('Guides.Deactivate');
+  // const canEdit = can('Guides.Edit');
   const canAssign = can('Applications.Assign');
   const dispatch = useAppDispatch();
   const detailStatus = useAppSelector(selectAgentDetailStatus);
@@ -447,6 +448,7 @@ export function GuideDetailPage() {
           </AppCard>
         </div>
 
+        {/* Temporarily hidden — restore when earnings / admin actions return
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12, minWidth: 0 }}>
           <AppCard>
             <SectionTitle style={{ marginBottom: 12 }}>Earnings</SectionTitle>
@@ -468,16 +470,6 @@ export function GuideDetailPage() {
                 <span className={styles.earningsValue}>{guide.earnings.totalTours}</span>
               </div>
             </div>
-            {/* Hidden until payouts work resumes:
-            <AppButton
-              variant="secondary"
-              size="xs"
-              style={{ width: '100%', marginTop: 12 }}
-              onClick={() => navigate(ROUTES.PAYOUTS)}
-            >
-              View Payout →
-            </AppButton>
-            */}
           </AppCard>
 
           {!isPending && (
@@ -509,6 +501,7 @@ export function GuideDetailPage() {
             </AppCard>
           )}
         </div>
+        */}
       </div>
 
       <RejectAgentModal

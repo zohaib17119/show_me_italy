@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { ColumnsType } from 'antd/es/table';
+import { useNavigate } from 'react-router-dom';
 import { mapGuideEarningsRecords, type GuideEarningsRow } from '@/api/mappers/guideEarningsMapper';
 import { formatLocalDateKey, todayLocalDateKey } from '@/api/utils/date';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
+  AppButton,
   DataTable,
   FilterBar,
   FormInput,
@@ -14,7 +16,7 @@ import {
   showToast,
 } from '@/components/ui';
 import { getRouteMeta } from '@/constants/navigation';
-import { ROUTES } from '@/constants/routes';
+import { ROUTES, getReportsBreakdownPath } from '@/constants/routes';
 import { agentApi } from '@/features/agent/agentApi';
 import { earningsApi } from '@/features/payments/earningsApi';
 
@@ -41,6 +43,7 @@ function inferTotal(page: number, pageSize: number, rowCount: number): number {
 }
 
 export function ReportsPage() {
+  const navigate = useNavigate();
   const meta = getRouteMeta(ROUTES.REPORTS);
   const today = todayLocalDateKey();
 
@@ -180,8 +183,27 @@ export function ReportsPage() {
         dataIndex: 'lastTourDateLabel',
         key: 'lastTourDate',
       },
+      {
+        title: 'Actions',
+        key: 'actions',
+        fixed: 'right',
+        width: 140,
+        render: (_, row) => (
+          <AppButton
+            variant="secondary"
+            size="sm"
+            onClick={() =>
+              navigate(getReportsBreakdownPath(row.guideId), {
+                state: { guideName: row.guideName },
+              })
+            }
+          >
+            Breakdown
+          </AppButton>
+        ),
+      },
     ],
-    [],
+    [navigate],
   );
 
   return (
@@ -227,6 +249,7 @@ export function ReportsPage() {
         columns={columns}
         dataSource={rows}
         pagination={false}
+        scroll={{ x: 'max-content' }}
       />
 
       <TablePagination

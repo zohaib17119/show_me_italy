@@ -24,6 +24,8 @@ export function NotificationItem({
   onClick,
   className,
 }: NotificationItemProps) {
+  const showFooter = Boolean(titleAction || time || unread);
+
   return (
     <div
       className={[
@@ -49,17 +51,19 @@ export function NotificationItem({
     >
       <div className={styles.notificationIcon}>{icon}</div>
       <div className={styles.notificationBody}>
-        <div className={styles.notificationTitleRow}>
-          <div className={styles.notificationTitle}>{title}</div>
-          {titleAction && (
-            <div className={styles.notificationTitleAction}>{titleAction}</div>
-          )}
-        </div>
+        <div className={styles.notificationTitle}>{title}</div>
         {sub && <div className={styles.notificationSub}>{sub}</div>}
         {meta && <div className={styles.notificationMeta}>{meta}</div>}
+        {showFooter && (
+          <div className={styles.notificationFooter}>
+            <div className={styles.notificationFooterAction}>{titleAction}</div>
+            <div className={styles.notificationFooterMeta}>
+              {time && <span className={styles.notificationTime}>{time}</span>}
+              {unread && <span className={styles.notificationDot} aria-hidden />}
+            </div>
+          </div>
+        )}
       </div>
-      {time && <span className={styles.notificationTime}>{time}</span>}
-      {unread && <span className={styles.notificationDot} aria-hidden />}
     </div>
   );
 }

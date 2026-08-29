@@ -182,7 +182,8 @@ export function AssignmentPage() {
     slotOverrides.payRateLabel ?? slotSummary?.payRateLabel ?? navPayLabel ?? '—';
   const updateDateKey = slotSummary?.dateKey || navDateKey;
 
-  const isSlotClosed = slotSummary?.status === 'closed';
+  const guidesFilled = slotSummary?.guidesFilled ?? 0;
+  const isAssignDisabled = guidesFilled > 0;
 
   const subtitle = useMemo(() => {
     if (slotSummary) {
@@ -354,7 +355,7 @@ export function AssignmentPage() {
                   <AppButton
                     variant="primary"
                     size="xs"
-                    disabled={isBusy}
+                    disabled={isBusy || isAssignDisabled}
                     onClick={() => {
                       if (missingApplicationId) {
                         showToast('Application ID not available yet');
@@ -375,7 +376,7 @@ export function AssignmentPage() {
                   <AppButton
                     variant="primary"
                     size="xs"
-                    disabled={isBusy}
+                    disabled={isBusy || isAssignDisabled}
                     onClick={() => {
                       if (missingApplicationId) {
                         showToast('Application ID not available yet');
@@ -408,7 +409,14 @@ export function AssignmentPage() {
           },
         },
       ]),
-    [actingId, applicantMutationStatus, handleStatusUpdate, canAssign, canUpdateStatus],
+    [
+      actingId,
+      applicantMutationStatus,
+      handleStatusUpdate,
+      canAssign,
+      canUpdateStatus,
+      isAssignDisabled,
+    ],
   );
 
   const overrideColumns: ColumnsType<AvailableGuideRow> = useMemo(
@@ -457,7 +465,7 @@ export function AssignmentPage() {
                 <AppButton
                   variant="primary"
                   size="xs"
-                  disabled={isBusy || isSlotClosed}
+                  disabled={isBusy || isAssignDisabled}
                   onClick={() => void handleManualAssign(row)}
                 >
                   Assign Slot
@@ -467,7 +475,7 @@ export function AssignmentPage() {
           },
         },
       ]),
-    [actingGuideId, handleManualAssign, isSlotClosed, manualAssignStatus, canAssign],
+    [actingGuideId, handleManualAssign, isAssignDisabled, manualAssignStatus, canAssign],
   );
 
   if (!hasValidTourSlotId) {

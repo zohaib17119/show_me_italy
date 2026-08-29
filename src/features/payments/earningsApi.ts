@@ -2,6 +2,7 @@ import { axiosInstance } from '@/api/axiosInstance';
 import { normalizeListResponse } from '@/api/utils/normalizeList';
 import type {
   GetGuideEarningsParams,
+  GuideEarningsDetailRecord,
   GuideEarningsRecord,
 } from '@/api/types/guideEarnings';
 
@@ -23,5 +24,17 @@ export const earningsApi = {
       params: query,
     });
     return normalizeListResponse<GuideEarningsRecord>(data);
+  },
+
+  getGuideEarningsDetail: async (
+    guideId: string,
+  ): Promise<GuideEarningsDetailRecord[]> => {
+    const trimmed = guideId.trim();
+    if (!trimmed) return [];
+
+    const { data } = await axiosInstance.get('/admin-guide-earnings-detail', {
+      params: { guideId: trimmed },
+    });
+    return normalizeListResponse<GuideEarningsDetailRecord>(data);
   },
 };

@@ -14,6 +14,7 @@ export interface DashboardStats {
   unfilledSlots?: number;
   pendingApplications?: number;
   pendingPayouts?: number;
+  totalEarnings?: number;
   activeGuides?: number;
 }
 

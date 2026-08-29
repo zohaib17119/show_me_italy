@@ -17,6 +17,7 @@ export const ROUTES = {
   PAYOUTS: '/payments/payouts',
   PAYOUT_DETAIL: '/payments/payouts/:id',
   REPORTS: '/payments/reports',
+  REPORTS_BREAKDOWN: '/payments/reports/:guideId',
   NOTIFICATIONS: '/system/notifications',
   SETTINGS: '/system/settings',
 } as const;
@@ -37,4 +38,8 @@ export function getAssignmentPath(tourSlotId: number | string): string {
 
 export function getApplicationsQueuePath(date: string): string {
   return `/applications/queue/${date}`;
+}
+
+export function getReportsBreakdownPath(guideId: string): string {
+  return `/payments/reports/${encodeURIComponent(guideId)}`;
 }

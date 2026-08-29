@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+// import { Modal, Spin } from 'antd';
 import { Spin } from 'antd';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
+// import { getApiErrorMessage } from '@/api/axiosInstance';
 import { mapTourSlotToFormValues, mergeTourSlotForUpdate } from '@/api/mappers/tourMapper';
 import type { TourSlot } from '@/api/types';
 import { PageHeader } from '@/components/layout/PageHeader';
@@ -13,6 +15,8 @@ import {
   showToast,
 } from '@/components/ui';
 import { ROUTES } from '@/constants/routes';
+// import { applicationsApi } from '@/features/applications/applicationsApi';
+// import { fetchAdminGuides, selectAdminGuides } from '@/features/agent/agentSlice';
 import { useCan } from '@/features/auth/useCan';
 import { fetchLanguages, selectActiveLanguages } from '@/features/language/languageSlice';
 import {
@@ -45,6 +49,7 @@ export function EditTourPage() {
   const mutationStatus = useAppSelector(selectTourMutationStatus);
   const tourTypes = useAppSelector(selectActiveTourTypes);
   const languages = useAppSelector(selectActiveLanguages);
+  // const guides = useAppSelector(selectAdminGuides);
 
   const tourSlotId = Number(id);
 
@@ -65,6 +70,12 @@ export function EditTourPage() {
   const [sendNotification, setSendNotification] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<TourSlotFieldErrors>({});
   const [formInitialized, setFormInitialized] = useState(false);
+
+  // Assigned guide dropdown / change flow (temporarily disabled)
+  // const [selectedGuideId, setSelectedGuideId] = useState('');
+  // const [pendingGuideId, setPendingGuideId] = useState<string | null>(null);
+  // const [confirmOpen, setConfirmOpen] = useState(false);
+  // const [updatingGuide, setUpdatingGuide] = useState(false);
 
   const clearFieldError = (field: keyof TourSlotFieldErrors) => {
     setFieldErrors((prev) => {
@@ -110,8 +121,20 @@ export function EditTourPage() {
     setTickets(values.tickets ?? null);
     setOpenApplications(values.openApplications);
     setSendNotification(values.sendNotification);
+    // setSelectedGuideId(String(tour.guideID ?? '').trim());
     setFormInitialized(true);
   }, [formInitialized, tour]);
+
+  // const tourLanguageCode = useMemo(() => {
+  //   if (!languageId) return '';
+  //   const lang = languages.find((l) => l.languageId === languageId);
+  //   return lang?.code?.trim().toUpperCase() ?? '';
+  // }, [languageId, languages]);
+
+  // useEffect(() => {
+  //   if (!tourLanguageCode) return;
+  //   void dispatch(fetchAdminGuides({ language: tourLanguageCode }));
+  // }, [dispatch, tourLanguageCode]);
 
   const tourTypeOptions = useMemo(
     () =>
@@ -131,9 +154,33 @@ export function EditTourPage() {
     [languages],
   );
 
+  // const guideOptions = useMemo(() => {
+  //   const options = [
+  //     { value: '', label: 'None / No guide' },
+  //     ...guides.map((g) => ({
+  //       value: g.id,
+  //       label: g.name,
+  //     })),
+  //   ];
+  //   const assignedId = String(originalTour?.guideID ?? selectedGuideId).trim();
+  //   const assignedName = originalTour?.fullName?.trim();
+  //   if (assignedId && !options.some((o) => o.value === assignedId)) {
+  //     options.splice(1, 0, {
+  //       value: assignedId,
+  //       label: assignedName || `Guide ${assignedId.slice(0, 8)}…`,
+  //     });
+  //   }
+  //   return options;
+  // }, [guides, originalTour?.fullName, originalTour?.guideID, selectedGuideId]);
+
   const selectedTourType = tourTypes.find((t) => t.tourTypeId === tourTypeId);
   const selectedLanguage = languages.find((l) => l.languageId === languageId);
   const langCode = (selectedLanguage?.code?.slice(0, 2).toUpperCase() ?? 'EN') as LangCode;
+
+  // const pendingGuideName = useMemo(() => {
+  //   if (pendingGuideId == null || pendingGuideId === '') return '';
+  //   return guideOptions.find((o) => o.value === pendingGuideId)?.label ?? 'this guide';
+  // }, [guideOptions, pendingGuideId]);
 
   const handleTourTypeChange = (nextTourTypeId: number) => {
     clearFieldError('tourTypeId');
@@ -145,6 +192,57 @@ export function EditTourPage() {
       clearFieldError('meetingPoint');
     }
   };
+
+  // const handleGuideSelectChange = (nextGuideId: string) => {
+  //   if (nextGuideId === selectedGuideId) return;
+  //   if (nextGuideId === '' && selectedGuideId === '') return;
+  //   setPendingGuideId(nextGuideId);
+  //   setConfirmOpen(true);
+  // };
+
+  // const closeGuideConfirm = () => {
+  //   if (updatingGuide) return;
+  //   setConfirmOpen(false);
+  //   setPendingGuideId(null);
+  // };
+
+  // const handleConfirmGuideChange = async () => {
+  //   if (pendingGuideId == null || updatingGuide || !originalTour) return;
+
+  //   const isNone = pendingGuideId === '';
+  //   const applicationId = Number(originalTour.applicationID ?? 0) || 0;
+  //   const payload = isNone
+  //     ? {
+  //         status: 'Cancelled By Admin',
+  //         guideId: '',
+  //         tourSlotId,
+  //         isNone: true,
+  //         applicationId,
+  //       }
+  //     : {
+  //         status: 'Approved',
+  //         guideId: pendingGuideId,
+  //         tourSlotId,
+  //         isNone: false,
+  //         applicationId,
+  //       };
+
+  //   setUpdatingGuide(true);
+  //   try {
+  //     await applicationsApi.updateGuideOnSelectedTour(payload);
+  //     showToast(isNone ? 'Guide removed from tour' : 'Guide assigned to tour');
+  //     setSelectedGuideId(pendingGuideId);
+  //     setConfirmOpen(false);
+  //     setPendingGuideId(null);
+  //     const refreshed = await dispatch(fetchTourById(tourSlotId)).unwrap();
+  //     setOriginalTour(refreshed);
+  //     setSelectedGuideId(String(refreshed.guideID ?? '').trim());
+  //   } catch (err) {
+  //     showToast(getApiErrorMessage(err));
+  //   } finally {
+  //     setUpdatingGuide(false);
+  //   }
+  // };
 
   const handleSave = async () => {
     if (!originalTour) return;
@@ -251,6 +349,8 @@ export function EditTourPage() {
     sendNotification,
   };
 
+  // const confirmIsRemove = pendingGuideId === '';
+
   return (
     <div>
       <BreadcrumbNav
@@ -292,6 +392,10 @@ export function EditTourPage() {
           showGuidesNeeded={false}
           meetingPointReadOnly
           errors={fieldErrors}
+          // assignedGuideOptions={guideOptions}
+          // assignedGuideId={selectedGuideId}
+          // assignedGuideDisabled={!canEdit || updatingGuide}
+          // onAssignedGuideChange={handleGuideSelectChange}
           onTourTypeIdChange={handleTourTypeChange}
           onLanguageIdChange={(value) => {
             clearFieldError('languageId');
@@ -325,6 +429,45 @@ export function EditTourPage() {
           onSendNotificationChange={setSendNotification}
         />
       )}
+
+      {/* <Modal
+        title={confirmIsRemove ? 'Remove assigned guide?' : 'Assign guide?'}
+        open={confirmOpen}
+        onCancel={closeGuideConfirm}
+        maskClosable={!updatingGuide}
+        closable={!updatingGuide}
+        footer={[
+          <AppButton
+            key="cancel"
+            variant="secondary"
+            onClick={closeGuideConfirm}
+            disabled={updatingGuide}
+          >
+            Cancel
+          </AppButton>,
+          <AppButton
+            key="confirm"
+            onClick={() => void handleConfirmGuideChange()}
+            disabled={updatingGuide}
+          >
+            {updatingGuide ? (
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                <Spin size="small" />
+                Updating…
+              </span>
+            ) : (
+              'Confirm'
+            )}
+          </AppButton>,
+        ]}
+        destroyOnClose
+      >
+        <p style={{ fontSize: 13, color: 'var(--text-muted)', margin: 0 }}>
+          {confirmIsRemove
+            ? 'Are you sure you want to remove the assigned guide from this tour?'
+            : `Are you sure you want to assign this tour to ${pendingGuideName}?`}
+        </p>
+      </Modal> */}
     </div>
   );
 }

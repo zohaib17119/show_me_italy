@@ -1,5 +1,6 @@
 import { axiosInstance } from '@/api/axiosInstance';
 import type {
+  AdminUpdateGuideOnSelectedTourPayload,
   AgentApplication,
   ApplicationCalendarDayRecord,
   AssignGuideApplicationPayload,
@@ -34,6 +35,8 @@ export interface GetGuideSlotsParams {
   languageID?: string;
   tourTypeIds?: string;
   status?: string;
+  /** Only for Move modal — omit elsewhere so key is not sent */
+  tourSlotId?: string;
 }
 
 export interface UpdateApproveGuideApplicationPayload {
@@ -76,12 +79,17 @@ export const applicationsApi = {
   },
 
   getGuideSlots: async (params?: GetGuideSlotsParams): Promise<GuideSlotRecord[]> => {
-    const { data } = await axiosInstance.post('/api/AgentApplications/guide-slots', {
+    const body: Record<string, string> = {
       date: params?.date ?? '',
       languageID: params?.languageID ?? '',
       tourTypeIds: params?.tourTypeIds ?? '',
       status: params?.status ?? '',
-    });
+    };
+    const slotId = params?.tourSlotId?.trim();
+    if (slotId) {
+      body.tourSlotId = slotId;
+    }
+    const { data } = await axiosInstance.post('/api/AgentApplications/guide-slots', body);
     return normalizeListResponse<GuideSlotRecord>(data);
   },
 
@@ -134,6 +142,15 @@ export const applicationsApi = {
 
   assignGuideApplication: async (payload: AssignGuideApplicationPayload): Promise<void> => {
     await axiosInstance.post('/api/AgentApplications/assign-guide-application', payload);
+  },
+
+  updateGuideOnSelectedTour: async (
+    payload: AdminUpdateGuideOnSelectedTourPayload,
+  ): Promise<void> => {
+    await axiosInstance.post(
+      '/api/AgentApplications/admin-update-guide-on-selected-tour',
+      payload,
+    );
   },
 
   apply: async (payload: Record<string, unknown>): Promise<void> => {
