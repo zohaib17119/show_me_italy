@@ -3,6 +3,7 @@ import {
   mapAgentToGuide,
   mapAgentsToGuides,
   mapGuideApplicationsToHistory,
+  unwrapGuideApplicationPage,
   type GuideApplicationRow,
 } from '@/api/mappers/agentMapper';
 import type { AllAgentsAdminFilter } from '@/api/types';
@@ -17,6 +18,7 @@ interface AgentState {
   unverified: Guide[];
   selectedAgent: Guide | null;
   selectedAgentApplications: GuideApplicationRow[];
+  selectedAgentApplicationsTotal: number;
   selectedAgentPendingApplications: GuideApplicationRow[];
   adminStatus: RequestStatus;
   unverifiedStatus: RequestStatus;
@@ -32,6 +34,7 @@ const initialState: AgentState = {
   unverified: [],
   selectedAgent: null,
   selectedAgentApplications: [],
+  selectedAgentApplicationsTotal: 0,
   selectedAgentPendingApplications: [],
   adminStatus: 'idle',
   unverifiedStatus: 'idle',
@@ -68,18 +71,29 @@ export const fetchUnverifiedAgents = createAsyncThunk(
 
 export const fetchAgentById = createAsyncThunk(
   'agent/fetchById',
-  async (userId: string, { rejectWithValue }) => {
+  async (
+    payload: { userId: string; pageNumber?: number; pageSize?: number },
+    { rejectWithValue },
+  ) => {
     try {
-      const profile = await agentApi.getAgentProfileByUserId(userId);
+      const profile = await agentApi.getAgentProfileByUserId(payload.userId, {
+        pageNumber: payload.pageNumber,
+        pageSize: payload.pageSize,
+      });
       if (!profile?.userResponse) {
         return rejectWithValue('Guide not found');
       }
       const guide = mapAgentToGuide(profile.userResponse);
-      const applications = mapGuideApplicationsToHistory(profile.guideApplication);
-      const pendingApplications = mapGuideApplicationsToHistory(
-        profile.pendingGuideApplication,
-      );
-      return { guide, applications, pendingApplications };
+      const historyPage = unwrapGuideApplicationPage(profile.guideApplication);
+      const pendingPage = unwrapGuideApplicationPage(profile.pendingGuideApplication);
+      const applications = mapGuideApplicationsToHistory(historyPage.records);
+      const pendingApplications = mapGuideApplicationsToHistory(pendingPage.records);
+      return {
+        guide,
+        applications,
+        applicationsTotal: historyPage.totalRecords,
+        pendingApplications,
+      };
     } catch (error) {
       return rejectWithValue(getApiErrorMessage(error));
     }
@@ -142,6 +156,7 @@ const agentSlice = createSlice({
     clearSelectedAgent(state) {
       state.selectedAgent = null;
       state.selectedAgentApplications = [];
+      state.selectedAgentApplicationsTotal = 0;
       state.selectedAgentPendingApplications = [];
       state.detailStatus = 'idle';
     },
@@ -180,12 +195,14 @@ const agentSlice = createSlice({
         state.detailStatus = 'succeeded';
         state.selectedAgent = action.payload.guide;
         state.selectedAgentApplications = action.payload.applications;
+        state.selectedAgentApplicationsTotal = action.payload.applicationsTotal;
         state.selectedAgentPendingApplications = action.payload.pendingApplications;
       })
       .addCase(fetchAgentById.rejected, (state, action) => {
         state.detailStatus = 'failed';
         state.selectedAgent = null;
         state.selectedAgentApplications = [];
+        state.selectedAgentApplicationsTotal = 0;
         state.selectedAgentPendingApplications = [];
         state.error = (action.payload as string) ?? 'Failed to load guide';
       })
@@ -233,6 +250,8 @@ export const selectUnverifiedGuides = (state: RootState) => state.agent.unverifi
 export const selectSelectedAgent = (state: RootState) => state.agent.selectedAgent;
 export const selectSelectedAgentApplications = (state: RootState) =>
   state.agent.selectedAgentApplications;
+export const selectSelectedAgentApplicationsTotal = (state: RootState) =>
+  state.agent.selectedAgentApplicationsTotal;
 export const selectSelectedAgentPendingApplications = (state: RootState) =>
   state.agent.selectedAgentPendingApplications;
 export const selectAdminGuideStatus = (state: RootState) => state.agent.adminStatus;

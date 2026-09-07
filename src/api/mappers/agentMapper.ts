@@ -1,4 +1,8 @@
-import type { AgentRecord, GuideApplicationRecord } from '@/api/types';
+import type {
+  AgentRecord,
+  GuideApplicationRecord,
+  PagedGuideApplications,
+} from '@/api/types';
 import type { Guide, GuideStatus } from '@/mocks/guides';
 import type { LangCode, TourStatus } from '@/types';
 
@@ -183,6 +187,18 @@ function mapApplicationStatus(status?: string): TourStatus {
   if (raw.includes('complete')) return 'completed';
   if (raw.includes('confirm')) return 'confirmed';
   return 'pending';
+}
+
+export function unwrapGuideApplicationPage(
+  value: PagedGuideApplications | GuideApplicationRecord[] | undefined,
+): { records: GuideApplicationRecord[]; totalRecords: number } {
+  if (Array.isArray(value)) {
+    return { records: value, totalRecords: value.length };
+  }
+  const records = Array.isArray(value?.data) ? value.data : [];
+  const totalRecords =
+    typeof value?.totalRecords === 'number' ? value.totalRecords : records.length;
+  return { records, totalRecords };
 }
 
 export function mapGuideApplicationsToHistory(

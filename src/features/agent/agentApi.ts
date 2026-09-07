@@ -23,9 +23,19 @@ export const agentApi = {
     return normalizeListResponse<AgentRecord>(data);
   },
 
-  getAgentProfileByUserId: async (userId: string): Promise<AgentProfileResponse | null> => {
-    const { data } = await axiosInstance.post(`/v1/Agent/get-agents-By-UserId?userId=${userId}`
-      // , {params: { userId },}
+  getAgentProfileByUserId: async (
+    userId: string,
+    params: { pageNumber?: number; pageSize?: number } = {},
+  ): Promise<AgentProfileResponse | null> => {
+    const pageNumber = params.pageNumber ?? 1;
+    const pageSize = params.pageSize ?? 25;
+    const query = new URLSearchParams({
+      userId,
+      pageNumber: String(pageNumber),
+      pageSize: String(pageSize),
+    });
+    const { data } = await axiosInstance.post(
+      `/v1/Agent/get-agents-By-UserId?${query.toString()}`,
     );
     const payload = unwrapData<AgentProfileResponse>(data);
     if (!payload?.userResponse) return null;

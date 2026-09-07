@@ -20,12 +20,17 @@ export function buildMonthGrid(year: number, month: number): MonthGridDay[] {
   const cells = startOffset + daysInMonth > FIVE_WEEK_CELLS ? SIX_WEEK_CELLS : FIVE_WEEK_CELLS;
 
   const days: MonthGridDay[] = [];
-  const prevMonthLast = new Date(year, month, 0).getDate();
+
+  // Compute prev-month anchor via Date to handle January → December year rollback
+  const prevMonthDate = new Date(year, month, 0); // last day of prev month
+  const prevYear = prevMonthDate.getFullYear();
+  const prevMonth = prevMonthDate.getMonth(); // 0-indexed, correct for formatLocalDateKey
+  const prevMonthLast = prevMonthDate.getDate();
 
   for (let i = startOffset - 1; i >= 0; i -= 1) {
     const day = prevMonthLast - i;
     days.push({
-      date: formatLocalDateKey(year, month - 1, day),
+      date: formatLocalDateKey(prevYear, prevMonth, day),
       day,
       otherMonth: true,
     });
@@ -36,10 +41,15 @@ export function buildMonthGrid(year: number, month: number): MonthGridDay[] {
     days.push({ date, day: d, isToday: date === today });
   }
 
+  // Compute next-month anchor via Date to handle December → January year rollover
+  const nextMonthDate = new Date(year, month + 1, 1); // first day of next month
+  const nextYear = nextMonthDate.getFullYear();
+  const nextMonth = nextMonthDate.getMonth(); // 0-indexed, correct for formatLocalDateKey
+
   let nextMonthDay = 1;
   while (days.length < cells) {
     days.push({
-      date: formatLocalDateKey(year, month + 1, nextMonthDay),
+      date: formatLocalDateKey(nextYear, nextMonth, nextMonthDay),
       day: nextMonthDay,
       otherMonth: true,
     });

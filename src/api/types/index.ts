@@ -423,10 +423,18 @@ export interface GuideApplicationRecord {
   [key: string]: unknown;
 }
 
+export interface PagedGuideApplications {
+  data?: GuideApplicationRecord[];
+  pageNumber?: number;
+  pageSize?: number;
+  totalRecords?: number;
+  totalPages?: number;
+}
+
 export interface AgentProfileResponse {
   userResponse: AgentRecord;
-  guideApplication?: GuideApplicationRecord[];
-  pendingGuideApplication?: GuideApplicationRecord[];
+  guideApplication?: PagedGuideApplications | GuideApplicationRecord[];
+  pendingGuideApplication?: PagedGuideApplications | GuideApplicationRecord[];
 }
 
 export interface WalletTransaction {
@@ -445,4 +453,29 @@ export interface WalletBalance {
   balance?: number;
   pending?: number;
   [key: string]: unknown;
+}
+
+export interface GuideAvailabilitySlot {
+  slotId: number;
+  slotName: string;
+  startTime: string;
+  endTime: string;
+}
+
+export interface GuideAvailabilityRecord {
+  guideAvailableSlotId: number;
+  guideId: string;
+  startDate: string;
+  endDate: string;
+  isRecurring: boolean;
+  monday: boolean;
+  tuesday: boolean;
+  wednesday: boolean;
+  thursday: boolean;
+  friday: boolean;
+  saturday: boolean;
+  sunday: boolean;
+  isActive: boolean;
+  slotIds: number[];
+  slots: GuideAvailabilitySlot[];
 }

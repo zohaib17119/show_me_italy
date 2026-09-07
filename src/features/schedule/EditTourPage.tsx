@@ -281,7 +281,7 @@ export function EditTourPage() {
     try {
       await dispatch(updateTourSlot(payload)).unwrap();
       showToast('✓ Tour slot updated!');
-      navigate(ROUTES.GUIDE_SLOTS);
+      navigate(ROUTES.CALENDAR);
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to update tour slot');
     }

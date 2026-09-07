@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Spin } from 'antd';
+import { Modal, Spin, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
-import { getApiErrorMessage } from '@/api/axiosInstance';
+import { axiosInstance, getApiErrorMessage } from '@/api/axiosInstance';
 import type { GuideApplicationRow } from '@/api/mappers/agentMapper';
+import type { GuideAvailabilityRecord } from '@/api/types';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
@@ -17,6 +18,7 @@ import {
   SectionLabel,
   SectionTitle,
   StatusBadge,
+  TablePagination,
   showToast,
 } from '@/components/ui';
 import { useCan } from '@/features/auth/useCan';
@@ -32,6 +34,7 @@ import {
   selectAgentDetailStatus,
   selectSelectedAgent,
   selectSelectedAgentApplications,
+  selectSelectedAgentApplicationsTotal,
   selectSelectedAgentPendingApplications,
 } from '@/features/agent/agentSlice';
 import type { GuideStatus } from '@/mocks/guides';
@@ -40,6 +43,45 @@ import { DeactivateGuideModal } from './components/DeactivateGuideModal';
 import { PreviewCertificateModal } from './components/PreviewCertificateModal';
 import { RejectAgentModal } from './components/RejectAgentModal';
 import styles from './guides.module.css';
+
+const HISTORY_PAGE_SIZE_OPTIONS = [25, 50, 100];
+const AVAIL_PAGE_SIZE_OPTIONS = [10, 25, 50];
+
+function unwrapPagedAvailability(
+  payload: unknown,
+): { records: GuideAvailabilityRecord[]; totalRecords: number } {
+  if (Array.isArray(payload)) {
+    return {
+      records: payload as GuideAvailabilityRecord[],
+      totalRecords: payload.length,
+    };
+  }
+  if (!payload || typeof payload !== 'object') {
+    return { records: [], totalRecords: 0 };
+  }
+
+  const obj = payload as Record<string, unknown>;
+  const inner = 'status_code' in obj && 'data' in obj ? obj.data : payload;
+
+  if (Array.isArray(inner)) {
+    return {
+      records: inner as GuideAvailabilityRecord[],
+      totalRecords: inner.length,
+    };
+  }
+
+  if (inner && typeof inner === 'object') {
+    const page = inner as { data?: unknown; totalRecords?: number };
+    const records = Array.isArray(page.data)
+      ? (page.data as GuideAvailabilityRecord[])
+      : [];
+    const totalRecords =
+      typeof page.totalRecords === 'number' ? page.totalRecords : records.length;
+    return { records, totalRecords };
+  }
+
+  return { records: [], totalRecords: 0 };
+}
 
 function formatRating(rating: number | null): string {
   if (rating == null) return '—';
@@ -67,6 +109,7 @@ export function GuideDetailPage() {
   const detailStatus = useAppSelector(selectAgentDetailStatus);
   const guide = useAppSelector(selectSelectedAgent);
   const applications = useAppSelector(selectSelectedAgentApplications);
+  const applicationsTotal = useAppSelector(selectSelectedAgentApplicationsTotal);
   const pendingApplications = useAppSelector(selectSelectedAgentPendingApplications);
 
   const [rejectOpen, setRejectOpen] = useState(false);
@@ -74,15 +117,79 @@ export function GuideDetailPage() {
   const [certificatePreviewOpen, setCertificatePreviewOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState(false);
   const [approvingApplicationId, setApprovingApplicationId] = useState<number | null>(null);
+  const [historyPage, setHistoryPage] = useState(1);
+  const [historyPageSize, setHistoryPageSize] = useState(25);
+  const [availability, setAvailability] = useState<GuideAvailabilityRecord[]>([]);
+  const [availabilityTotal, setAvailabilityTotal] = useState(0);
+  const [availPage, setAvailPage] = useState(1);
+  const [availPageSize, setAvailPageSize] = useState(10);
+  const [availabilityLoading, setAvailabilityLoading] = useState(false);
+  const [deleteAvailId, setDeleteAvailId] = useState<number | null>(null);
+  const [deleteAvailLoading, setDeleteAvailLoading] = useState(false);
+
+  useEffect(() => {
+    setHistoryPage(1);
+    setAvailPage(1);
+  }, [id]);
 
   useEffect(() => {
     if (id) {
-      void dispatch(fetchAgentById(id));
+      void dispatch(
+        fetchAgentById({
+          userId: id,
+          pageNumber: historyPage,
+          pageSize: historyPageSize,
+        }),
+      );
     }
+  }, [dispatch, id, historyPage, historyPageSize]);
+
+  useEffect(() => {
     return () => {
       dispatch(clearSelectedAgent());
     };
   }, [dispatch, id]);
+
+  const loadAvailability = useCallback(async () => {
+    if (!id) return;
+    setAvailabilityLoading(true);
+    try {
+      const { data } = await axiosInstance.get(`/api/GuideAvailability/guide/${id}`, {
+        params: { pageNumber: availPage, pageSize: availPageSize },
+      });
+      const page = unwrapPagedAvailability(data);
+      setAvailability(page.records);
+      setAvailabilityTotal(page.totalRecords);
+    } catch {
+      setAvailability([]);
+      setAvailabilityTotal(0);
+    } finally {
+      setAvailabilityLoading(false);
+    }
+  }, [id, availPage, availPageSize]);
+
+  useEffect(() => {
+    void loadAvailability();
+  }, [loadAvailability]);
+
+  const handleDeleteAvailability = async () => {
+    if (deleteAvailId == null) return;
+    setDeleteAvailLoading(true);
+    try {
+      await axiosInstance.delete(`/api/GuideAvailability/${deleteAvailId}`);
+      showToast('Availability record deleted');
+      if (availability.length <= 1 && availPage > 1) {
+        setAvailPage((prev) => prev - 1);
+      } else {
+        await loadAvailability();
+      }
+    } catch (err) {
+      showToast(getApiErrorMessage(err));
+    } finally {
+      setDeleteAvailLoading(false);
+      setDeleteAvailId(null);
+    }
+  };
 
   const handleApprove = async () => {
     if (!guide) return;
@@ -124,7 +231,13 @@ export function GuideDetailPage() {
       showToast(`${guide.name} ${activating ? 'activated' : 'deactivated'}`);
       setDeactivateOpen(false);
       if (activating) {
-        void dispatch(fetchAgentById(guide.id));
+        void dispatch(
+          fetchAgentById({
+            userId: guide.id,
+            pageNumber: historyPage,
+            pageSize: historyPageSize,
+          }),
+        );
       } else {
         navigate(ROUTES.GUIDES);
       }
@@ -148,7 +261,13 @@ export function GuideDetailPage() {
         status: 'Approved',
       });
       showToast('✓ Application approved');
-      await dispatch(fetchAgentById(guide.id)).unwrap();
+      await dispatch(
+        fetchAgentById({
+          userId: guide.id,
+          pageNumber: historyPage,
+          pageSize: historyPageSize,
+        }),
+      ).unwrap();
     } catch (err) {
       showToast(getApiErrorMessage(err));
     } finally {
@@ -224,6 +343,91 @@ export function GuideDetailPage() {
       dataIndex: 'status',
       key: 'status',
       render: (status: GuideApplicationRow['status']) => <StatusBadge status={status} />,
+    },
+  ];
+
+  // const DAY_KEYS: (keyof GuideAvailabilityRecord)[] = [
+  //   'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+  // ];
+  // const DAY_LABELS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+
+  const availabilityColumns: ColumnsType<GuideAvailabilityRecord> = [
+    {
+      title: 'Start Date',
+      dataIndex: 'startDate',
+      key: 'startDate',
+      width: 100,
+      render: (v: string) =>
+        v ? new Date(v).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—',
+    },
+    {
+      title: 'End Date',
+      dataIndex: 'endDate',
+      key: 'endDate',
+      width: 100,
+      render: (v: string) =>
+        v ? new Date(v).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—',
+    },
+    {
+      title: 'Slots',
+      key: 'slots',
+      width: 180,
+      render: (_: unknown, record: GuideAvailabilityRecord) =>
+        record.slots && record.slots.length > 0 ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+            {record.slots.map((s) => (
+              <div key={s.slotId} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                <Tag
+                  color="blue"
+                  style={{ marginInlineEnd: 0, flexShrink: 0, whiteSpace: 'nowrap' }}
+                >
+                  {s.slotName}
+                </Tag>
+                <span style={{ fontSize: 11, color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                  {s.startTime.slice(0, 5)}–{s.endTime.slice(0, 5)}
+                </span>
+              </div>
+            ))}
+          </div>
+        ) : '—',
+    },
+    {
+      title: 'Recurring',
+      key: 'isRecurring',
+      width: 100,
+      render: (_: unknown, record: GuideAvailabilityRecord) =>
+        record.isRecurring ? (
+          <Tag color="purple">Recurring</Tag>
+        ) : (
+          <Tag color="default">Non-Recurring</Tag>
+        ),
+    },
+    {
+      title: 'Active',
+      dataIndex: 'isActive',
+      key: 'isActive',
+      width: 80,
+      render: (v: boolean) =>
+        v ? (
+          <Tag color="green">Active</Tag>
+        ) : (
+          <Tag color="red">Inactive</Tag>
+        ),
+    },
+    {
+      title: '',
+      key: 'actions',
+      width: 70,
+      fixed: 'right' as const,
+      render: (_: unknown, record: GuideAvailabilityRecord) => (
+        <AppButton
+          variant="danger"
+          size="xs"
+          onClick={() => setDeleteAvailId(record.guideAvailableSlotId)}
+        >
+          Delete
+        </AppButton>
+      ),
     },
   ];
 
@@ -427,7 +631,7 @@ export function GuideDetailPage() {
             <DataTable<GuideApplicationRow>
               rowKey="id"
               columns={pendingColumns}
-              dataSource={pendingApplications}
+              dataSource={Array.isArray(pendingApplications) ? pendingApplications : []}
               pagination={false}
               size="small"
               scroll={{ x: '100%' }}
@@ -440,10 +644,46 @@ export function GuideDetailPage() {
             <DataTable<GuideApplicationRow>
               rowKey="id"
               columns={historyColumns}
-              dataSource={applications}
+              dataSource={Array.isArray(applications) ? applications : []}
               pagination={false}
               size="small"
               scroll={{ x: '100%' }}
+            />
+            <TablePagination
+              page={historyPage}
+              pageSize={historyPageSize}
+              total={applicationsTotal}
+              pageSizeOptions={HISTORY_PAGE_SIZE_OPTIONS}
+              onPageChange={setHistoryPage}
+              onPageSizeChange={(size) => {
+                setHistoryPageSize(size);
+                setHistoryPage(1);
+              }}
+            />
+          </AppCard>
+
+          <AppCard>
+            <SectionTitle style={{ marginBottom: 10 }}>Availability Schedule</SectionTitle>
+            <DataTable<GuideAvailabilityRecord>
+              rowKey="guideAvailableSlotId"
+              loading={availabilityLoading}
+              columns={availabilityColumns}
+              dataSource={Array.isArray(availability) ? availability : []}
+              pagination={false}
+              size="small"
+              scroll={{ x: '100%' }}
+              locale={{ emptyText: 'No availability records found' }}
+            />
+            <TablePagination
+              page={availPage}
+              pageSize={availPageSize}
+              total={availabilityTotal}
+              pageSizeOptions={AVAIL_PAGE_SIZE_OPTIONS}
+              onPageChange={setAvailPage}
+              onPageSizeChange={(size) => {
+                setAvailPageSize(size);
+                setAvailPage(1);
+              }}
             />
           </AppCard>
         </div>
@@ -527,6 +767,21 @@ export function GuideDetailPage() {
         guideName={guide.name}
         onClose={() => setCertificatePreviewOpen(false)}
       />
+
+      <Modal
+        open={deleteAvailId != null}
+        title="Delete Availability Record"
+        okText="Yes, Delete"
+        okButtonProps={{ danger: true, loading: deleteAvailLoading }}
+        cancelText="Cancel"
+        onOk={() => void handleDeleteAvailability()}
+        onCancel={() => setDeleteAvailId(null)}
+        centered
+      >
+        <p style={{ margin: 0 }}>
+          Are you sure you want to delete this availability record? This action cannot be undone.
+        </p>
+      </Modal>
     </div>
   );
 }
