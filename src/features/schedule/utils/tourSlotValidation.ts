@@ -21,6 +21,7 @@ export interface BulkTourSlotValidationInput {
   guestCount: number;
   selectedDaysCount: number;
   previewSlotCount: number;
+  bulkCount: number;
 }
 
 function validateCommonTourFields(
@@ -95,6 +96,13 @@ export function validateBulkTourSlots(
 
   if (values.selectedDaysCount === 0) {
     errors.selectedDays = 'Select at least one day of the week';
+  }
+
+  if (
+    !Number.isInteger(values.bulkCount) ||
+    values.bulkCount < 1
+  ) {
+    errors.bulkCount = 'Must be a whole number of 1 or more';
   }
 
   if (

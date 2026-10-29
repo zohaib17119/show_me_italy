@@ -1,18 +1,21 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Spin } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { getApiErrorMessage } from '@/api/axiosInstance';
 import {
   mapGuideEarningsDetailRecords,
   type GuideEarningsDetailRow,
 } from '@/api/mappers/guideEarningsMapper';
+import { formatLocalDateKey, todayLocalDateKey } from '@/api/utils/date';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
   AppButton,
   BreadcrumbNav,
   DataTable,
+  FilterBar,
+  FormInput,
   ListErrorState,
   showToast,
 } from '@/components/ui';
@@ -27,6 +30,16 @@ interface BreakdownLocationState {
   guideName?: string;
 }
 
+function subtractOneMonth(dateYmd: string): string {
+  const [y, m, d] = dateYmd.split('-').map(Number);
+  const date = new Date(y, m - 2, d);
+  return formatLocalDateKey(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
+function isYmd(value: string | null): value is string {
+  return Boolean(value && /^\d{4}-\d{2}-\d{2}$/.test(value));
+}
+
 function formatEuro(value: number): string {
   return `€${value.toLocaleString('en-GB', {
     minimumFractionDigits: 0,
@@ -39,10 +52,18 @@ export function GuideEarningsBreakdownPage() {
   const guideId = guideIdParam ? decodeURIComponent(guideIdParam).trim() : '';
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const dispatch = useAppDispatch();
   const languages = useAppSelector(selectLanguages);
   const stateGuideName = (location.state as BreakdownLocationState | null)?.guideName;
+  const today = todayLocalDateKey();
 
+  const [fromDate, setFromDate] = useState(() =>
+    isYmd(searchParams.get('fromDate')) ? searchParams.get('fromDate')! : subtractOneMonth(today),
+  );
+  const [toDate, setToDate] = useState(() =>
+    isYmd(searchParams.get('toDate')) ? searchParams.get('toDate')! : today,
+  );
   const [rows, setRows] = useState<GuideEarningsDetailRow[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'succeeded' | 'failed'>('idle');
   const [error, setError] = useState<string | null>(null);
@@ -57,12 +78,30 @@ export function GuideEarningsBreakdownPage() {
     return map;
   }, [languages]);
 
+  const applyDateRange = useCallback(
+    (nextFrom: string, nextTo: string) => {
+      setFromDate(nextFrom);
+      setToDate(nextTo);
+      setSearchParams({ fromDate: nextFrom, toDate: nextTo }, { replace: true });
+    },
+    [setSearchParams],
+  );
+
   const loadDetail = useCallback(async () => {
-    if (!guideId) return;
+    if (!guideId) {
+      setRows([]);
+      setStatus('failed');
+      setError('Missing guide id');
+      return;
+    }
     setStatus('loading');
     setError(null);
     try {
-      const records = await earningsApi.getGuideEarningsDetail(guideId);
+      const records = await earningsApi.getGuideEarningsDetail({
+        guideId,
+        fromDate,
+        toDate,
+      });
       setRows(mapGuideEarningsDetailRecords(records));
       setStatus('succeeded');
     } catch (err) {
@@ -71,43 +110,15 @@ export function GuideEarningsBreakdownPage() {
       setError(getApiErrorMessage(err));
       showToast('Failed to load earnings breakdown');
     }
-  }, [guideId]);
+  }, [guideId, fromDate, toDate]);
 
   useEffect(() => {
     void dispatch(fetchLanguages());
   }, [dispatch]);
 
   useEffect(() => {
-    let cancelled = false;
-
-    if (!guideId) {
-      setRows([]);
-      setStatus('failed');
-      setError('Missing guide id');
-      return;
-    }
-
-    setStatus('loading');
-    setError(null);
-    void (async () => {
-      try {
-        const records = await earningsApi.getGuideEarningsDetail(guideId);
-        if (cancelled) return;
-        setRows(mapGuideEarningsDetailRecords(records));
-        setStatus('succeeded');
-      } catch (err) {
-        if (cancelled) return;
-        setRows([]);
-        setStatus('failed');
-        setError(getApiErrorMessage(err));
-        showToast('Failed to load earnings breakdown');
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [guideId]);
+    void loadDetail();
+  }, [loadDetail]);
 
   const titleGuideName =
     stateGuideName?.trim() || rows[0]?.guideName?.trim() || 'Guide';
@@ -184,6 +195,28 @@ export function GuideEarningsBreakdownPage() {
           </AppButton>
         }
       />
+
+      <FilterBar>
+        <FormInput
+          label="From"
+          type="date"
+          value={fromDate}
+          max={toDate || undefined}
+          onChange={(e) => {
+            applyDateRange(e.target.value || subtractOneMonth(todayLocalDateKey()), toDate);
+          }}
+        />
+        <FormInput
+          label="To"
+          type="date"
+          value={toDate}
+          min={fromDate || undefined}
+          max={todayLocalDateKey()}
+          onChange={(e) => {
+            applyDateRange(fromDate, e.target.value || todayLocalDateKey());
+          }}
+        />
+      </FilterBar>
 
       {status === 'loading' && (
         <div style={{ display: 'flex', justifyContent: 'center', padding: 80 }}>

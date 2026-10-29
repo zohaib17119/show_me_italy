@@ -36,6 +36,7 @@ import {
   type TourSlotFieldErrors,
 } from './utils/tourSlotValidation';
 import { TourTicketField } from './components/TourTicketField';
+import { addMinutesToTime } from './utils/addMinutesToTime';
 import styles from './schedule.module.css';
 
 const WEEKDAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -70,6 +71,7 @@ export function BulkCreatorPage() {
   const [tourTypeId, setTourTypeId] = useState(0);
   const [guestCount, setGuestCount] = useState(0);
   const [payRate, setPayRate] = useState(0);
+  const [bulkCount, setBulkCount] = useState(1);
   const [meetingPoint, setMeetingPoint] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
   const [status, setStatus] = useState('Open');
@@ -124,6 +126,12 @@ export function BulkCreatorPage() {
     if (type?.meetingPointAddress?.trim()) {
       clearFieldError('meetingPoint');
     }
+    const nextEnd = addMinutesToTime(startTime, type?.durationMinutes ?? 0);
+    if (nextEnd) {
+      setEndTime(nextEnd);
+      clearFieldError('endTime');
+      clearFieldError('previewSlots');
+    }
   };
 
   const selectedDates = useMemo(() => {
@@ -147,7 +155,14 @@ export function BulkCreatorPage() {
   }, [fromDate, toDate, selectedDays]);
 
   const previewSlots = useMemo(() => {
-    if (!startTime || !endTime || selectedDates.length === 0 || languageIds.length === 0) {
+    if (
+      !startTime ||
+      !endTime ||
+      selectedDates.length === 0 ||
+      languageIds.length === 0 ||
+      !Number.isInteger(bulkCount) ||
+      bulkCount < 1
+    ) {
       return [];
     }
 
@@ -171,19 +186,21 @@ export function BulkCreatorPage() {
 
       for (const languageId of languageIds) {
         const lang = languages.find((l) => l.languageId === languageId);
-        slots.push({
-          id: `${date}-${languageId}`,
-          dateLabel,
-          date,
-          startTime,
-          endTime,
-          language: (lang?.code?.slice(0, 2).toUpperCase() ?? 'EN') as LangCode,
-        });
+        for (let i = 0; i < bulkCount; i++) {
+          slots.push({
+            id: `${date}-${languageId}-${i}`,
+            dateLabel,
+            date,
+            startTime,
+            endTime,
+            language: (lang?.code?.slice(0, 2).toUpperCase() ?? 'EN') as LangCode,
+          });
+        }
       }
     }
 
     return slots;
-  }, [selectedDates, startTime, endTime, languageIds, languages]);
+  }, [selectedDates, startTime, endTime, languageIds, languages, bulkCount]);
 
   const toggleDay = (day: string) => {
     clearFieldError('selectedDays');
@@ -208,6 +225,7 @@ export function BulkCreatorPage() {
       guestCount,
       selectedDaysCount: selectedDays.size,
       previewSlotCount: previewSlots.length,
+      bulkCount,
     });
     setFieldErrors(errors);
     if (hasFieldErrors(errors)) return;
@@ -228,6 +246,7 @@ export function BulkCreatorPage() {
         adminNotes,
         status,
         tickets,
+        bulkCount,
       });
       await dispatch(createBulkTourSlots(payload)).unwrap();
       showToast(`✓ ${totalSlots} slots created!`);
@@ -240,7 +259,7 @@ export function BulkCreatorPage() {
   };
 
   return (
-    <div>
+    <div className={styles.bulkPage}>
       <BreadcrumbNav
         items={[
           { label: 'Dashboard', onClick: () => navigate(ROUTES.DASHBOARD) },
@@ -252,7 +271,7 @@ export function BulkCreatorPage() {
       <PageHeader title="Bulk Schedule Creator" />
 
       <div className={styles.bulkGrid}>
-        <div>
+        <div className={styles.bulkFormCol}>
           <div style={{ marginBottom: 12 }}>
             <AppCard>
               <Stepper steps={STEPPER_STEPS} />
@@ -341,7 +360,15 @@ export function BulkCreatorPage() {
                   onChange={(e) => {
                     clearFieldError('startTime');
                     clearFieldError('previewSlots');
-                    setStartTime(e.target.value);
+                    const value = e.target.value;
+                    setStartTime(value);
+                    const duration =
+                      tourTypes.find((t) => t.tourTypeId === tourTypeId)?.durationMinutes ?? 0;
+                    const nextEnd = addMinutesToTime(value, duration);
+                    if (nextEnd) {
+                      setEndTime(nextEnd);
+                      clearFieldError('endTime');
+                    }
                   }}
                 />
                 <FormInput
@@ -386,6 +413,30 @@ export function BulkCreatorPage() {
                   value={payRate}
                   onChange={(e) => setPayRate(Number(e.target.value))}
                 />
+                <FormInput
+                  label="Slots per language per day"
+                  type="number"
+                  min={1}
+                  step={1}
+                  value={bulkCount}
+                  error={fieldErrors.bulkCount}
+                  onChange={(e) => {
+                    const raw = e.target.value;
+                    if (raw === '') {
+                      setBulkCount(1);
+                      clearFieldError('bulkCount');
+                      clearFieldError('previewSlots');
+                      return;
+                    }
+                    const next = Number(raw);
+                    if (!Number.isInteger(next) || next < 1) {
+                      return;
+                    }
+                    clearFieldError('bulkCount');
+                    clearFieldError('previewSlots');
+                    setBulkCount(next);
+                  }}
+                />
                 <div className={formGridSpanFull}>
                   <FormTextarea
                     label="Admin Notes"
@@ -413,7 +464,7 @@ export function BulkCreatorPage() {
           </div>
         </div>
 
-        <AppCard>
+        <AppCard className={styles.previewPanel}>
           <SectionTitle style={{ marginBottom: 12 }}>Preview</SectionTitle>
           {fieldErrors.previewSlots && (
             <div style={{ fontSize: 10, color: 'var(--red)', fontWeight: 600, marginBottom: 12 }}>
@@ -421,7 +472,7 @@ export function BulkCreatorPage() {
             </div>
           )}
           <div className={styles.previewList}>
-            {previewSlots.slice(0, 8).map((row) => (
+            {previewSlots.map((row) => (
               <ImportPreviewRow
                 key={row.id}
                 title={row.dateLabel}
@@ -436,18 +487,6 @@ export function BulkCreatorPage() {
                 }
               />
             ))}
-            {previewSlots.length > 8 && (
-              <div
-                style={{
-                  fontSize: 11,
-                  color: 'var(--text-muted)',
-                  textAlign: 'center',
-                  padding: '8px 0',
-                }}
-              >
-                + {previewSlots.length - 8} more slots…
-              </div>
-            )}
           </div>
         </AppCard>
       </div>

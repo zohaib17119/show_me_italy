@@ -72,6 +72,7 @@ export interface BulkTourSlotCreatePayload {
   tickets?: string | null;
   isImported: false;
   conflictFlag: false;
+  bulkCount: number[];
 }
 
 export interface TourSlotFilter {
@@ -220,6 +221,8 @@ export interface AgentRecord {
   totalTour?: number;
   totalEarning?: number;
   pendingCounts?: number;
+  guideCategory?: number[] | Array<{ id?: string | number }>;
+  categories?: string | null;
   [key: string]: unknown;
 }
 
@@ -241,7 +244,14 @@ export interface GuideUpdateProfilePayload {
   userId: string;
   favorite: boolean;
   adminNotes: string;
+  cancellationPercentage: number;
   rating: number;
+  guideCategory: number[];
+}
+
+export interface GuideCategoryRecord {
+  id?: string | number;
+  category?: string;
 }
 
 export interface GuideSlotRecord {

@@ -3,82 +3,83 @@ import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import type { GuideSlotRow } from '@/api/mappers/guideSlotMapper';
 import { PageHeader } from '@/components/layout/PageHeader';
 import {
-  ListErrorState,
-  LoadingOverlay,
+ ListErrorState,
+ LoadingOverlay,
 } from '@/components/ui';
 import { useFetchErrorToast } from '@/hooks/useFetchErrorToast';
 import { getRouteMeta } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
 import {
-  fetchGuideSlots,
-  selectGuideSlots,
-  selectGuideSlotsError,
-  selectGuideSlotsStatus,
+ fetchGuideSlots,
+ selectGuideSlots,
+ selectGuideSlotsError,
+ selectGuideSlotsStatus,
 } from '@/features/applications/applicationsSlice';
 import { GuideSlotsTable } from '@/features/applications/components/GuideSlotsTable';
 import { PreviewTicketModal } from '@/features/applications/components/PreviewTicketModal';
 import { UploadTicketModal } from '@/features/applications/components/UploadTicketModal';
 
 export function GuideSlotsPage() {
-  const dispatch = useAppDispatch();
-  const meta = getRouteMeta(ROUTES.GUIDE_SLOTS);
-  const guideSlots = useAppSelector(selectGuideSlots);
-  const status = useAppSelector(selectGuideSlotsStatus);
-  const error = useAppSelector(selectGuideSlotsError);
-  const [uploadTarget, setUploadTarget] = useState<GuideSlotRow | null>(null);
-  const [previewTarget, setPreviewTarget] = useState<GuideSlotRow | null>(null);
+ const dispatch = useAppDispatch();
+ const meta = getRouteMeta(ROUTES.GUIDE_SLOTS);
+ const guideSlots = useAppSelector(selectGuideSlots);
+ const status = useAppSelector(selectGuideSlotsStatus);
+ const error = useAppSelector(selectGuideSlotsError);
+ const [uploadTarget, setUploadTarget] = useState<GuideSlotRow | null>(null);
+ const [previewTarget, setPreviewTarget] = useState<GuideSlotRow | null>(null);
 
-  const loadGuideSlots = useCallback(() => {
-    void dispatch(fetchGuideSlots());
-  }, [dispatch]);
+ const loadGuideSlots = useCallback(() => {
+ void dispatch(fetchGuideSlots());
+ }, [dispatch]);
 
-  useFetchErrorToast(status, error);
+ useFetchErrorToast(status, error);
 
-  useEffect(() => {
-    loadGuideSlots();
-  }, [loadGuideSlots]);
+ useEffect(() => {
+ loadGuideSlots();
+ }, [loadGuideSlots]);
 
-  const handleUploadSuccess = () => {
-    setUploadTarget(null);
-    loadGuideSlots();
-  };
+ const handleUploadSuccess = () => {
+ setUploadTarget(null);
+ loadGuideSlots();
+ };
 
-  return (
-    <div style={{ position: 'relative' }}>
-      <LoadingOverlay visible={status === 'loading' && guideSlots.length === 0} />
+ return (
+ <div style={{ position: 'relative' }}>
+ <LoadingOverlay visible={status === 'loading' && guideSlots.length === 0} />
 
-      <PageHeader
-        title={meta.title}
-        subtitle={`${guideSlots.length} slot${guideSlots.length === 1 ? '' : 's'} with applications`}
-      />
+ <PageHeader
+ title={meta.title}
+ subtitle={`${guideSlots.length} slot${guideSlots.length === 1 ? '' : 's'} with applications`}
+ />
 
-      {status === 'failed' && (
-        <ListErrorState message={error} onRetry={loadGuideSlots} />
-      )}
+ {status === 'failed' && (
+ <ListErrorState message={error} onRetry={loadGuideSlots} />
+ )}
 
-      {status !== 'failed' && (
-        <GuideSlotsTable
-          rows={guideSlots}
-          loading={status === 'loading' && guideSlots.length === 0}
-          onUploadTicket={setUploadTarget}
-          onPreviewTicket={setPreviewTarget}
-        />
-      )}
+ {status !== 'failed' && (
+ <GuideSlotsTable
+ rows={guideSlots}
+ loading={status === 'loading' && guideSlots.length === 0}
+ onUploadTicket={setUploadTarget}
+ onPreviewTicket={setPreviewTarget}
+ onDeleteSuccess={loadGuideSlots}
+ />
+ )}
 
-      <UploadTicketModal
-        open={uploadTarget != null}
-        tourSlotId={uploadTarget?.tourSlotId ?? null}
-        tourName={uploadTarget?.tourName}
-        onClose={() => setUploadTarget(null)}
-        onSuccess={handleUploadSuccess}
-      />
+ <UploadTicketModal
+ open={uploadTarget != null}
+ tourSlotId={uploadTarget?.tourSlotId ?? null}
+ tourName={uploadTarget?.tourName}
+ onClose={() => setUploadTarget(null)}
+ onSuccess={handleUploadSuccess}
+ />
 
-      <PreviewTicketModal
-        open={previewTarget != null}
-        ticketUrl={previewTarget?.tickets ?? null}
-        tourName={previewTarget?.tourName}
-        onClose={() => setPreviewTarget(null)}
-      />
-    </div>
-  );
+ <PreviewTicketModal
+ open={previewTarget != null}
+ ticketUrl={previewTarget?.tickets ?? null}
+ tourName={previewTarget?.tourName}
+ onClose={() => setPreviewTarget(null)}
+ />
+ </div>
+ );
 }

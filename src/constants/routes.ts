@@ -40,6 +40,15 @@ export function getApplicationsQueuePath(date: string): string {
   return `/applications/queue/${date}`;
 }
 
-export function getReportsBreakdownPath(guideId: string): string {
-  return `/payments/reports/${encodeURIComponent(guideId)}`;
+export function getReportsBreakdownPath(
+  guideId: string,
+  range?: { fromDate: string; toDate: string },
+): string {
+  const path = `/payments/reports/${encodeURIComponent(guideId)}`;
+  if (!range?.fromDate || !range?.toDate) return path;
+  const query = new URLSearchParams({
+    fromDate: range.fromDate,
+    toDate: range.toDate,
+  });
+  return `${path}?${query.toString()}`;
 }

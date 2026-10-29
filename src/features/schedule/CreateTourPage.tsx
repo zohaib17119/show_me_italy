@@ -20,6 +20,7 @@ import {
 import { fetchTourTypes, selectActiveTourTypes } from '@/features/tourType/tourTypeSlice';
 import type { LangCode } from '@/types';
 import { TourSlotFormView } from './components/TourSlotFormView';
+import { addMinutesToTime } from './utils/addMinutesToTime';
 import {
   hasFieldErrors,
   validateSingleTourSlot,
@@ -94,6 +95,11 @@ export function CreateTourPage() {
     setPayRatePerHour(type?.basePrice ?? 0);
     if (type?.meetingPointAddress?.trim()) {
       clearFieldError('meetingPoint');
+    }
+    const nextEnd = addMinutesToTime(startTime, type?.durationMinutes ?? 0);
+    if (nextEnd) {
+      setEndTime(nextEnd);
+      clearFieldError('endTime');
     }
   };
 
@@ -205,6 +211,12 @@ export function CreateTourPage() {
           onStartTimeChange={(value) => {
             clearFieldError('startTime');
             setStartTime(value);
+            const duration = selectedTourType?.durationMinutes ?? 0;
+            const nextEnd = addMinutesToTime(value, duration);
+            if (nextEnd) {
+              setEndTime(nextEnd);
+              clearFieldError('endTime');
+            }
           }}
           onEndTimeChange={(value) => {
             clearFieldError('endTime');

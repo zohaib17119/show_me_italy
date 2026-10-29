@@ -148,6 +148,7 @@ export function buildBulkTourSlotPayload(form: {
   adminNotes: string;
   status: string;
   tickets?: string | null;
+  bulkCount: number;
 }): BulkTourSlotCreatePayload {
   return {
     tourTypeId: form.tourTypeId,
@@ -164,6 +165,7 @@ export function buildBulkTourSlotPayload(form: {
     tickets: form.tickets?.trim() ? form.tickets : null,
     isImported: false,
     conflictFlag: false,
+    bulkCount: [form.bulkCount],
   };
 }
 

@@ -5,6 +5,7 @@ import type {
   AgentRecord,
   AllAgentsAdminFilter,
   ApproveRejectAgents,
+  GuideCategoryRecord,
   GuideUpdateProfilePayload,
 } from '@/api/types';
 import type { SignUpAdminPayload } from '@/api/types/adminSignUp';
@@ -48,6 +49,11 @@ export const agentApi = {
 
   updateGuideProfile: async (payload: GuideUpdateProfilePayload): Promise<void> => {
     await axiosInstance.post('/v1/Agent/guide-update-profile', payload);
+  },
+
+  getAllCategories: async (): Promise<GuideCategoryRecord[]> => {
+    const { data } = await axiosInstance.get('/v1/Agent/get-all-categories');
+    return normalizeListResponse<GuideCategoryRecord>(data);
   },
 
   signUpAdmin: async (payload: SignUpAdminPayload): Promise<void> => {

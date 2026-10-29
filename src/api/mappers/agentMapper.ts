@@ -87,6 +87,25 @@ function parseLanguages(record: AgentRecord): Guide['languages'] {
   return [];
 }
 
+function parseGuideCategoryIds(record: AgentRecord): number[] {
+  const raw = record.guideCategory;
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((entry) => {
+      if (typeof entry === 'number' && Number.isFinite(entry)) return entry;
+      if (typeof entry === 'string') {
+        const n = Number(entry);
+        return Number.isFinite(n) ? n : null;
+      }
+      if (entry && typeof entry === 'object' && 'id' in entry) {
+        const n = Number(entry.id);
+        return Number.isFinite(n) ? n : null;
+      }
+      return null;
+    })
+    .filter((id): id is number => id != null);
+}
+
 export function mapAgentToGuide(record: AgentRecord, options?: { pending?: boolean }): Guide {
   const pending = options?.pending ?? false;
   const name =
@@ -131,6 +150,8 @@ export function mapAgentToGuide(record: AgentRecord, options?: { pending?: boole
     certificateUpload: record.certificateUpload,
     profilePicture: record.profilePicture?.trim() || undefined,
     pendingCounts: Number(record.pendingCounts ?? 0),
+    guideCategory: parseGuideCategoryIds(record),
+    categories: record.categories?.trim() || '',
   };
 }
 

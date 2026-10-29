@@ -28,6 +28,12 @@ export interface GetGuideEarningsParams {
   pagesize: number;
 }
 
+export interface GetGuideEarningsDetailParams {
+  guideId: string;
+  fromDate: string;
+  toDate: string;
+}
+
 export interface GuideEarningsDetailRecord {
   guideID?: string;
   guideName?: string | null;

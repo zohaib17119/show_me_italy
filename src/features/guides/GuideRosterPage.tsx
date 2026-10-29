@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useAppDispatch, useAppSelector } from '@/app/hooks';
 import type { AllAgentsAdminFilter } from '@/api/types';
@@ -43,6 +44,62 @@ function guideStatusToBadge(status: GuideStatus): TourStatus {
   if (status === 'active') return 'active';
   if (status === 'pending') return 'pending';
   return 'inactive';
+}
+
+const CATEGORY_CHIP_STYLE: CSSProperties = {
+  fontSize: 11,
+  fontWeight: 600,
+  padding: '2px 8px',
+  borderRadius: 999,
+  background: 'var(--g50)',
+  color: 'var(--text-primary)',
+  whiteSpace: 'nowrap',
+};
+
+const CATEGORY_OVERFLOW_STYLE: CSSProperties = {
+  ...CATEGORY_CHIP_STYLE,
+  cursor: 'default',
+  background: 'var(--g100, #e8e8e8)',
+};
+
+function parseCategoryLabels(categories?: string): string[] {
+  return (categories ?? '')
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+function GuideCategoryChips({ categories }: { categories?: string }) {
+  const labels = parseCategoryLabels(categories);
+  if (labels.length === 0) {
+    return <span style={{ color: 'var(--text-muted)' }}>—</span>;
+  }
+
+  const visible = labels.slice(0, 2);
+  const extra = labels.slice(2);
+
+  return (
+    <span style={{ display: 'flex', gap: 4, flexWrap: 'nowrap', alignItems: 'center' }}>
+      {visible.map((label, index) => (
+        <span key={`${label}-${index}`} style={CATEGORY_CHIP_STYLE}>
+          {label}
+        </span>
+      ))}
+      {extra.length > 0 ? (
+        <Tooltip
+          title={
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {extra.map((label, index) => (
+                <span key={`${label}-extra-${index}`}>{label}</span>
+              ))}
+            </div>
+          }
+        >
+          <span style={CATEGORY_OVERFLOW_STYLE}>+{extra.length}</span>
+        </Tooltip>
+      ) : null}
+    </span>
+  );
 }
 
 export function GuideRosterPage() {
@@ -139,6 +196,11 @@ export function GuideRosterPage() {
           ))}
         </span>
       ),
+    },
+    {
+      title: 'Categories',
+      key: 'categories',
+      render: (_, record) => <GuideCategoryChips categories={record.categories} />,
     },
     {
       title: 'Status',

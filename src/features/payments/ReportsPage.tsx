@@ -193,7 +193,7 @@ export function ReportsPage() {
             variant="secondary"
             size="sm"
             onClick={() =>
-              navigate(getReportsBreakdownPath(row.guideId), {
+              navigate(getReportsBreakdownPath(row.guideId, { fromDate, toDate }), {
                 state: { guideName: row.guideName },
               })
             }
@@ -203,7 +203,7 @@ export function ReportsPage() {
         ),
       },
     ],
-    [navigate],
+    [navigate, fromDate, toDate],
   );
 
   return (

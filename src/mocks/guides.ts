@@ -40,6 +40,8 @@ export interface Guide {
   certificateUpload?: string;
   profilePicture?: string | null;
   pendingCounts?: number;
+  guideCategory?: number[];
+  categories?: string;
 }
 
 export const MOCK_GUIDES: Guide[] = [
