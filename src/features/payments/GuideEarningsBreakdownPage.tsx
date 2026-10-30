@@ -67,6 +67,7 @@ export function GuideEarningsBreakdownPage() {
   const [rows, setRows] = useState<GuideEarningsDetailRow[]>([]);
   const [status, setStatus] = useState<'idle' | 'loading' | 'succeeded' | 'failed'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [exporting, setExporting] = useState(false);
 
   const languageLabelById = useMemo(() => {
     const map = new Map<number, string>();
@@ -119,6 +120,22 @@ export function GuideEarningsBreakdownPage() {
   useEffect(() => {
     void loadDetail();
   }, [loadDetail]);
+
+  const handleExportCsv = async () => {
+    if (!guideId) return;
+    setExporting(true);
+    try {
+      await earningsApi.exportGuideEarningsDetail({
+        guideId,
+        fromDate,
+        toDate,
+      });
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to export earnings breakdown');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const titleGuideName =
     stateGuideName?.trim() || rows[0]?.guideName?.trim() || 'Guide';
@@ -216,6 +233,15 @@ export function GuideEarningsBreakdownPage() {
             applyDateRange(fromDate, e.target.value || todayLocalDateKey());
           }}
         />
+        <div style={{ marginLeft: 'auto', alignSelf: 'flex-end' }}>
+          <AppButton
+            variant="secondary"
+            onClick={() => void handleExportCsv()}
+            disabled={exporting || status === 'loading' || !guideId}
+          >
+            {exporting ? 'Exporting…' : 'Export to CSV'}
+          </AppButton>
+        </div>
       </FilterBar>
 
       {status === 'loading' && (

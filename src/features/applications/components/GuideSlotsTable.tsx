@@ -12,6 +12,7 @@ import {
  LangChip,
  LockedAction,
  SearchInput,
+ StatusBadge,
  TablePagination,
  TableRowMenu,
  showToast,
@@ -137,6 +138,24 @@ export function GuideSlotsTable({
 
  base.push({ title: 'Guide Name', dataIndex: 'guideName', key: 'guideName' });
 
+ if (isCalendarModal) {
+ base.push({
+ title: 'Application status',
+ key: 'guideApplicationStatus',
+ width: 140,
+ render: (_, row) => {
+ const status = row.guideApplicationStatus;
+ if (status === 'Confirmed') {
+ return <StatusBadge status="confirmed" />;
+ }
+ if (status === 'ConfirmationPending') {
+ return <StatusBadge status="pending" />;
+ }
+ return <span style={{ color: 'var(--text-muted)' }}>—</span>;
+ },
+ });
+ }
+
  base.push({
  title: 'Admin Notes',
  key: 'adminNotes',
@@ -237,7 +256,7 @@ export function GuideSlotsTable({
  dataSource={pageData}
  loading={loading}
  pagination={false}
- scroll={{ x: isCalendarModal ? 1000 : 1100 }}
+ scroll={{ x: isCalendarModal ? 1200 : 1100 }}
  footer={() => (
  <TablePagination
  page={page}

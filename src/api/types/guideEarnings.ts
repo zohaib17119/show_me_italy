@@ -34,6 +34,12 @@ export interface GetGuideEarningsDetailParams {
   toDate: string;
 }
 
+export interface ExportGuideEarningsParams {
+  fromDate: string;
+  toDate: string;
+  guideId?: string;
+}
+
 export interface GuideEarningsDetailRecord {
   guideID?: string;
   guideName?: string | null;

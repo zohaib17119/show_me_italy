@@ -54,6 +54,7 @@ export function ReportsPage() {
   const [pageSize, setPageSize] = useState(25);
   const [rows, setRows] = useState<GuideEarningsRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [guideOptions, setGuideOptions] = useState<{ value: string; label: string }[]>([
     { value: '', label: 'All guides' },
   ]);
@@ -107,6 +108,21 @@ export function ReportsPage() {
   useEffect(() => {
     void loadEarnings();
   }, [loadEarnings]);
+
+  const handleExportCsv = async () => {
+    setExporting(true);
+    try {
+      await earningsApi.exportGuideEarnings({
+        fromDate,
+        toDate,
+        guideId: guideId || undefined,
+      });
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : 'Failed to export guide earnings');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   const total = useMemo(
     () => inferTotal(page, pageSize, rows.length),
@@ -242,6 +258,15 @@ export function ReportsPage() {
             setPage(1);
           }}
         />
+        <div style={{ marginLeft: 'auto', alignSelf: 'flex-end' }}>
+          <AppButton
+            variant="secondary"
+            onClick={() => void handleExportCsv()}
+            disabled={exporting || loading}
+          >
+            {exporting ? 'Exporting…' : 'Export to CSV'}
+          </AppButton>
+        </div>
       </FilterBar>
 
       <DataTable<GuideEarningsRow>

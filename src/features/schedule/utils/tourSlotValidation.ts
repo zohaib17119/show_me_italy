@@ -10,18 +10,22 @@ export interface SingleTourSlotValidationInput {
   guestCount: number;
 }
 
+export interface BulkSlotDataInput {
+  startTime: string;
+  endTime: string;
+  slotQuantity: number;
+}
+
 export interface BulkTourSlotValidationInput {
   tourTypeId: number;
   languageIds: number[];
   fromDate: string;
   toDate: string;
-  startTime: string;
-  endTime: string;
   meetingPoint: string;
   guestCount: number;
   selectedDaysCount: number;
   previewSlotCount: number;
-  bulkCount: number;
+  slotsData: BulkSlotDataInput[];
 }
 
 function validateCommonTourFields(
@@ -69,7 +73,17 @@ export function validateSingleTourSlot(
 export function validateBulkTourSlots(
   values: BulkTourSlotValidationInput,
 ): TourSlotFieldErrors {
-  const errors = validateCommonTourFields(values);
+  const errors: TourSlotFieldErrors = {};
+
+  if (!values.tourTypeId) {
+    errors.tourTypeId = 'Tour type is required';
+  }
+  if (!values.meetingPoint.trim()) {
+    errors.meetingPoint = 'Meeting point is required';
+  }
+  if (!values.guestCount || values.guestCount <= 0) {
+    errors.guestCount = 'Group size is required';
+  }
 
   if (!values.languageIds.length) {
     errors.languageId = 'Select at least one language';
@@ -98,21 +112,32 @@ export function validateBulkTourSlots(
     errors.selectedDays = 'Select at least one day of the week';
   }
 
-  if (
-    !Number.isInteger(values.bulkCount) ||
-    values.bulkCount < 1
-  ) {
-    errors.bulkCount = 'Must be a whole number of 1 or more';
+  if (!values.slotsData.length) {
+    errors.slotsData = 'Add at least one time slot';
+  } else {
+    values.slotsData.forEach((slot, index) => {
+      if (!slot.startTime.trim()) {
+        errors[`slotsData.${index}.startTime`] = 'Start time is required';
+      }
+      if (!slot.endTime.trim()) {
+        errors[`slotsData.${index}.endTime`] = 'End time is required';
+      }
+      if (!Number.isInteger(slot.slotQuantity) || slot.slotQuantity < 1) {
+        errors[`slotsData.${index}.slotQuantity`] = 'Must be a whole number of 1 or more';
+      }
+    });
   }
+
+  const hasSlotFieldErrors = Object.keys(errors).some((key) => key.startsWith('slotsData'));
 
   if (
     values.previewSlotCount === 0 &&
     !errors.fromDate &&
     !errors.toDate &&
-    !errors.startTime &&
-    !errors.endTime &&
     !errors.selectedDays &&
-    !errors.languageId
+    !errors.languageId &&
+    !errors.slotsData &&
+    !hasSlotFieldErrors
   ) {
     errors.previewSlots = 'No slots match your date range and selected days';
   }

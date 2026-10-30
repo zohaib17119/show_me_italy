@@ -55,6 +55,22 @@ const STATUS_OPTIONS: FormSelectOption[] = [
   { value: 'Cancelled', label: 'Cancelled' },
 ];
 
+interface BulkSlotRow {
+  id: string;
+  startTime: string;
+  endTime: string;
+  slotQuantity: number;
+}
+
+function createEmptySlotRow(): BulkSlotRow {
+  return {
+    id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    startTime: '',
+    endTime: '',
+    slotQuantity: 1,
+  };
+}
+
 export function BulkCreatorPage() {
   const navigate = useNavigate();
   const can = useCan();
@@ -65,18 +81,16 @@ export function BulkCreatorPage() {
 
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
   const [languageIds, setLanguageIds] = useState<number[]>([]);
   const [tourTypeId, setTourTypeId] = useState(0);
   const [guestCount, setGuestCount] = useState(0);
   const [payRate, setPayRate] = useState(0);
-  const [bulkCount, setBulkCount] = useState(1);
   const [meetingPoint, setMeetingPoint] = useState('');
   const [adminNotes, setAdminNotes] = useState('');
   const [status, setStatus] = useState('Open');
   const [tickets, setTickets] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [slotsData, setSlotsData] = useState<BulkSlotRow[]>(() => [createEmptySlotRow()]);
   const [selectedDays, setSelectedDays] = useState<Set<string>>(
     () => new Set(['Mon', 'Tue', 'Wed', 'Thu', 'Fri']),
   );
@@ -88,6 +102,27 @@ export function BulkCreatorPage() {
       const next = { ...prev };
       delete next[field];
       return next;
+    });
+  };
+
+  const clearSlotFieldErrors = (index: number) => {
+    setFieldErrors((prev) => {
+      const keys = [
+        `slotsData.${index}.startTime`,
+        `slotsData.${index}.endTime`,
+        `slotsData.${index}.slotQuantity`,
+        'slotsData',
+        'previewSlots',
+      ];
+      let changed = false;
+      const next = { ...prev };
+      for (const key of keys) {
+        if (next[key]) {
+          delete next[key];
+          changed = true;
+        }
+      }
+      return changed ? next : prev;
     });
   };
 
@@ -117,6 +152,13 @@ export function BulkCreatorPage() {
   const selectedTourTypeName =
     tourTypes.find((t) => t.tourTypeId === tourTypeId)?.name ?? 'Tour';
 
+  const tourDurationMinutes =
+    tourTypes.find((t) => t.tourTypeId === tourTypeId)?.durationMinutes ?? 0;
+
+  const updateSlotRow = (id: string, patch: Partial<BulkSlotRow>) => {
+    setSlotsData((prev) => prev.map((row) => (row.id === id ? { ...row, ...patch } : row)));
+  };
+
   const handleTourTypeChange = (id: number) => {
     clearFieldError('tourTypeId');
     setTourTypeId(id);
@@ -126,12 +168,14 @@ export function BulkCreatorPage() {
     if (type?.meetingPointAddress?.trim()) {
       clearFieldError('meetingPoint');
     }
-    const nextEnd = addMinutesToTime(startTime, type?.durationMinutes ?? 0);
-    if (nextEnd) {
-      setEndTime(nextEnd);
-      clearFieldError('endTime');
-      clearFieldError('previewSlots');
-    }
+    const duration = type?.durationMinutes ?? 0;
+    setSlotsData((prev) =>
+      prev.map((row) => {
+        const nextEnd = addMinutesToTime(row.startTime, duration);
+        return nextEnd ? { ...row, endTime: nextEnd } : row;
+      }),
+    );
+    clearFieldError('previewSlots');
   };
 
   const selectedDates = useMemo(() => {
@@ -155,16 +199,18 @@ export function BulkCreatorPage() {
   }, [fromDate, toDate, selectedDays]);
 
   const previewSlots = useMemo(() => {
-    if (
-      !startTime ||
-      !endTime ||
-      selectedDates.length === 0 ||
-      languageIds.length === 0 ||
-      !Number.isInteger(bulkCount) ||
-      bulkCount < 1
-    ) {
+    if (selectedDates.length === 0 || languageIds.length === 0) {
       return [];
     }
+
+    const validSlots = slotsData.filter(
+      (slot) =>
+        slot.startTime &&
+        slot.endTime &&
+        Number.isInteger(slot.slotQuantity) &&
+        slot.slotQuantity >= 1,
+    );
+    if (validSlots.length === 0) return [];
 
     const slots: {
       id: string;
@@ -186,21 +232,23 @@ export function BulkCreatorPage() {
 
       for (const languageId of languageIds) {
         const lang = languages.find((l) => l.languageId === languageId);
-        for (let i = 0; i < bulkCount; i++) {
-          slots.push({
-            id: `${date}-${languageId}-${i}`,
-            dateLabel,
-            date,
-            startTime,
-            endTime,
-            language: (lang?.code?.slice(0, 2).toUpperCase() ?? 'EN') as LangCode,
-          });
+        for (const slot of validSlots) {
+          for (let i = 0; i < slot.slotQuantity; i++) {
+            slots.push({
+              id: `${date}-${languageId}-${slot.id}-${i}`,
+              dateLabel,
+              date,
+              startTime: slot.startTime,
+              endTime: slot.endTime,
+              language: (lang?.code?.slice(0, 2).toUpperCase() ?? 'EN') as LangCode,
+            });
+          }
         }
       }
     }
 
     return slots;
-  }, [selectedDates, startTime, endTime, languageIds, languages, bulkCount]);
+  }, [selectedDates, languageIds, languages, slotsData]);
 
   const toggleDay = (day: string) => {
     clearFieldError('selectedDays');
@@ -219,13 +267,15 @@ export function BulkCreatorPage() {
       languageIds,
       fromDate,
       toDate,
-      startTime,
-      endTime,
       meetingPoint,
       guestCount,
       selectedDaysCount: selectedDays.size,
       previewSlotCount: previewSlots.length,
-      bulkCount,
+      slotsData: slotsData.map(({ startTime, endTime, slotQuantity }) => ({
+        startTime,
+        endTime,
+        slotQuantity,
+      })),
     });
     setFieldErrors(errors);
     if (hasFieldErrors(errors)) return;
@@ -237,8 +287,6 @@ export function BulkCreatorPage() {
         tourTypeId,
         dates: selectedDates,
         languageIds,
-        startTime,
-        endTime,
         guidesNeeded: 1,
         guestCount,
         payRatePerHour: payRate,
@@ -246,7 +294,11 @@ export function BulkCreatorPage() {
         adminNotes,
         status,
         tickets,
-        bulkCount,
+        slotsData: slotsData.map(({ startTime, endTime, slotQuantity }) => ({
+          startTime,
+          endTime,
+          slotQuantity,
+        })),
       });
       await dispatch(createBulkTourSlots(payload)).unwrap();
       showToast(`✓ ${totalSlots} slots created!`);
@@ -351,37 +403,85 @@ export function BulkCreatorPage() {
               </FormGrid>
 
               <SectionLabel style={{ marginBottom: 8, marginTop: 4 }}>Time Slots</SectionLabel>
-              <div className={styles.timeSlotRow}>
-                <FormInput
-                  label="Start Time"
-                  type="time"
-                  value={startTime}
-                  error={fieldErrors.startTime}
-                  onChange={(e) => {
-                    clearFieldError('startTime');
+              {fieldErrors.slotsData && (
+                <div style={{ fontSize: 10, color: 'var(--red)', fontWeight: 600, marginBottom: 8 }}>
+                  {fieldErrors.slotsData}
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {slotsData.map((slot, index) => (
+                  <div key={slot.id} className={styles.timeSlotRow}>
+                    <FormInput
+                      label="Start Time"
+                      type="time"
+                      value={slot.startTime}
+                      error={fieldErrors[`slotsData.${index}.startTime`]}
+                      onChange={(e) => {
+                        clearSlotFieldErrors(index);
+                        const value = e.target.value;
+                        const nextEnd = addMinutesToTime(value, tourDurationMinutes);
+                        updateSlotRow(slot.id, {
+                          startTime: value,
+                          ...(nextEnd ? { endTime: nextEnd } : {}),
+                        });
+                      }}
+                    />
+                    <FormInput
+                      label="End Time"
+                      type="time"
+                      value={slot.endTime}
+                      error={fieldErrors[`slotsData.${index}.endTime`]}
+                      onChange={(e) => {
+                        clearSlotFieldErrors(index);
+                        updateSlotRow(slot.id, { endTime: e.target.value });
+                      }}
+                    />
+                    <FormInput
+                      label="Slot quantity"
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={slot.slotQuantity}
+                      error={fieldErrors[`slotsData.${index}.slotQuantity`]}
+                      onChange={(e) => {
+                        clearSlotFieldErrors(index);
+                        const raw = e.target.value;
+                        if (raw === '') {
+                          updateSlotRow(slot.id, { slotQuantity: 1 });
+                          return;
+                        }
+                        const next = Number(raw);
+                        if (!Number.isInteger(next) || next < 1) return;
+                        updateSlotRow(slot.id, { slotQuantity: next });
+                      }}
+                    />
+                    {slotsData.length > 1 ? (
+                      <AppButton
+                        variant="secondary"
+                        onClick={() => {
+                          setSlotsData((prev) => prev.filter((row) => row.id !== slot.id));
+                          clearFieldError('previewSlots');
+                        }}
+                      >
+                        Remove
+                      </AppButton>
+                    ) : (
+                      <span />
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div style={{ marginTop: 8, marginBottom: 4 }}>
+                <AppButton
+                  variant="secondary"
+                  onClick={() => {
+                    clearFieldError('slotsData');
                     clearFieldError('previewSlots');
-                    const value = e.target.value;
-                    setStartTime(value);
-                    const duration =
-                      tourTypes.find((t) => t.tourTypeId === tourTypeId)?.durationMinutes ?? 0;
-                    const nextEnd = addMinutesToTime(value, duration);
-                    if (nextEnd) {
-                      setEndTime(nextEnd);
-                      clearFieldError('endTime');
-                    }
+                    setSlotsData((prev) => [...prev, createEmptySlotRow()]);
                   }}
-                />
-                <FormInput
-                  label="End Time"
-                  type="time"
-                  value={endTime}
-                  error={fieldErrors.endTime}
-                  onChange={(e) => {
-                    clearFieldError('endTime');
-                    clearFieldError('previewSlots');
-                    setEndTime(e.target.value);
-                  }}
-                />
+                >
+                  + Add slot
+                </AppButton>
               </div>
 
               <FormGrid className={styles.bulkFormGridMt}>
@@ -412,30 +512,6 @@ export function BulkCreatorPage() {
                   type="number"
                   value={payRate}
                   onChange={(e) => setPayRate(Number(e.target.value))}
-                />
-                <FormInput
-                  label="Slots per language per day"
-                  type="number"
-                  min={1}
-                  step={1}
-                  value={bulkCount}
-                  error={fieldErrors.bulkCount}
-                  onChange={(e) => {
-                    const raw = e.target.value;
-                    if (raw === '') {
-                      setBulkCount(1);
-                      clearFieldError('bulkCount');
-                      clearFieldError('previewSlots');
-                      return;
-                    }
-                    const next = Number(raw);
-                    if (!Number.isInteger(next) || next < 1) {
-                      return;
-                    }
-                    clearFieldError('bulkCount');
-                    clearFieldError('previewSlots');
-                    setBulkCount(next);
-                  }}
                 />
                 <div className={formGridSpanFull}>
                   <FormTextarea

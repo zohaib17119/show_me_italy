@@ -57,6 +57,12 @@ export interface AdminUpdateGuideOnSelectedTourPayload {
   applicationId: number;
 }
 
+export interface BulkTourSlotDataItem {
+  startTime: string;
+  endTime: string;
+  slotQuantity: number;
+}
+
 export interface BulkTourSlotCreatePayload {
   tourTypeId: number;
   slotDate: string[];
@@ -73,6 +79,7 @@ export interface BulkTourSlotCreatePayload {
   isImported: false;
   conflictFlag: false;
   bulkCount: number[];
+  slotsData: BulkTourSlotDataItem[];
 }
 
 export interface TourSlotFilter {
@@ -270,6 +277,7 @@ export interface GuideSlotRecord {
   totalApplicants?: number;
   guidesNeeded?: number;
   adminNotes?: string;
+  guideApplicationStatus?: string | null;
   [key: string]: unknown;
 }
 

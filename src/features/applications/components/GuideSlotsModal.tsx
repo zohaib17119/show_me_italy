@@ -89,7 +89,7 @@ export function GuideSlotsModal({
  onCancel={onClose}
  footer={null}
  width="80%"
- style={{ maxWidth: 1200 }}
+ style={{ maxWidth: 1400 }}
  destroyOnClose
  >
  {status === 'loading' && (

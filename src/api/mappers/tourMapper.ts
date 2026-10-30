@@ -139,8 +139,6 @@ export function buildBulkTourSlotPayload(form: {
   tourTypeId: number;
   dates: string[];
   languageIds: number[];
-  startTime: string;
-  endTime: string;
   guidesNeeded: number;
   guestCount: number;
   payRatePerHour: number;
@@ -148,14 +146,19 @@ export function buildBulkTourSlotPayload(form: {
   adminNotes: string;
   status: string;
   tickets?: string | null;
-  bulkCount: number;
+  slotsData: Array<{
+    startTime: string;
+    endTime: string;
+    slotQuantity: number;
+  }>;
 }): BulkTourSlotCreatePayload {
+  const first = form.slotsData[0];
   return {
     tourTypeId: form.tourTypeId,
     slotDate: form.dates.map((date) => toApiDateTime(date)),
     languageIds: form.languageIds,
-    startTime: normalizeTimeForApi(form.startTime),
-    endTime: normalizeTimeForApi(form.endTime),
+    startTime: normalizeTimeForApi(first?.startTime ?? ''),
+    endTime: normalizeTimeForApi(first?.endTime ?? ''),
     guidesNeeded: form.guidesNeeded,
     guestCount: form.guestCount,
     payRatePerHour: form.payRatePerHour,
@@ -165,7 +168,12 @@ export function buildBulkTourSlotPayload(form: {
     tickets: form.tickets?.trim() ? form.tickets : null,
     isImported: false,
     conflictFlag: false,
-    bulkCount: [form.bulkCount],
+    bulkCount: form.slotsData.map((slot) => slot.slotQuantity),
+    slotsData: form.slotsData.map((slot) => ({
+      startTime: normalizeTimeForApi(slot.startTime),
+      endTime: normalizeTimeForApi(slot.endTime),
+      slotQuantity: slot.slotQuantity,
+    })),
   };
 }
 
